@@ -1,0 +1,1589 @@
+{
+  "building_templates": [
+    {
+      "name": "Abattoir",
+      "sphere": "Économique",
+      "capacity": 10,
+      "assignment_type": "Main-d'œuvre",
+      "resource_produced": "Victuailles",
+      "ratio_per_unit": 5,
+      "domain_limitation": "Prod. domaine: bétail",
+      "prerequisite_building": null,
+      "structure_points": 5,
+      "construction_costs": {
+        "solaris": 40,
+        "mo": 10,
+        "ressources": 30,
+        "ingenieurs": 2
+      }
+    },
+    {
+      "name": "Académie",
+      "sphere": "Économique",
+      "capacity": 5,
+      "assignment_type": "Main-d'œuvre",
+      "resource_produced": "Ingénieur",
+      "ratio_per_unit": 1,
+      "domain_limitation": null,
+      "prerequisite_building": null,
+      "structure_points": 9,
+      "construction_costs": {
+        "solaris": 50,
+        "mo": 10,
+        "ressources": 30,
+        "equipements": 25,
+        "macons": 2,
+        "charpentiers": 2,
+        "forgerons": 1,
+        "ingenieurs": 2
+      }
+    },
+    {
+      "name": "Atelier",
+      "sphere": "Économique",
+      "capacity": 10,
+      "assignment_type": "Main-d'œuvre",
+      "resource_produced": "Équipements",
+      "ratio_per_unit": 5,
+      "domain_limitation": "Prod. domaine: ressource",
+      "prerequisite_building": null,
+      "structure_points": 4,
+      "construction_costs": {
+        "solaris": 40,
+        "mo": 10,
+        "ressources": 30
+      }
+    },
+    {
+      "name": "Camp de bûcherons",
+      "sphere": "Économique",
+      "capacity": 10,
+      "assignment_type": "Main-d'œuvre",
+      "resource_produced": "Ressources",
+      "ratio_per_unit": 5,
+      "domain_limitation": "Prod. domaine: ressource",
+      "prerequisite_building": null,
+      "structure_points": 1,
+      "construction_costs": {
+        "solaris": 20,
+        "mo": 5,
+        "ressources": 10
+      }
+    },
+    {
+      "name": "Carrière",
+      "sphere": "Économique",
+      "capacity": 20,
+      "assignment_type": "Main-d'œuvre",
+      "resource_produced": "Ressources",
+      "ratio_per_unit": 5,
+      "domain_limitation": "Prod. domaine: ressource",
+      "prerequisite_building": null,
+      "structure_points": 2,
+      "construction_costs": {
+        "solaris": 20,
+        "mo": 5,
+        "ressources": 10,
+        "macons": 1,
+        "ingenieurs": 1
+      }
+    },
+    {
+      "name": "Champs",
+      "sphere": "Économique",
+      "capacity": 10,
+      "assignment_type": "Main-d'œuvre",
+      "resource_produced": "Céréales",
+      "ratio_per_unit": 5,
+      "domain_limitation": "Prod. domaine: céréale",
+      "prerequisite_building": null,
+      "structure_points": 1,
+      "construction_costs": {
+        "solaris": 20,
+        "mo": 5,
+        "ressources": 10
+      }
+    },
+    {
+      "name": "Chaumières",
+      "sphere": "Économique",
+      "capacity": 10,
+      "assignment_type": "Fiche pop.",
+      "resource_produced": "Main-d'œuvre",
+      "ratio_per_unit": 2,
+      "domain_limitation": null,
+      "prerequisite_building": null,
+      "structure_points": 1,
+      "construction_costs": {
+        "solaris": 20,
+        "mo": 5,
+        "ressources": 5
+      }
+    },
+    {
+      "name": "École de charpentiers",
+      "sphere": "Économique",
+      "capacity": 5,
+      "assignment_type": "Main-d'œuvre",
+      "resource_produced": "Charpentier",
+      "ratio_per_unit": 1,
+      "domain_limitation": null,
+      "prerequisite_building": null,
+      "structure_points": 6,
+      "construction_costs": {
+        "solaris": 50,
+        "mo": 10,
+        "ressources": 30,
+        "equipements": 20,
+        "charpentiers": 1
+      }
+    },
+    {
+      "name": "École de forgerons",
+      "sphere": "Économique",
+      "capacity": 5,
+      "assignment_type": "Main-d'œuvre",
+      "resource_produced": "Forgeron",
+      "ratio_per_unit": 1,
+      "domain_limitation": null,
+      "prerequisite_building": null,
+      "structure_points": 6,
+      "construction_costs": {
+        "solaris": 50,
+        "mo": 10,
+        "ressources": 30,
+        "equipements": 20,
+        "forgerons": 1
+      }
+    },
+    {
+      "name": "École de maçons",
+      "sphere": "Économique",
+      "capacity": 5,
+      "assignment_type": "Main-d'œuvre",
+      "resource_produced": "Maçon",
+      "ratio_per_unit": 1,
+      "domain_limitation": null,
+      "prerequisite_building": null,
+      "structure_points": 6,
+      "construction_costs": {
+        "solaris": 50,
+        "mo": 10,
+        "ressources": 30,
+        "equipements": 20,
+        "macons": 1
+      }
+    },
+    {
+      "name": "Enclos",
+      "sphere": "Économique",
+      "capacity": 10,
+      "assignment_type": "Main-d'œuvre",
+      "resource_produced": "Bétails",
+      "ratio_per_unit": 5,
+      "domain_limitation": "Prod. domaine: bétail",
+      "prerequisite_building": null,
+      "structure_points": 1,
+      "construction_costs": {
+        "solaris": 20,
+        "mo": 5,
+        "ressources": 10
+      }
+    },
+    {
+      "name": "Étable",
+      "sphere": "Économique",
+      "capacity": 20,
+      "assignment_type": "Main-d'œuvre",
+      "resource_produced": "Bétails",
+      "ratio_per_unit": 5,
+      "domain_limitation": "Prod. domaine: bétail",
+      "prerequisite_building": null,
+      "structure_points": 2,
+      "construction_costs": {
+        "solaris": 20,
+        "mo": 5,
+        "ressources": 10,
+        "forgerons": 1,
+        "ingenieurs": 1
+      }
+    },
+    {
+      "name": "Fabrique",
+      "sphere": "Économique",
+      "capacity": 10,
+      "assignment_type": "Main-d'œuvre",
+      "resource_produced": "Équipements",
+      "ratio_per_unit": 5,
+      "domain_limitation": "Prod. domaine: ressource",
+      "prerequisite_building": null,
+      "structure_points": 5,
+      "construction_costs": {
+        "solaris": 40,
+        "mo": 10,
+        "ressources": 30,
+        "ingenieurs": 2
+      }
+    },
+    {
+      "name": "Faubourg",
+      "sphere": "Économique",
+      "capacity": 10,
+      "assignment_type": "Fiche pop.",
+      "resource_produced": "Main-d'œuvre",
+      "ratio_per_unit": 2,
+      "domain_limitation": null,
+      "prerequisite_building": null,
+      "structure_points": 6,
+      "construction_costs": {
+        "solaris": 40,
+        "mo": 5,
+        "ressources": 30,
+        "equipements": 20,
+        "macons": 1,
+        "forgerons": 1,
+        "ingenieurs": 1,
+        "intendants": 1
+      }
+    },
+    {
+      "name": "Ferme",
+      "sphere": "Économique",
+      "capacity": 10,
+      "assignment_type": "Main-d'œuvre",
+      "resource_produced": "Victuailles",
+      "ratio_per_unit": 5,
+      "domain_limitation": "Prod. domaine: bétail",
+      "prerequisite_building": null,
+      "structure_points": 4,
+      "construction_costs": {
+        "solaris": 40,
+        "mo": 10,
+        "ressources": 30
+      }
+    },
+    {
+      "name": "Fonderie",
+      "sphere": "Économique",
+      "capacity": 10,
+      "assignment_type": "Main-d'œuvre",
+      "resource_produced": "Armements",
+      "ratio_per_unit": 5,
+      "domain_limitation": "Prod. domaine: ressource",
+      "prerequisite_building": null,
+      "structure_points": 5,
+      "construction_costs": {
+        "solaris": 40,
+        "mo": 10,
+        "ressources": 30,
+        "ingenieurs": 2
+      }
+    },
+    {
+      "name": "Forge",
+      "sphere": "Économique",
+      "capacity": 10,
+      "assignment_type": "Main-d'œuvre",
+      "resource_produced": "Armements",
+      "ratio_per_unit": 5,
+      "domain_limitation": "Prod. domaine: ressource",
+      "prerequisite_building": null,
+      "structure_points": 4,
+      "construction_costs": {
+        "solaris": 40,
+        "mo": 10,
+        "ressources": 30
+      }
+    },
+    {
+      "name": "Four",
+      "sphere": "Économique",
+      "capacity": 10,
+      "assignment_type": "Main-d'œuvre",
+      "resource_produced": "Victuailles",
+      "ratio_per_unit": 5,
+      "domain_limitation": "Prod. domaine: céréale",
+      "prerequisite_building": null,
+      "structure_points": 5,
+      "construction_costs": {
+        "solaris": 40,
+        "mo": 10,
+        "ressources": 30,
+        "ingenieurs": 2
+      }
+    },
+    {
+      "name": "Grande mine",
+      "sphere": "Économique",
+      "capacity": 20,
+      "assignment_type": "Main-d'œuvre",
+      "resource_produced": "Minerai/Pierre préc.",
+      "ratio_per_unit": 5,
+      "domain_limitation": "Grand gisement",
+      "prerequisite_building": null,
+      "structure_points": 5,
+      "construction_costs": {
+        "solaris": 40,
+        "mo": 10,
+        "ressources": 30,
+        "ingenieurs": 2
+      },
+      "notes": "Selon type gisement"
+    },
+    {
+      "name": "Grange",
+      "sphere": "Économique",
+      "capacity": 20,
+      "assignment_type": "Main-d'œuvre",
+      "resource_produced": "Céréales",
+      "ratio_per_unit": 5,
+      "domain_limitation": "Prod. domaine: céréale",
+      "prerequisite_building": null,
+      "structure_points": 2,
+      "construction_costs": {
+        "solaris": 20,
+        "mo": 5,
+        "ressources": 10,
+        "charpentiers": 1,
+        "ingenieurs": 1
+      }
+    },
+    {
+      "name": "Habitations",
+      "sphere": "Économique",
+      "capacity": 10,
+      "assignment_type": "Fiche pop.",
+      "resource_produced": "Main-d'œuvre",
+      "ratio_per_unit": 2,
+      "domain_limitation": null,
+      "prerequisite_building": null,
+      "structure_points": 4,
+      "construction_costs": {
+        "solaris": 30,
+        "mo": 10,
+        "ressources": 25
+      }
+    },
+    {
+      "name": "Mine",
+      "sphere": "Économique",
+      "capacity": 10,
+      "assignment_type": "Main-d'œuvre",
+      "resource_produced": "Minerai/Pierre préc.",
+      "ratio_per_unit": 5,
+      "domain_limitation": "Petit gisement",
+      "prerequisite_building": null,
+      "structure_points": 4,
+      "construction_costs": {
+        "solaris": 40,
+        "mo": 10,
+        "ressources": 30
+      },
+      "notes": "Selon type gisement"
+    },
+    {
+      "name": "Moulin",
+      "sphere": "Économique",
+      "capacity": 10,
+      "assignment_type": "Main-d'œuvre",
+      "resource_produced": "Victuailles",
+      "ratio_per_unit": 5,
+      "domain_limitation": "Prod. domaine: céréale",
+      "prerequisite_building": null,
+      "structure_points": 4,
+      "construction_costs": {
+        "solaris": 40,
+        "mo": 10,
+        "ressources": 30
+      }
+    },
+    {
+      "name": "Université",
+      "sphere": "Économique",
+      "capacity": 5,
+      "assignment_type": "Main-d'œuvre",
+      "resource_produced": "Intendant",
+      "ratio_per_unit": 1,
+      "domain_limitation": null,
+      "prerequisite_building": null,
+      "structure_points": 9,
+      "construction_costs": {
+        "solaris": 50,
+        "mo": 10,
+        "ressources": 30,
+        "equipements": 25,
+        "macons": 2,
+        "charpentiers": 1,
+        "forgerons": 2,
+        "ingenieurs": 1,
+        "intendants": 1
+      }
+    },
+    {
+      "name": "Amphithéâtre",
+      "sphere": "Arts",
+      "capacity": 10,
+      "assignment_type": "Main-d'œuvre",
+      "resource_produced": "Admirateur",
+      "ratio_per_unit": 1,
+      "domain_limitation": null,
+      "prerequisite_building": null,
+      "structure_points": 11,
+      "construction_costs": {
+        "solaris": 100,
+        "mo": 15,
+        "ressources": 40,
+        "equipements": 30,
+        "macons": 2,
+        "charpentiers": 3,
+        "ingenieurs": 1
+      }
+    },
+    {
+      "name": "Auberge-relais",
+      "sphere": "Arts",
+      "capacity": 1,
+      "assignment_type": "Main-d'œuvre",
+      "resource_produced": "Admirateur",
+      "ratio_per_unit": 1,
+      "domain_limitation": null,
+      "prerequisite_building": null,
+      "structure_points": 1,
+      "construction_costs": {
+        "solaris": 10,
+        "mo": 2,
+        "ressources": 10
+      }
+    },
+    {
+      "name": "Bibliothèque",
+      "sphere": "Arts",
+      "capacity": "1+",
+      "assignment_type": "Œuvres",
+      "resource_produced": "+25 infl. rég./1000$",
+      "ratio_per_unit": 0,
+      "domain_limitation": null,
+      "prerequisite_building": null,
+      "structure_points": 12,
+      "construction_costs": {
+        "solaris": 100,
+        "mo": 10,
+        "ressources": 50,
+        "equipements": 50,
+        "charpentiers": 1,
+        "forgerons": 1,
+        "intendants": 1,
+        "scribes": 1,
+        "influences_reg": 5
+      },
+      "notes": "+1 notoriété si plus haute valeur"
+    },
+    {
+      "name": "Monument",
+      "sphere": "Arts",
+      "capacity": 0,
+      "assignment_type": "—",
+      "resource_produced": "Notoriété (top 3)",
+      "ratio_per_unit": 0,
+      "domain_limitation": null,
+      "prerequisite_building": null,
+      "structure_points": 0,
+      "construction_costs": {
+        "solaris": 100
+      },
+      "notes": "Coût: 100$+ (1 pt struct/100$)"
+    },
+    {
+      "name": "Musée",
+      "sphere": "Arts",
+      "capacity": "1+",
+      "assignment_type": "Obj. collection",
+      "resource_produced": "+25 infl. prov./1000$",
+      "ratio_per_unit": 0,
+      "domain_limitation": null,
+      "prerequisite_building": null,
+      "structure_points": 11,
+      "construction_costs": {
+        "solaris": 100,
+        "mo": 10,
+        "ressources": 25,
+        "equipements": 50,
+        "macons": 1,
+        "charpentiers": 1,
+        "forgerons": 2,
+        "influences_reg": 10
+      },
+      "notes": "+1 notoriété si plus haute valeur"
+    },
+    {
+      "name": "Abbaye",
+      "sphere": "Croyance",
+      "capacity": 5,
+      "assignment_type": "Croyant",
+      "resource_produced": "V7+É7+A3/croyant",
+      "ratio_per_unit": 0,
+      "domain_limitation": null,
+      "prerequisite_building": null,
+      "structure_points": 6,
+      "construction_costs": {
+        "solaris": 50,
+        "mo": 5,
+        "ressources": 25,
+        "charpentiers": 1,
+        "croyants": 1
+      },
+      "notes": "7 vict + 7 équip + 3 arm par croyant"
+    },
+    {
+      "name": "Cathédrale",
+      "sphere": "Croyance",
+      "capacity": 10,
+      "assignment_type": "Fiche pop.",
+      "resource_produced": "Pt pouvoir/5 fp",
+      "ratio_per_unit": 0,
+      "domain_limitation": null,
+      "prerequisite_building": null,
+      "structure_points": 24,
+      "construction_costs": {
+        "solaris": 300,
+        "mo": 30,
+        "ressources": 100,
+        "macons": 4,
+        "charpentiers": 2,
+        "forgerons": 2,
+        "croyants": 1,
+        "influences_reg": 10
+      },
+      "notes": "+1 pt pouvoir si pleine cap."
+    },
+    {
+      "name": "Chapelle",
+      "sphere": "Croyance",
+      "capacity": 5,
+      "assignment_type": "Main-d'œuvre",
+      "resource_produced": "Croyant",
+      "ratio_per_unit": 1,
+      "domain_limitation": null,
+      "prerequisite_building": null,
+      "structure_points": 12,
+      "construction_costs": {
+        "solaris": 50,
+        "mo": 10,
+        "ressources": 30,
+        "equipements": 25,
+        "macons": 2,
+        "charpentiers": 2,
+        "forgerons": 2,
+        "croyants": 1,
+        "influences_reg": 5
+      }
+    },
+    {
+      "name": "Commanderie",
+      "sphere": "Croyance",
+      "capacity": 6,
+      "assignment_type": "Croyant",
+      "resource_produced": "Chevalier/3 croyants",
+      "ratio_per_unit": 0,
+      "domain_limitation": null,
+      "prerequisite_building": null,
+      "structure_points": 9,
+      "construction_costs": {
+        "solaris": 50,
+        "mo": 10,
+        "ressources": 25,
+        "equipements": 20,
+        "charpentiers": 1,
+        "forgerons": 1,
+        "ingenieurs": 1,
+        "croyants": 1
+      },
+      "notes": "1 chevalier par 3 croyants"
+    },
+    {
+      "name": "Temple",
+      "sphere": "Croyance",
+      "capacity": 5,
+      "assignment_type": "Croyant",
+      "resource_produced": "Protect. surnaturelle",
+      "ratio_per_unit": 0,
+      "domain_limitation": null,
+      "prerequisite_building": null,
+      "structure_points": 13,
+      "construction_costs": {
+        "solaris": 200,
+        "mo": 20,
+        "ressources": 50,
+        "macons": 2,
+        "charpentiers": 1,
+        "croyants": 1
+      },
+      "notes": "Croyants perdus si attaque surn. maj."
+    },
+    {
+      "name": "Taverne",
+      "sphere": "Exploration",
+      "capacity": 10,
+      "assignment_type": "Main-d'œuvre",
+      "resource_produced": "Mentor aventurier",
+      "ratio_per_unit": 1,
+      "domain_limitation": null,
+      "prerequisite_building": null,
+      "structure_points": 17,
+      "construction_costs": {
+        "solaris": 100,
+        "mo": 20,
+        "ressources": 50,
+        "equipements": 50,
+        "armements": 25,
+        "macons": 2,
+        "charpentiers": 2,
+        "forgerons": 3,
+        "ingenieurs": 1,
+        "mentor_avent": 1
+      }
+    },
+    {
+      "name": "Collège arcanique",
+      "sphere": "Magie",
+      "capacity": 5,
+      "assignment_type": "Main-d'œuvre",
+      "resource_produced": "Scribe",
+      "ratio_per_unit": 1,
+      "domain_limitation": null,
+      "prerequisite_building": null,
+      "structure_points": 10,
+      "construction_costs": {
+        "solaris": 50,
+        "mo": 10,
+        "ressources": 30,
+        "equipements": 25,
+        "macons": 2,
+        "charpentiers": 2,
+        "forgerons": 2,
+        "scribes": 1,
+        "influences_reg": 5
+      }
+    },
+    {
+      "name": "Collège occulte",
+      "sphere": "Occulte",
+      "capacity": 5,
+      "assignment_type": "Main-d'œuvre",
+      "resource_produced": "Laborantin",
+      "ratio_per_unit": 1,
+      "domain_limitation": null,
+      "prerequisite_building": null,
+      "structure_points": 10,
+      "construction_costs": {
+        "solaris": 50,
+        "mo": 10,
+        "ressources": 30,
+        "equipements": 25,
+        "macons": 2,
+        "charpentiers": 2,
+        "forgerons": 2,
+        "laborantins": 1,
+        "influences_reg": 5
+      }
+    },
+    {
+      "name": "Lieu arcanique",
+      "sphere": "Occulte",
+      "capacity": 3,
+      "assignment_type": "Mag./Occ.",
+      "resource_produced": "Domiciliation",
+      "ratio_per_unit": 0,
+      "domain_limitation": null,
+      "prerequisite_building": null,
+      "structure_points": 19,
+      "construction_costs": {
+        "solaris": 200,
+        "mo": 25,
+        "ressources": 50,
+        "equipements": 20,
+        "macons": 3,
+        "charpentiers": 1
+      }
+    },
+    {
+      "name": "Grand lieu arcanique",
+      "sphere": "Occulte",
+      "capacity": 3,
+      "assignment_type": "Mag./Occ.",
+      "resource_produced": "+3 domiciliation",
+      "ratio_per_unit": 0,
+      "domain_limitation": null,
+      "prerequisite_building": "Lieu arcanique",
+      "structure_points": 16,
+      "construction_costs": {
+        "solaris": 100,
+        "mo": 10,
+        "ressources": 50,
+        "equipements": 25,
+        "macons": 2,
+        "charpentiers": 1,
+        "ingenieurs": 2,
+        "laborantins": 1
+      }
+    },
+    {
+      "name": "Caserne",
+      "sphere": "Militaire",
+      "capacity": 10,
+      "assignment_type": "Main-d'œuvre",
+      "resource_produced": "Mentor militaire",
+      "ratio_per_unit": 1,
+      "domain_limitation": "Prod. domaine: céréales",
+      "prerequisite_building": null,
+      "structure_points": 17,
+      "construction_costs": {
+        "solaris": 100,
+        "mo": 20,
+        "ressources": 50,
+        "equipements": 25,
+        "armements": 50,
+        "macons": 2,
+        "charpentiers": 2,
+        "forgerons": 3,
+        "ingenieurs": 1,
+        "mentor_mil": 1
+      }
+    },
+    {
+      "name": "Écurie",
+      "sphere": "Militaire",
+      "capacity": 10,
+      "assignment_type": "Main-d'œuvre",
+      "resource_produced": "Mentor militaire",
+      "ratio_per_unit": 1,
+      "domain_limitation": "Prod. domaine: bétails",
+      "prerequisite_building": null,
+      "structure_points": 17,
+      "construction_costs": {
+        "solaris": 100,
+        "mo": 20,
+        "ressources": 50,
+        "equipements": 50,
+        "armements": 25,
+        "macons": 2,
+        "charpentiers": 3,
+        "forgerons": 2,
+        "ingenieurs": 1,
+        "mentor_mil": 1
+      }
+    },
+    {
+      "name": "Palissade",
+      "sphere": "Fortification",
+      "capacity": 5,
+      "assignment_type": "Unités",
+      "resource_produced": "Garnison 5",
+      "ratio_per_unit": 0,
+      "domain_limitation": null,
+      "prerequisite_building": null,
+      "structure_points": 4,
+      "construction_costs": {
+        "solaris": 20,
+        "mo": 5,
+        "ressources": 20,
+        "equipements": 10,
+        "armements": 10,
+        "charpentiers": 1
+      }
+    },
+    {
+      "name": "Fortin",
+      "sphere": "Fortification",
+      "capacity": 5,
+      "assignment_type": "Unités",
+      "resource_produced": "Garnison +5",
+      "ratio_per_unit": 0,
+      "domain_limitation": null,
+      "prerequisite_building": "Palissade",
+      "structure_points": 6,
+      "construction_costs": {
+        "solaris": 25,
+        "mo": 10,
+        "ressources": 30,
+        "equipements": 15,
+        "armements": 20,
+        "macons": 1
+      }
+    },
+    {
+      "name": "Donjon",
+      "sphere": "Fortification",
+      "capacity": 5,
+      "assignment_type": "Unités",
+      "resource_produced": "Garnison +5 + FM",
+      "ratio_per_unit": 0,
+      "domain_limitation": null,
+      "prerequisite_building": "Fortin",
+      "structure_points": 13,
+      "construction_costs": {
+        "solaris": 50,
+        "mo": 20,
+        "ressources": 40,
+        "equipements": 15,
+        "armements": 20,
+        "macons": 3,
+        "charpentiers": 2,
+        "forgerons": 2,
+        "ingenieurs": 1
+      },
+      "notes": "+1 FM/unité, +1 sceau mil. siège"
+    },
+    {
+      "name": "Tourelle",
+      "sphere": "Fortification",
+      "capacity": 5,
+      "assignment_type": "Unités",
+      "resource_produced": "Garnison +5",
+      "ratio_per_unit": 0,
+      "domain_limitation": null,
+      "prerequisite_building": "Donjon",
+      "structure_points": 20,
+      "construction_costs": {
+        "solaris": 75,
+        "mo": 25,
+        "ressources": 60,
+        "equipements": 25,
+        "armements": 40,
+        "macons": 5,
+        "charpentiers": 2,
+        "forgerons": 4,
+        "ingenieurs": 2
+      },
+      "notes": "+2 sceaux mil. siège"
+    },
+    {
+      "name": "Forteresse",
+      "sphere": "Fortification",
+      "capacity": 5,
+      "assignment_type": "Unités",
+      "resource_produced": "Garnison +5 + FM",
+      "ratio_per_unit": 0,
+      "domain_limitation": null,
+      "prerequisite_building": "Tourelle",
+      "structure_points": 38,
+      "construction_costs": {
+        "solaris": 150,
+        "mo": 50,
+        "ressources": 120,
+        "equipements": 45,
+        "armements": 80,
+        "macons": 8,
+        "charpentiers": 4,
+        "forgerons": 7,
+        "ingenieurs": 3
+      },
+      "notes": "+FM cumulatif donjon"
+    },
+    {
+      "name": "Quai",
+      "sphere": "Maritime",
+      "capacity": 5,
+      "assignment_type": "Marin",
+      "resource_produced": "Victuailles",
+      "ratio_per_unit": 5,
+      "domain_limitation": "Domaine côtier",
+      "prerequisite_building": null,
+      "structure_points": 5,
+      "construction_costs": {
+        "solaris": 30,
+        "mo": 5,
+        "ressources": 25,
+        "equipements": 10,
+        "charpentiers": 1,
+        "marins": 5
+      }
+    },
+    {
+      "name": "Chantier naval",
+      "sphere": "Maritime",
+      "capacity": 0,
+      "assignment_type": "—",
+      "resource_produced": "Fab. navires",
+      "ratio_per_unit": 0,
+      "domain_limitation": "Domaine côtier",
+      "prerequisite_building": "Quai",
+      "structure_points": 26,
+      "construction_costs": {
+        "solaris": 75,
+        "mo": 5,
+        "ressources": 75,
+        "equipements": 50,
+        "armements": 50,
+        "macons": 4,
+        "charpentiers": 6,
+        "forgerons": 3,
+        "ingenieurs": 2,
+        "marins": 10,
+        "influences_reg": 20
+      }
+    },
+    {
+      "name": "Port",
+      "sphere": "Maritime",
+      "capacity": 10,
+      "assignment_type": "Fiche pop.",
+      "resource_produced": "Marins",
+      "ratio_per_unit": 2,
+      "domain_limitation": null,
+      "prerequisite_building": "Quai",
+      "structure_points": 12,
+      "construction_costs": {
+        "solaris": 30,
+        "mo": 10,
+        "ressources": 50,
+        "equipements": 25,
+        "macons": 1,
+        "charpentiers": 1,
+        "forgerons": 1,
+        "ingenieurs": 1,
+        "marins": 10,
+        "influences_reg": 5
+      }
+    },
+    {
+      "name": "Village de pêche",
+      "sphere": "Maritime",
+      "capacity": 20,
+      "assignment_type": "Marin",
+      "resource_produced": "Bateau pêche/2 marins",
+      "ratio_per_unit": 0,
+      "domain_limitation": null,
+      "prerequisite_building": "Quai",
+      "structure_points": 5,
+      "construction_costs": {
+        "solaris": 40,
+        "mo": 5,
+        "ressources": 25,
+        "equipements": 10,
+        "charpentiers": 1,
+        "marins": 5
+      }
+    },
+    {
+      "name": "Castel",
+      "sphere": "Politique",
+      "capacity": 0,
+      "assignment_type": "Lingots",
+      "resource_produced": "+25 infl. prov./1000$",
+      "ratio_per_unit": 0,
+      "domain_limitation": null,
+      "prerequisite_building": null,
+      "structure_points": 14,
+      "construction_costs": {
+        "solaris": 200,
+        "mo": 15,
+        "ressources": 50,
+        "equipements": 25,
+        "armements": 10,
+        "macons": 4,
+        "charpentiers": 2,
+        "ingenieurs": 2
+      }
+    },
+    {
+      "name": "Château",
+      "sphere": "Politique",
+      "capacity": 5,
+      "assignment_type": "Intendant",
+      "resource_produced": "15 MO/intendant",
+      "ratio_per_unit": "Voir notes",
+      "domain_limitation": "2 FP affectées/fief par MO produite",
+      "prerequisite_building": null,
+      "structure_points": 12,
+      "construction_costs": {
+        "solaris": 50,
+        "mo": 15,
+        "ressources": 50,
+        "equipements": 20,
+        "macons": 3,
+        "charpentiers": 2,
+        "influences_reg": 10
+      },
+      "notes": "Max 15 MO par intendant. Requiert 2 FP affectées dans le fief par MO. MO va à guilde du maître de fief."
+    },
+    {
+      "name": "Manoir",
+      "sphere": "Politique",
+      "capacity": 0,
+      "assignment_type": "—",
+      "resource_produced": "+2 pierres savoir",
+      "ratio_per_unit": 0,
+      "domain_limitation": null,
+      "prerequisite_building": null,
+      "structure_points": 6,
+      "construction_costs": {
+        "solaris": 50,
+        "mo": 10,
+        "ressources": 30,
+        "equipements": 20,
+        "macons": 2,
+        "charpentiers": 1,
+        "forgerons": 1
+      },
+      "notes": "Au chef de domaine"
+    }
+  ],
+  "inventory": [
+    {
+      "item": "Armement",
+      "coffre": 30,
+      "en_mains": 16,
+      "production": 59,
+      "notes": "Forge 50 + Abbaye 9"
+    },
+    {
+      "item": "Bétail",
+      "coffre": 43,
+      "en_mains": 8,
+      "production": 0,
+      "notes": "Aucun bâtiment prod."
+    },
+    {
+      "item": "Céréales",
+      "coffre": 3,
+      "en_mains": 0,
+      "production": 125,
+      "notes": "Champs 50 + Grange 75"
+    },
+    {
+      "item": "Min. argent",
+      "coffre": 7,
+      "en_mains": 50,
+      "production": 0,
+      "notes": null
+    },
+    {
+      "item": "Minerais or",
+      "coffre": 0,
+      "en_mains": 20,
+      "production": 0,
+      "notes": null
+    },
+    {
+      "item": "Pierre précieuse",
+      "coffre": 5,
+      "en_mains": 1,
+      "production": 100,
+      "notes": "Grande mine 20/20"
+    },
+    {
+      "item": "Ressources",
+      "coffre": 15,
+      "en_mains": 20,
+      "production": 100,
+      "notes": "2× Camp bûch. (50+50)"
+    },
+    {
+      "item": "Solaris",
+      "coffre": 990,
+      "en_mains": 1210,
+      "production": 0,
+      "notes": "Coffre corrigé: 990"
+    },
+    {
+      "item": "Victuailles",
+      "coffre": 50,
+      "en_mains": 3,
+      "production": 96,
+      "notes": "Moulin 50 + Abbaye 21 + Quai 25"
+    },
+    {
+      "item": "Aventurier",
+      "coffre": 0,
+      "en_mains": 0,
+      "production": 0,
+      "notes": "Pas dans coffre"
+    },
+    {
+      "item": "Charpentier",
+      "coffre": 1,
+      "en_mains": 2,
+      "production": 5,
+      "notes": "Éc. charpentiers 5/5"
+    },
+    {
+      "item": "Chevalier",
+      "coffre": 1,
+      "en_mains": 2,
+      "production": 0,
+      "notes": null
+    },
+    {
+      "item": "Dons",
+      "coffre": 0,
+      "en_mains": 13,
+      "production": 0,
+      "notes": "Pas dans coffre"
+    },
+    {
+      "item": "Fiche de population",
+      "coffre": 3,
+      "en_mains": 0,
+      "production": 0,
+      "notes": "Nouveau — dans coffre"
+    },
+    {
+      "item": "Forgeron",
+      "coffre": 2,
+      "en_mains": 1,
+      "production": 5,
+      "notes": "Éc. forgerons 5/5"
+    },
+    {
+      "item": "Inf. Empire",
+      "coffre": 4,
+      "en_mains": 9,
+      "production": 0,
+      "notes": null
+    },
+    {
+      "item": "Inf. Irendille",
+      "coffre": 0,
+      "en_mains": 20,
+      "production": 0,
+      "notes": null
+    },
+    {
+      "item": "Inf. Terre des Brumes",
+      "coffre": 0,
+      "en_mains": 20,
+      "production": 0,
+      "notes": null
+    },
+    {
+      "item": "Ingénieur",
+      "coffre": 2,
+      "en_mains": 0,
+      "production": 0,
+      "notes": "⚠ 0 en prod."
+    },
+    {
+      "item": "Intendant",
+      "coffre": 4,
+      "en_mains": 2,
+      "production": 5,
+      "notes": "Université 5/5"
+    },
+    {
+      "item": "Maçon",
+      "coffre": 1,
+      "en_mains": 0,
+      "production": 5,
+      "notes": "Éc. maçons 5/5"
+    },
+    {
+      "item": "Marin",
+      "coffre": 3,
+      "en_mains": 0,
+      "production": 0,
+      "notes": null
+    },
+    {
+      "item": "Mentor Mil.",
+      "coffre": 5,
+      "en_mains": 5,
+      "production": 0,
+      "notes": "⚠ Caserne NON STAFFÉE"
+    },
+    {
+      "item": "Milice",
+      "coffre": 3,
+      "en_mains": 0,
+      "production": 0,
+      "notes": null
+    },
+    {
+      "item": "Sold. de métier",
+      "coffre": 1,
+      "en_mains": 0,
+      "production": 0,
+      "notes": null
+    },
+    {
+      "item": "Admirateurs",
+      "coffre": 0,
+      "en_mains": 5,
+      "production": 0,
+      "notes": "⚠ Amphi. NON STAFFÉ"
+    },
+    {
+      "item": "Croyant",
+      "coffre": 0,
+      "en_mains": 1,
+      "production": 5,
+      "notes": "Chapelle 5/5"
+    },
+    {
+      "item": "Laborantins",
+      "coffre": 0,
+      "en_mains": 2,
+      "production": 0,
+      "notes": "⚠ 0 en prod."
+    },
+    {
+      "item": "Paysans",
+      "coffre": 0,
+      "en_mains": 0,
+      "production": 100,
+      "notes": "5 bât. domiciliation"
+    },
+    {
+      "item": "Équipements",
+      "coffre": 0,
+      "en_mains": 5,
+      "production": 71,
+      "notes": "Atelier 50 + Abbaye 21"
+    },
+    {
+      "item": "Objet de coll.",
+      "coffre": 0,
+      "en_mains": 10,
+      "production": 0,
+      "notes": null
+    },
+    {
+      "item": "Sceau Occulte",
+      "coffre": 0,
+      "en_mains": 1,
+      "production": 0,
+      "notes": null
+    },
+    {
+      "item": "Sceau Exploration",
+      "coffre": 0,
+      "en_mains": 1,
+      "production": 0,
+      "notes": null
+    },
+    {
+      "item": "Composante surnaturelles",
+      "coffre": 0,
+      "en_mains": 2,
+      "production": 0,
+      "notes": null
+    },
+    {
+      "item": "Faveur divine",
+      "coffre": 0,
+      "en_mains": 1,
+      "production": 0,
+      "notes": null
+    }
+  ],
+  "domains": {
+    "kewtail": {
+      "buildings": [
+        {
+          "name": "Camp de bûcherons",
+          "type_affectation": "Paysan",
+          "capacity": 10,
+          "assigned": 10,
+          "produces": "Ressource",
+          "revenue": 50
+        },
+        {
+          "name": "Faubourg",
+          "type_affectation": "Fiche pop.",
+          "capacity": 10,
+          "assigned": 10,
+          "produces": "Paysan",
+          "revenue": 20
+        },
+        {
+          "name": "Grande mine",
+          "type_affectation": "Paysan",
+          "capacity": 20,
+          "assigned": 20,
+          "produces": "Pierre préc.",
+          "revenue": 100
+        },
+        {
+          "name": "Palissade",
+          "type_affectation": "—",
+          "capacity": "—",
+          "assigned": 0,
+          "produces": "Garnison 5",
+          "revenue": "—"
+        }
+      ],
+      "stage": "bourgade",
+      "production_type": "ressource",
+      "max_buildings": 10,
+      "used": 4
+    },
+    "kintyre": {
+      "buildings": [
+        {
+          "name": "Abbaye",
+          "type_affectation": "Croyant",
+          "capacity": 5,
+          "assigned": 3,
+          "produces": "V21/É21/A9",
+          "revenue": "⚠ 3/5"
+        },
+        {
+          "name": "Amphithéâtre",
+          "type_affectation": "Paysan",
+          "capacity": 10,
+          "assigned": 0,
+          "produces": "Admirateur",
+          "revenue": "⚠ 0/10"
+        },
+        {
+          "name": "Atelier",
+          "type_affectation": "Paysan",
+          "capacity": 10,
+          "assigned": 10,
+          "produces": "Équipement",
+          "revenue": 50
+        },
+        {
+          "name": "Camp de bûcherons",
+          "type_affectation": "Paysan",
+          "capacity": 10,
+          "assigned": 10,
+          "produces": "Ressource",
+          "revenue": 50
+        },
+        {
+          "name": "Chapelle",
+          "type_affectation": "Paysan",
+          "capacity": 5,
+          "assigned": 5,
+          "produces": "Croyant",
+          "revenue": 5
+        },
+        {
+          "name": "Chaumières",
+          "type_affectation": "Fiche pop.",
+          "capacity": 10,
+          "assigned": 10,
+          "produces": "Paysan",
+          "revenue": 20
+        },
+        {
+          "name": "Éc. charpentiers",
+          "type_affectation": "Paysan",
+          "capacity": 5,
+          "assigned": 5,
+          "produces": "Charpentier",
+          "revenue": 5
+        },
+        {
+          "name": "Éc. maçons",
+          "type_affectation": "Paysan",
+          "capacity": 5,
+          "assigned": 5,
+          "produces": "Maçon",
+          "revenue": 5
+        },
+        {
+          "name": "Faubourg",
+          "type_affectation": "Fiche pop.",
+          "capacity": 10,
+          "assigned": 10,
+          "produces": "Paysan",
+          "revenue": 20
+        },
+        {
+          "name": "Forge",
+          "type_affectation": "Paysan",
+          "capacity": 10,
+          "assigned": 10,
+          "produces": "Armement",
+          "revenue": 50
+        },
+        {
+          "name": "Fortin",
+          "type_affectation": "—",
+          "capacity": "—",
+          "assigned": 0,
+          "produces": "Garnison +5",
+          "revenue": "—"
+        },
+        {
+          "name": "Habitations",
+          "type_affectation": "Fiche pop.",
+          "capacity": 10,
+          "assigned": 10,
+          "produces": "Paysan",
+          "revenue": 20
+        },
+        {
+          "name": "Manoir",
+          "type_affectation": "—",
+          "capacity": "—",
+          "assigned": 0,
+          "produces": "+2 pierres sav.",
+          "revenue": "—"
+        },
+        {
+          "name": "Palissade",
+          "type_affectation": "—",
+          "capacity": "—",
+          "assigned": 0,
+          "produces": "Garnison 5",
+          "revenue": "—"
+        },
+        {
+          "name": "Quai",
+          "type_affectation": "Marin",
+          "capacity": 5,
+          "assigned": 5,
+          "produces": "Victuailles",
+          "revenue": 25
+        },
+        {
+          "name": "Université",
+          "type_affectation": "Paysan",
+          "capacity": 5,
+          "assigned": 5,
+          "produces": "Intendant",
+          "revenue": 5
+        }
+      ],
+      "stage": "village",
+      "production_type": "ressource",
+      "max_buildings": 16,
+      "used": 16
+    },
+    "dramelay": {
+      "buildings": [
+        {
+          "name": "Caserne",
+          "type_affectation": "Paysan",
+          "capacity": 10,
+          "assigned": 0,
+          "produces": "Mentor mil.",
+          "revenue": "⚠ 0/10"
+        },
+        {
+          "name": "Champs",
+          "type_affectation": "Paysan",
+          "capacity": 10,
+          "assigned": 10,
+          "produces": "Céréales",
+          "revenue": 50
+        },
+        {
+          "name": "Chaumières",
+          "type_affectation": "Fiche pop.",
+          "capacity": 10,
+          "assigned": 10,
+          "produces": "Paysan",
+          "revenue": 20
+        },
+        {
+          "name": "Éc. forgerons",
+          "type_affectation": "Paysan",
+          "capacity": 5,
+          "assigned": 5,
+          "produces": "Forgeron",
+          "revenue": 5
+        },
+        {
+          "name": "Grange",
+          "type_affectation": "Paysan",
+          "capacity": 20,
+          "assigned": 15,
+          "produces": "Céréales",
+          "revenue": "⚠ 75/100"
+        },
+        {
+          "name": "Moulin",
+          "type_affectation": "Paysan",
+          "capacity": 10,
+          "assigned": 10,
+          "produces": "Victuailles",
+          "revenue": 50
+        },
+        {
+          "name": "Palissade",
+          "type_affectation": "—",
+          "capacity": "—",
+          "assigned": 0,
+          "produces": "Garnison 5",
+          "revenue": "—"
+        }
+      ],
+      "stage": "bourgade",
+      "production_type": "cereale",
+      "max_buildings": 10,
+      "used": 7
+    }
+  },
+  "maintenance_by_stage": {
+    "campement": {
+      "cereales": 5,
+      "betails": 5,
+      "ressources": 0,
+      "equipements": 0,
+      "macons": 0,
+      "intendants": 0,
+      "charpentiers": 0,
+      "forgerons": 0,
+      "ingenieurs": 0
+    },
+    "hameau": {
+      "cereales": 5,
+      "betails": 5,
+      "ressources": 5,
+      "equipements": 0,
+      "macons": 0,
+      "intendants": 0,
+      "charpentiers": 0,
+      "forgerons": 0,
+      "ingenieurs": 0
+    },
+    "bourgade": {
+      "cereales": 5,
+      "betails": 5,
+      "ressources": 5,
+      "equipements": 0,
+      "macons": 1,
+      "intendants": 0,
+      "charpentiers": 0,
+      "forgerons": 0,
+      "ingenieurs": 0
+    },
+    "village": {
+      "cereales": 5,
+      "betails": 5,
+      "ressources": 5,
+      "equipements": 5,
+      "macons": 1,
+      "intendants": 1,
+      "charpentiers": 1,
+      "forgerons": 0,
+      "ingenieurs": 0
+    },
+    "ville": {
+      "cereales": 5,
+      "betails": 5,
+      "ressources": 5,
+      "equipements": 10,
+      "macons": 1,
+      "intendants": 2,
+      "charpentiers": 1,
+      "forgerons": 1,
+      "ingenieurs": 0
+    },
+    "cité": {
+      "cereales": 8,
+      "betails": 8,
+      "ressources": 5,
+      "equipements": 20,
+      "macons": 1,
+      "intendants": 2,
+      "charpentiers": 1,
+      "forgerons": 1,
+      "ingenieurs": 2
+    }
+  }
+}

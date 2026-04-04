@@ -1,0 +1,8 @@
+node_modules
+.next
+bicolline.db
+.git
+.gitignore
+*.md
+.claude
+start-dev.sh
