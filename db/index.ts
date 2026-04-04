@@ -1,6 +1,7 @@
 import Database from "better-sqlite3";
 import path from "path";
 import fs from "fs";
+import crypto from "crypto";
 
 const DATA_DIR = process.env.DATA_DIR || process.cwd();
 const DB_PATH = path.join(DATA_DIR, "bicolline.db");
@@ -41,6 +42,13 @@ function seedDatabase(db: Database.Database) {
   db.exec("BEGIN");
 
   try {
+    // Users — seed Admin account
+    const insertUser = db.prepare(
+      "INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)"
+    );
+    const adminHash = hashPassword("Cl@nM3kDyud3");
+    insertUser.run("Admin", adminHash, "admin");
+
     // Guilds
     const insertGuild = db.prepare("INSERT INTO guilds (id, name) VALUES (?, ?)");
     const guilds = [
@@ -241,4 +249,16 @@ function seedDatabase(db: Database.Database) {
     db.exec("ROLLBACK");
     throw e;
   }
+}
+
+export function hashPassword(password: string): string {
+  const salt = crypto.randomBytes(16).toString("hex");
+  const key = crypto.scryptSync(password, salt, 64);
+  return `${salt}:${key.toString("hex")}`;
+}
+
+export function verifyPassword(password: string, hash: string): boolean {
+  const [salt, storedKey] = hash.split(":");
+  const key = crypto.scryptSync(password, salt, 64);
+  return crypto.timingSafeEqual(Buffer.from(storedKey, "hex"), key);
 }

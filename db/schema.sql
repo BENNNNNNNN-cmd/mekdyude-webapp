@@ -1,3 +1,12 @@
+-- USERS & AUTH
+CREATE TABLE IF NOT EXISTS users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  username TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,
+  role TEXT NOT NULL DEFAULT 'viewer',
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- LOOKUP: Game rules (read-only after seed)
 CREATE TABLE IF NOT EXISTS building_templates (
   id TEXT PRIMARY KEY,

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Sidebar from "./components/Sidebar";
+import AppShell from "./components/AppShell";
 
 export const metadata: Metadata = {
   title: "Mek Dyude — Gestionnaire de domaines",
@@ -14,11 +14,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr" className="h-full">
-      <body className="h-full flex">
-        <Sidebar />
-        <main className="flex-1 overflow-auto p-6 lg:p-8">
-          {children}
-        </main>
+      <body className="h-full">
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );
