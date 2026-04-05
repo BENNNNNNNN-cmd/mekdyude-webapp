@@ -10,7 +10,7 @@ export default function LoginPage() {
   return (
     <div
       className="relative flex min-h-screen items-center justify-center overflow-hidden bg-cover bg-center bg-no-repeat px-4"
-      style={{ backgroundImage: "url('/images/Background_Mekdyude_login.png')" }}
+      style={{ backgroundImage: "url('/images/Background_MekDyude.png')" }}
     >
       <div className="absolute inset-0 bg-black/45" />
 
