@@ -21,9 +21,10 @@ export default function LoginPage() {
             <Image
               src="/images/logo.svg"
               alt="Mek Dyude"
-              width={64}
-              height={64}
-              className="mb-3 drop-shadow-lg"
+              width={246}
+              height={209}
+              loading="eager"
+              className="mb-3 h-16 w-auto drop-shadow-lg"
             />
             <h1 className="font-serif text-2xl font-bold text-white tracking-wide">
               Mek Dyude
