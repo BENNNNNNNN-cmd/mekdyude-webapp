@@ -4,7 +4,7 @@ import { Fragment, useState } from "react";
 import type { BuildingTemplate } from "./page";
 
 const costLabels: Record<string, string> = {
-  solaris: "Solaris",
+  solar: "solar",
   mo: "Main-d'œuvre",
   ressources: "Ressources",
   equipements: "Équipements",

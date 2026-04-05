@@ -16,10 +16,10 @@ export default function Dashboard() {
   const maintenance = computeMaintenance();
 
   // KPI data
-  const solarisRow = db.prepare(
-    "SELECT qty_coffre + qty_en_mains as total FROM inventory WHERE guild_id = 'mek_dyude' AND item_name = 'Solaris'"
+  const solarRow = db.prepare(
+    "SELECT qty_coffre + qty_en_mains as total FROM inventory WHERE guild_id = 'mek_dyude' AND item_name = 'solar'"
   ).get() as { total: number } | undefined;
-  const solaris = solarisRow?.total ?? 0;
+  const solar = solarRow?.total ?? 0;
 
   const distinctResources = Object.keys(totals).length;
 
@@ -46,7 +46,7 @@ export default function Dashboard() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPICard title="Solaris" value={solaris.toLocaleString("fr-CA") + " $"} icon="$" color="amber" />
+        <KPICard title="solar" value={solar.toLocaleString("fr-CA") + " $"} icon="$" color="amber" />
         <KPICard title="Production totale" value={`${distinctResources} ressources`} icon="⚙" color="blue" />
         <KPICard title="Bâtiments" value={`${domainsData.used}/${domainsData.max}`} icon="🏠" color="green" />
         <KPICard title="Alertes" value={alertCount.toString()} icon="⚠" color={alertCount > 0 ? "red" : "green"} />

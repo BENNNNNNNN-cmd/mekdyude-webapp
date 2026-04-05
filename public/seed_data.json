@@ -11,7 +11,7 @@
       "prerequisite_building": null,
       "structure_points": 5,
       "construction_costs": {
-        "solaris": 40,
+        "solar": 40,
         "mo": 10,
         "ressources": 30,
         "ingenieurs": 2
@@ -28,7 +28,7 @@
       "prerequisite_building": null,
       "structure_points": 9,
       "construction_costs": {
-        "solaris": 50,
+        "solar": 50,
         "mo": 10,
         "ressources": 30,
         "equipements": 25,
@@ -49,7 +49,7 @@
       "prerequisite_building": null,
       "structure_points": 4,
       "construction_costs": {
-        "solaris": 40,
+        "solar": 40,
         "mo": 10,
         "ressources": 30
       }
@@ -65,7 +65,7 @@
       "prerequisite_building": null,
       "structure_points": 1,
       "construction_costs": {
-        "solaris": 20,
+        "solar": 20,
         "mo": 5,
         "ressources": 10
       }
@@ -81,7 +81,7 @@
       "prerequisite_building": null,
       "structure_points": 2,
       "construction_costs": {
-        "solaris": 20,
+        "solar": 20,
         "mo": 5,
         "ressources": 10,
         "macons": 1,
@@ -99,7 +99,7 @@
       "prerequisite_building": null,
       "structure_points": 1,
       "construction_costs": {
-        "solaris": 20,
+        "solar": 20,
         "mo": 5,
         "ressources": 10
       }
@@ -115,7 +115,7 @@
       "prerequisite_building": null,
       "structure_points": 1,
       "construction_costs": {
-        "solaris": 20,
+        "solar": 20,
         "mo": 5,
         "ressources": 5
       }
@@ -131,7 +131,7 @@
       "prerequisite_building": null,
       "structure_points": 6,
       "construction_costs": {
-        "solaris": 50,
+        "solar": 50,
         "mo": 10,
         "ressources": 30,
         "equipements": 20,
@@ -149,7 +149,7 @@
       "prerequisite_building": null,
       "structure_points": 6,
       "construction_costs": {
-        "solaris": 50,
+        "solar": 50,
         "mo": 10,
         "ressources": 30,
         "equipements": 20,
@@ -167,7 +167,7 @@
       "prerequisite_building": null,
       "structure_points": 6,
       "construction_costs": {
-        "solaris": 50,
+        "solar": 50,
         "mo": 10,
         "ressources": 30,
         "equipements": 20,
@@ -185,7 +185,7 @@
       "prerequisite_building": null,
       "structure_points": 1,
       "construction_costs": {
-        "solaris": 20,
+        "solar": 20,
         "mo": 5,
         "ressources": 10
       }
@@ -201,7 +201,7 @@
       "prerequisite_building": null,
       "structure_points": 2,
       "construction_costs": {
-        "solaris": 20,
+        "solar": 20,
         "mo": 5,
         "ressources": 10,
         "forgerons": 1,
@@ -219,7 +219,7 @@
       "prerequisite_building": null,
       "structure_points": 5,
       "construction_costs": {
-        "solaris": 40,
+        "solar": 40,
         "mo": 10,
         "ressources": 30,
         "ingenieurs": 2
@@ -236,7 +236,7 @@
       "prerequisite_building": null,
       "structure_points": 6,
       "construction_costs": {
-        "solaris": 40,
+        "solar": 40,
         "mo": 5,
         "ressources": 30,
         "equipements": 20,
@@ -257,7 +257,7 @@
       "prerequisite_building": null,
       "structure_points": 4,
       "construction_costs": {
-        "solaris": 40,
+        "solar": 40,
         "mo": 10,
         "ressources": 30
       }
@@ -273,7 +273,7 @@
       "prerequisite_building": null,
       "structure_points": 5,
       "construction_costs": {
-        "solaris": 40,
+        "solar": 40,
         "mo": 10,
         "ressources": 30,
         "ingenieurs": 2
@@ -290,7 +290,7 @@
       "prerequisite_building": null,
       "structure_points": 4,
       "construction_costs": {
-        "solaris": 40,
+        "solar": 40,
         "mo": 10,
         "ressources": 30
       }
@@ -306,7 +306,7 @@
       "prerequisite_building": null,
       "structure_points": 5,
       "construction_costs": {
-        "solaris": 40,
+        "solar": 40,
         "mo": 10,
         "ressources": 30,
         "ingenieurs": 2
@@ -323,7 +323,7 @@
       "prerequisite_building": null,
       "structure_points": 5,
       "construction_costs": {
-        "solaris": 40,
+        "solar": 40,
         "mo": 10,
         "ressources": 30,
         "ingenieurs": 2
@@ -341,7 +341,7 @@
       "prerequisite_building": null,
       "structure_points": 2,
       "construction_costs": {
-        "solaris": 20,
+        "solar": 20,
         "mo": 5,
         "ressources": 10,
         "charpentiers": 1,
@@ -359,7 +359,7 @@
       "prerequisite_building": null,
       "structure_points": 4,
       "construction_costs": {
-        "solaris": 30,
+        "solar": 30,
         "mo": 10,
         "ressources": 25
       }
@@ -375,7 +375,7 @@
       "prerequisite_building": null,
       "structure_points": 4,
       "construction_costs": {
-        "solaris": 40,
+        "solar": 40,
         "mo": 10,
         "ressources": 30
       },
@@ -392,7 +392,7 @@
       "prerequisite_building": null,
       "structure_points": 4,
       "construction_costs": {
-        "solaris": 40,
+        "solar": 40,
         "mo": 10,
         "ressources": 30
       }
@@ -408,7 +408,7 @@
       "prerequisite_building": null,
       "structure_points": 9,
       "construction_costs": {
-        "solaris": 50,
+        "solar": 50,
         "mo": 10,
         "ressources": 30,
         "equipements": 25,
@@ -430,7 +430,7 @@
       "prerequisite_building": null,
       "structure_points": 11,
       "construction_costs": {
-        "solaris": 100,
+        "solar": 100,
         "mo": 15,
         "ressources": 40,
         "equipements": 30,
@@ -450,7 +450,7 @@
       "prerequisite_building": null,
       "structure_points": 1,
       "construction_costs": {
-        "solaris": 10,
+        "solar": 10,
         "mo": 2,
         "ressources": 10
       }
@@ -466,7 +466,7 @@
       "prerequisite_building": null,
       "structure_points": 12,
       "construction_costs": {
-        "solaris": 100,
+        "solar": 100,
         "mo": 10,
         "ressources": 50,
         "equipements": 50,
@@ -489,7 +489,7 @@
       "prerequisite_building": null,
       "structure_points": 0,
       "construction_costs": {
-        "solaris": 100
+        "solar": 100
       },
       "notes": "Coût: 100$+ (1 pt struct/100$)"
     },
@@ -504,7 +504,7 @@
       "prerequisite_building": null,
       "structure_points": 11,
       "construction_costs": {
-        "solaris": 100,
+        "solar": 100,
         "mo": 10,
         "ressources": 25,
         "equipements": 50,
@@ -526,7 +526,7 @@
       "prerequisite_building": null,
       "structure_points": 6,
       "construction_costs": {
-        "solaris": 50,
+        "solar": 50,
         "mo": 5,
         "ressources": 25,
         "charpentiers": 1,
@@ -545,7 +545,7 @@
       "prerequisite_building": null,
       "structure_points": 24,
       "construction_costs": {
-        "solaris": 300,
+        "solar": 300,
         "mo": 30,
         "ressources": 100,
         "macons": 4,
@@ -567,7 +567,7 @@
       "prerequisite_building": null,
       "structure_points": 12,
       "construction_costs": {
-        "solaris": 50,
+        "solar": 50,
         "mo": 10,
         "ressources": 30,
         "equipements": 25,
@@ -589,7 +589,7 @@
       "prerequisite_building": null,
       "structure_points": 9,
       "construction_costs": {
-        "solaris": 50,
+        "solar": 50,
         "mo": 10,
         "ressources": 25,
         "equipements": 20,
@@ -611,7 +611,7 @@
       "prerequisite_building": null,
       "structure_points": 13,
       "construction_costs": {
-        "solaris": 200,
+        "solar": 200,
         "mo": 20,
         "ressources": 50,
         "macons": 2,
@@ -631,7 +631,7 @@
       "prerequisite_building": null,
       "structure_points": 17,
       "construction_costs": {
-        "solaris": 100,
+        "solar": 100,
         "mo": 20,
         "ressources": 50,
         "equipements": 50,
@@ -654,7 +654,7 @@
       "prerequisite_building": null,
       "structure_points": 10,
       "construction_costs": {
-        "solaris": 50,
+        "solar": 50,
         "mo": 10,
         "ressources": 30,
         "equipements": 25,
@@ -676,7 +676,7 @@
       "prerequisite_building": null,
       "structure_points": 10,
       "construction_costs": {
-        "solaris": 50,
+        "solar": 50,
         "mo": 10,
         "ressources": 30,
         "equipements": 25,
@@ -698,7 +698,7 @@
       "prerequisite_building": null,
       "structure_points": 19,
       "construction_costs": {
-        "solaris": 200,
+        "solar": 200,
         "mo": 25,
         "ressources": 50,
         "equipements": 20,
@@ -717,7 +717,7 @@
       "prerequisite_building": "Lieu arcanique",
       "structure_points": 16,
       "construction_costs": {
-        "solaris": 100,
+        "solar": 100,
         "mo": 10,
         "ressources": 50,
         "equipements": 25,
@@ -738,7 +738,7 @@
       "prerequisite_building": null,
       "structure_points": 17,
       "construction_costs": {
-        "solaris": 100,
+        "solar": 100,
         "mo": 20,
         "ressources": 50,
         "equipements": 25,
@@ -761,7 +761,7 @@
       "prerequisite_building": null,
       "structure_points": 17,
       "construction_costs": {
-        "solaris": 100,
+        "solar": 100,
         "mo": 20,
         "ressources": 50,
         "equipements": 50,
@@ -784,7 +784,7 @@
       "prerequisite_building": null,
       "structure_points": 4,
       "construction_costs": {
-        "solaris": 20,
+        "solar": 20,
         "mo": 5,
         "ressources": 20,
         "equipements": 10,
@@ -803,7 +803,7 @@
       "prerequisite_building": "Palissade",
       "structure_points": 6,
       "construction_costs": {
-        "solaris": 25,
+        "solar": 25,
         "mo": 10,
         "ressources": 30,
         "equipements": 15,
@@ -822,7 +822,7 @@
       "prerequisite_building": "Fortin",
       "structure_points": 13,
       "construction_costs": {
-        "solaris": 50,
+        "solar": 50,
         "mo": 20,
         "ressources": 40,
         "equipements": 15,
@@ -845,7 +845,7 @@
       "prerequisite_building": "Donjon",
       "structure_points": 20,
       "construction_costs": {
-        "solaris": 75,
+        "solar": 75,
         "mo": 25,
         "ressources": 60,
         "equipements": 25,
@@ -868,7 +868,7 @@
       "prerequisite_building": "Tourelle",
       "structure_points": 38,
       "construction_costs": {
-        "solaris": 150,
+        "solar": 150,
         "mo": 50,
         "ressources": 120,
         "equipements": 45,
@@ -891,7 +891,7 @@
       "prerequisite_building": null,
       "structure_points": 5,
       "construction_costs": {
-        "solaris": 30,
+        "solar": 30,
         "mo": 5,
         "ressources": 25,
         "equipements": 10,
@@ -910,7 +910,7 @@
       "prerequisite_building": "Quai",
       "structure_points": 26,
       "construction_costs": {
-        "solaris": 75,
+        "solar": 75,
         "mo": 5,
         "ressources": 75,
         "equipements": 50,
@@ -934,7 +934,7 @@
       "prerequisite_building": "Quai",
       "structure_points": 12,
       "construction_costs": {
-        "solaris": 30,
+        "solar": 30,
         "mo": 10,
         "ressources": 50,
         "equipements": 25,
@@ -957,7 +957,7 @@
       "prerequisite_building": "Quai",
       "structure_points": 5,
       "construction_costs": {
-        "solaris": 40,
+        "solar": 40,
         "mo": 5,
         "ressources": 25,
         "equipements": 10,
@@ -976,7 +976,7 @@
       "prerequisite_building": null,
       "structure_points": 14,
       "construction_costs": {
-        "solaris": 200,
+        "solar": 200,
         "mo": 15,
         "ressources": 50,
         "equipements": 25,
@@ -997,7 +997,7 @@
       "prerequisite_building": null,
       "structure_points": 12,
       "construction_costs": {
-        "solaris": 50,
+        "solar": 50,
         "mo": 15,
         "ressources": 50,
         "equipements": 20,
@@ -1018,7 +1018,7 @@
       "prerequisite_building": null,
       "structure_points": 6,
       "construction_costs": {
-        "solaris": 50,
+        "solar": 50,
         "mo": 10,
         "ressources": 30,
         "equipements": 20,
@@ -1080,7 +1080,7 @@
       "notes": "2× Camp bûch. (50+50)"
     },
     {
-      "item": "Solaris",
+      "item": "solar",
       "coffre": 990,
       "en_mains": 1210,
       "production": 0,

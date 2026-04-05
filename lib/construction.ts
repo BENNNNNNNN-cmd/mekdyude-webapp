@@ -115,7 +115,7 @@ export function checkConstructionFeasibility(
   }
 
   const resourceDisplayMap: Record<string, string> = {
-    solaris: "Solaris",
+    solar: "solar",
     mo: "Main-d'œuvre",
     ressources: "Ressources",
     equipements: "Équipements",
