@@ -228,7 +228,7 @@ function seedDatabase(db: Database.Database) {
       const unitItems = [
         "Charpentier", "Chevalier", "Croyant", "Forgeron", "Ingénieur", "Intendant",
         "Laborantins", "Maçon", "Marin", "Mentor Mil.", "Milice", "Sold. de métier",
-        "Admirateurs", "Paysans", "Fiche de population", "Aventurier", "Dons",
+        "Admirateurs", "Paysans", "Fiche de population", "Aventurier", "Doms",
       ];
       const specialItems = ["Sceau Occulte", "Sceau Exploration", "Composante surnaturelles", "Faveur divine", "Objet de coll."];
       const influenceItems = ["Inf. Empire", "Inf. Irendille", "Inf. Terre des Brumes"];
