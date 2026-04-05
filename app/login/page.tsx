@@ -8,9 +8,14 @@ export default function LoginPage() {
   const [state, action, pending] = useActionState(login, undefined);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-parchment">
-      <div className="w-full max-w-sm">
-        <div className="bg-white rounded-xl shadow-lg p-8 border border-brand-amber/20">
+    <div
+      className="relative flex min-h-screen items-center justify-center overflow-hidden bg-cover bg-center bg-no-repeat px-4"
+      style={{ backgroundImage: "url('/images/Background_MekDyude.png')" }}
+    >
+      <div className="absolute inset-0 bg-black/45" />
+
+      <div className="relative z-10 w-full max-w-sm">
+        <div className="rounded-2xl border border-white/20 bg-white/10 p-8 shadow-2xl backdrop-blur-xl">
           {/* Header */}
           <div className="flex flex-col items-center mb-8">
             <Image
@@ -20,15 +25,15 @@ export default function LoginPage() {
               height={64}
               className="mb-3 drop-shadow-lg"
             />
-            <h1 className="font-serif text-2xl font-bold text-sidebar tracking-wide">
+            <h1 className="font-serif text-2xl font-bold text-white tracking-wide">
               Mek Dyude
             </h1>
-            <p className="text-xs text-gray-400 mt-1">Duché de Bicolline</p>
+            <p className="mt-1 text-xs text-white/70">Duché de Bicolline</p>
           </div>
 
           {/* Error message */}
           {state?.error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 text-center">
+            <div className="mb-4 rounded-lg border border-red-200/60 bg-red-950/40 p-3 text-center text-sm text-red-100 backdrop-blur-sm">
               {state.error}
             </div>
           )}
@@ -38,7 +43,7 @@ export default function LoginPage() {
             <div>
               <label
                 htmlFor="username"
-                className="block text-sm font-medium text-gray-700 mb-1"
+                className="mb-1 block text-sm font-medium text-white/85"
               >
                 Nom d&apos;utilisateur
               </label>
@@ -49,14 +54,14 @@ export default function LoginPage() {
                 required
                 autoFocus
                 autoComplete="username"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-amber/50 focus:border-brand-amber"
+                className="w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm text-white placeholder:text-white/45 focus:outline-none focus:ring-2 focus:ring-brand-amber/50 focus:border-brand-amber"
               />
             </div>
 
             <div>
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-gray-700 mb-1"
+                className="mb-1 block text-sm font-medium text-white/85"
               >
                 Mot de passe
               </label>
@@ -66,14 +71,14 @@ export default function LoginPage() {
                 type="password"
                 required
                 autoComplete="current-password"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-amber/50 focus:border-brand-amber"
+                className="w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm text-white placeholder:text-white/45 focus:outline-none focus:ring-2 focus:ring-brand-amber/50 focus:border-brand-amber"
               />
             </div>
 
             <button
               type="submit"
               disabled={pending}
-              className="w-full py-2.5 bg-sidebar text-white rounded-lg text-sm font-medium hover:bg-sidebar/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full rounded-lg border border-amber-300/40 bg-sidebar/80 py-2.5 text-sm font-medium text-white transition-colors hover:bg-sidebar/90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {pending ? "Connexion..." : "Se connecter"}
             </button>
@@ -81,7 +86,7 @@ export default function LoginPage() {
         </div>
 
         {/* Footer */}
-        <p className="text-center text-xs text-gray-400 mt-4">
+        <p className="mt-4 text-center text-xs text-white/65">
           Bicolline Manager v0.1
         </p>
       </div>
