@@ -38,8 +38,6 @@ COPY --from=builder --chown=nextjs:nodejs /app/public/seed_data.json ./public/se
 # Create data directory for SQLite
 RUN mkdir -p /app/data && chown nextjs:nodejs /app/data
 
-USER nextjs
-
 EXPOSE 3000
 
 CMD ["node", "server.js"]
