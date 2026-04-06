@@ -184,7 +184,17 @@ export default function InventoryTable({ initialItems }: { initialItems: Invento
       ))}
 
       {hasDirtyChanges && (
-        <div className="sticky bottom-6 flex justify-center">
+        <div className="sticky bottom-6 flex justify-center gap-3">
+          <button
+            onClick={() => {
+              setDirty({});
+              setItems(initialItems);
+            }}
+            disabled={saving}
+            className="px-6 py-3 bg-gray-500 text-white font-semibold rounded-lg shadow-lg hover:bg-gray-600 disabled:opacity-50 transition-colors cursor-pointer"
+          >
+            Annuler
+          </button>
           <button
             onClick={saveAll}
             disabled={saving}
