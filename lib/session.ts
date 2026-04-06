@@ -10,6 +10,7 @@ interface SessionPayload {
   username: string;
   role: string;
   expiresAt: string;
+  lastActivity: number; // timestamp ms — used by proxy for idle timeout
 }
 
 export async function encrypt(payload: SessionPayload): Promise<string> {
@@ -38,6 +39,7 @@ export async function createSession(user: { id: number; username: string; role: 
     username: user.username,
     role: user.role,
     expiresAt: expiresAt.toISOString(),
+    lastActivity: Date.now(),
   });
 
   const cookieStore = await cookies();

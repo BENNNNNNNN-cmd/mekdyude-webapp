@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { jwtVerify } from "jose";
+import { SignJWT, jwtVerify } from "jose";
 
 const secretKey = process.env.SESSION_SECRET;
 const encodedKey = new TextEncoder().encode(secretKey);
 
+const IDLE_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
 const PUBLIC_PATHS = ["/login"];
 
 export async function proxy(request: NextRequest) {
@@ -20,17 +21,44 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const session = request.cookies.get("session")?.value;
+  const sessionToken = request.cookies.get("session")?.value;
 
-  if (!session) {
+  if (!sessionToken) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
   try {
-    await jwtVerify(session, encodedKey, { algorithms: ["HS256"] });
-    return NextResponse.next();
+    const { payload } = await jwtVerify(sessionToken, encodedKey, { algorithms: ["HS256"] });
+
+    // Check idle timeout — if lastActivity exists and is too old, force logout
+    const lastActivity = payload.lastActivity as number | undefined;
+    if (lastActivity && Date.now() - lastActivity > IDLE_TIMEOUT_MS) {
+      const response = NextResponse.redirect(new URL("/login", request.url));
+      response.cookies.delete("session");
+      return response;
+    }
+
+    // Refresh lastActivity in the JWT token
+    const refreshed = await new SignJWT({ ...payload, lastActivity: Date.now() })
+      .setProtectedHeader({ alg: "HS256" })
+      .setIssuedAt()
+      .setExpirationTime("7d")
+      .sign(encodedKey);
+
+    const response = NextResponse.next();
+    response.cookies.set("session", refreshed, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      sameSite: "lax",
+      path: "/",
+    });
+
+    return response;
   } catch {
-    return NextResponse.redirect(new URL("/login", request.url));
+    const response = NextResponse.redirect(new URL("/login", request.url));
+    response.cookies.delete("session");
+    return response;
   }
 }
 
