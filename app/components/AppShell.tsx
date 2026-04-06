@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Sidebar from "./Sidebar";
+import IdleLogout from "./IdleLogout";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -13,6 +14,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="h-full flex">
+      <IdleLogout />
       <Sidebar />
       <main className="flex-1 overflow-auto p-6 lg:p-8">{children}</main>
     </div>
