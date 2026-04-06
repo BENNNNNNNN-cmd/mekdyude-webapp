@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { getDb } from "@/db";
 
 export async function GET() {
@@ -42,6 +43,8 @@ export async function PATCH(request: NextRequest) {
   const updated = db.prepare(
     "SELECT * FROM inventory WHERE guild_id = 'mek_dyude' AND item_name = ?"
   ).get(item_name);
+
+  revalidatePath("/inventaire");
 
   return NextResponse.json(updated);
 }
