@@ -3,23 +3,32 @@
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500&display=swap');
 @import "tailwindcss";
 
-@theme inline {
-  /* Backgrounds */
-  --color-background:       #21160a;
-  --color-parchment:        #21160a;
-  --color-parchment-dark:   #1c1208;
-  --color-card:             #2a1a0a;
+@custom-variant dark (&:is(.dark *));
 
-  /* Sidebar */
+/*
+ * Theme-switchable colors: use @theme (NOT inline) so Tailwind generates
+ * var(--color-*) references that respond to .dark overrides.
+ */
+@theme {
+  /* Backgrounds */
+  --color-background:       #f5efe6;
+  --color-parchment:        #f5efe6;
+  --color-parchment-dark:   #e8dfd2;
+  --color-card:             #ffffff;
+
+  /* Text */
+  --color-foreground:       #3d2b1f;
+
+  /* Borders */
+  --color-border:           rgba(160, 120, 60, 0.25);
+}
+
+/* Static colors that don't change between themes */
+@theme inline {
+  /* Sidebar (stays dark in both themes) */
   --color-sidebar:          #150e06;
   --color-sidebar-hover:    rgba(180, 90, 20, 0.12);
   --color-sidebar-active:   #c07820;
-
-  /* Text */
-  --color-foreground:       rgba(210, 170, 90, 0.85);
-
-  /* Borders */
-  --color-border:           rgba(180, 90, 20, 0.25);
 
   /* Brand */
   --color-brand-amber:      #d4851a;
@@ -30,7 +39,7 @@
   --color-accent-amber:     #c07820;
   --color-accent-red:       #c04040;
 
-  /* Tartan (conservés pour cohérence) */
+  /* Tartan */
   --color-tartan-red:       #8b2020;
   --color-tartan-black:     #150e06;
   --color-tartan-gold:      #c07820;
@@ -38,6 +47,16 @@
   /* Fonts */
   --font-serif:  'Cinzel', serif;
   --font-sans:   'DM Sans', sans-serif;
+}
+
+/* ── Dark theme overrides ── */
+.dark {
+  --color-background:       #21160a;
+  --color-parchment:        #21160a;
+  --color-parchment-dark:   #1c1208;
+  --color-card:             #2a1a0a;
+  --color-foreground:       rgba(210, 170, 90, 0.85);
+  --color-border:           rgba(180, 90, 20, 0.25);
 }
 
 body {

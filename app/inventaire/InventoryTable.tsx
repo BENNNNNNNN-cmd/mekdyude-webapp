@@ -37,7 +37,7 @@ function EditableCell({
     return (
       <input
         type="number"
-        className="w-20 px-2 py-1 text-sm text-right border border-amber-400 rounded bg-white focus:outline-none focus:ring-2 focus:ring-amber-300"
+        className="w-20 px-2 py-1 text-sm text-right border border-amber-400 rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-amber-300"
         value={draft}
         autoFocus
         onChange={(e) => setDraft(e.target.value)}
@@ -55,7 +55,7 @@ function EditableCell({
 
   return (
     <button
-      className={`w-20 px-2 py-1 text-sm text-right rounded hover:bg-amber-50 hover:ring-1 hover:ring-amber-200 cursor-pointer transition-colors ${isDirty ? "bg-amber-100 ring-1 ring-amber-300 font-semibold" : ""}`}
+      className={`w-20 px-2 py-1 text-sm text-right rounded hover:bg-parchment-dark hover:ring-1 hover:ring-amber-200 cursor-pointer transition-colors ${isDirty ? "bg-amber-100 ring-1 ring-amber-300 font-semibold" : ""}`}
       onClick={() => {
         setDraft(value.toString());
         setEditing(true);
@@ -128,7 +128,7 @@ export default function InventoryTable({ initialItems }: { initialItems: Invento
   return (
     <div className="space-y-6">
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+        <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/40 rounded-lg text-sm text-red-700 dark:text-red-400">
           {error}
         </div>
       )}
@@ -188,7 +188,7 @@ export default function InventoryTable({ initialItems }: { initialItems: Invento
           <button
             onClick={saveAll}
             disabled={saving}
-            className="px-6 py-3 bg-brand-amber text-foreground font-semibold rounded-lg shadow-lg hover:bg-amber-500 disabled:opacity-50 transition-colors cursor-pointer"
+            className="px-6 py-3 bg-brand-amber text-white font-semibold rounded-lg shadow-lg hover:bg-amber-500 disabled:opacity-50 transition-colors cursor-pointer"
           >
             {saving ? "Sauvegarde en cours…" : "Sauvegarder"}
           </button>

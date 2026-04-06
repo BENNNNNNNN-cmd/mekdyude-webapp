@@ -24,16 +24,16 @@ const costLabels: Record<string, string> = {
 };
 
 const sphereColors: Record<string, string> = {
-  "Économique": "bg-emerald-100 text-emerald-800",
-  "Arts": "bg-purple-100 text-purple-800",
-  "Croyance": "bg-yellow-100 text-yellow-800",
-  "Exploration": "bg-sky-100 text-sky-800",
-  "Magie": "bg-indigo-100 text-indigo-800",
-  "Occulte": "bg-violet-100 text-violet-800",
-  "Militaire": "bg-red-100 text-red-800",
-  "Fortification": "bg-stone-200 text-stone-800",
-  "Maritime": "bg-cyan-100 text-cyan-800",
-  "Politique": "bg-amber-100 text-amber-800",
+  "Économique": "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-400",
+  "Arts": "bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-400",
+  "Croyance": "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-400",
+  "Exploration": "bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-400",
+  "Magie": "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-400",
+  "Occulte": "bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-400",
+  "Militaire": "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-400",
+  "Fortification": "bg-stone-200 text-stone-800 dark:bg-stone-800/40 dark:text-stone-400",
+  "Maritime": "bg-cyan-100 text-cyan-800 dark:bg-cyan-900/40 dark:text-cyan-400",
+  "Politique": "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-400",
 };
 
 export default function ReglesClient({
@@ -95,7 +95,7 @@ export default function ReglesClient({
                   <tr
                     className={`cursor-pointer transition-colors ${
                       i % 2 === 0 ? "bg-card" : "bg-parchment/30"
-                    } hover:bg-amber-50`}
+                    } hover:bg-parchment-dark`}
                     onClick={() => setExpanded(expanded === b.id ? null : b.id)}
                   >
                     <td className="px-4 py-2 font-medium">
@@ -122,7 +122,7 @@ export default function ReglesClient({
                     </td>
                   </tr>
                   {expanded === b.id && (
-                    <tr key={`${b.id}-costs`} className="bg-amber-50/50">
+                    <tr key={`${b.id}-costs`} className="bg-parchment-dark/50">
                       <td colSpan={8} className="px-4 py-3">
                         <div className="flex flex-wrap gap-x-6 gap-y-1">
                           <span className="text-xs font-semibold text-foreground/60 uppercase tracking-wider mr-2">Coûts:</span>

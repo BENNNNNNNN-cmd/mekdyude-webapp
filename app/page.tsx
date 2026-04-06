@@ -4,10 +4,10 @@ import { computeMaintenance } from "@/lib/maintenance";
 import { checkConstructionFeasibility } from "@/lib/construction";
 
 function StatusBadge({ status }: { status: string }) {
-  if (status === "full") return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">✓ Plein</span>;
-  if (status === "partial") return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">⚠ Partiel</span>;
-  if (status === "unstaffed") return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">⚠ NON STAFFÉ</span>;
-  return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-500">—</span>;
+  if (status === "full") return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-400">✓ Plein</span>;
+  if (status === "partial") return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-400">⚠ Partiel</span>;
+  if (status === "unstaffed") return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-400">⚠ NON STAFFÉ</span>;
+  return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-800/40 text-gray-500 dark:text-gray-400">—</span>;
 }
 
 export default function Dashboard() {
@@ -156,16 +156,16 @@ export default function Dashboard() {
 
 function KPICard({ title, value, icon, color }: { title: string; value: string; icon: string; color: string }) {
   const colors: Record<string, string> = {
-    amber: "bg-amber-50 border-amber-200 text-amber-700",
-    blue: "bg-blue-50 border-blue-200 text-blue-700",
-    green: "bg-green-50 border-green-200 text-green-700",
-    red: "bg-red-50 border-red-200 text-red-700",
+    amber: "bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800/40 text-amber-700 dark:text-amber-400",
+    blue: "bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800/40 text-blue-700 dark:text-blue-400",
+    green: "bg-green-50 dark:bg-green-950/40 border-green-200 dark:border-green-800/40 text-green-700 dark:text-green-400",
+    red: "bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800/40 text-red-700 dark:text-red-400",
   };
   const iconColors: Record<string, string> = {
-    amber: "bg-amber-100 text-amber-600",
-    blue: "bg-blue-100 text-blue-600",
-    green: "bg-green-100 text-green-600",
-    red: "bg-red-100 text-red-600",
+    amber: "bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400",
+    blue: "bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400",
+    green: "bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400",
+    red: "bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400",
   };
   return (
     <div className={`rounded-xl border p-5 ${colors[color]} shadow-sm`}>
@@ -190,9 +190,9 @@ function ConstructionCard({ result }: { result: ReturnType<typeof checkConstruct
         <span className="text-xs text-foreground/50">sur {result.domainName}</span>
       </div>
       {result.reasons.length > 0 && (
-        <div className="px-5 py-2 bg-red-50 border-b border-red-100">
+        <div className="px-5 py-2 bg-red-50 dark:bg-red-950/40 border-b border-red-100 dark:border-red-900/40">
           {result.reasons.map((r, i) => (
-            <p key={i} className="text-xs text-red-700">✗ {r}</p>
+            <p key={i} className="text-xs text-red-700 dark:text-red-400">✗ {r}</p>
           ))}
         </div>
       )}
