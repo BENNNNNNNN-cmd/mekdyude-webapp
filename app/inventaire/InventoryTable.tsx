@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import type { InventoryItem } from "./page";
 
 const categoryLabels: Record<string, string> = {
@@ -12,9 +13,11 @@ const categoryLabels: Record<string, string> = {
 
 function EditableCell({
   value,
+  isDirty,
   onSave,
 }: {
   value: number;
+  isDirty: boolean;
   onSave: (newValue: number) => void;
 }) {
   const [editing, setEditing] = useState(false);
@@ -52,7 +55,7 @@ function EditableCell({
 
   return (
     <button
-      className="w-20 px-2 py-1 text-sm text-right rounded hover:bg-amber-50 hover:ring-1 hover:ring-amber-200 cursor-pointer transition-colors"
+      className={`w-20 px-2 py-1 text-sm text-right rounded hover:bg-amber-50 hover:ring-1 hover:ring-amber-200 cursor-pointer transition-colors ${isDirty ? "bg-amber-100 ring-1 ring-amber-300 font-semibold" : ""}`}
       onClick={() => {
         setDraft(value.toString());
         setEditing(true);
@@ -63,45 +66,57 @@ function EditableCell({
   );
 }
 
+type DirtyChanges = Record<string, { qty_coffre?: number; qty_en_mains?: number }>;
+
 export default function InventoryTable({ initialItems }: { initialItems: InventoryItem[] }) {
+  const router = useRouter();
   const [items, setItems] = useState(initialItems);
-  const [saving, setSaving] = useState<string | null>(null);
+  const [dirty, setDirty] = useState<DirtyChanges>({});
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const hasDirtyChanges = Object.keys(dirty).length > 0;
+
   const updateItem = useCallback(
-    async (itemName: string, field: "qty_coffre" | "qty_en_mains", newValue: number) => {
-      // Optimistic update
+    (itemName: string, field: "qty_coffre" | "qty_en_mains", newValue: number) => {
       setItems((prev) =>
         prev.map((item) =>
           item.item_name === itemName ? { ...item, [field]: newValue } : item
         )
       );
-      setSaving(itemName);
-      setError(null);
-
-      try {
-        const res = await fetch("/api/inventory", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ item_name: itemName, [field]: newValue }),
-        });
-        if (!res.ok) throw new Error("Erreur de sauvegarde");
-      } catch {
-        // Revert on error
-        setItems((prev) =>
-          prev.map((item) =>
-            item.item_name === itemName
-              ? { ...item, [field]: initialItems.find((i) => i.item_name === itemName)?.[field] ?? 0 }
-              : item
-          )
-        );
-        setError(`Erreur lors de la mise à jour de ${itemName}`);
-      } finally {
-        setSaving(null);
-      }
+      setDirty((prev) => ({
+        ...prev,
+        [itemName]: { ...prev[itemName], [field]: newValue },
+      }));
     },
-    [initialItems]
+    []
   );
+
+  const saveAll = useCallback(async () => {
+    setSaving(true);
+    setError(null);
+
+    try {
+      const entries = Object.entries(dirty);
+      await Promise.all(
+        entries.map(([itemName, fields]) =>
+          fetch("/api/inventory", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ item_name: itemName, ...fields }),
+          }).then((res) => {
+            if (!res.ok) throw new Error(`Erreur pour ${itemName}`);
+          })
+        )
+      );
+      setDirty({});
+      router.refresh();
+    } catch {
+      setError("Erreur lors de la sauvegarde. Veuillez réessayer.");
+    } finally {
+      setSaving(false);
+    }
+  }, [dirty, router]);
 
   // Group by category
   const grouped: Record<string, InventoryItem[]> = {};
@@ -138,18 +153,21 @@ export default function InventoryTable({ initialItems }: { initialItems: Invento
               <tbody>
                 {categoryItems.map((item, i) => {
                   const total = item.qty_coffre + item.qty_en_mains + item.qty_production;
+                  const itemDirty = dirty[item.item_name];
                   return (
-                    <tr key={item.item_name} className={`${i % 2 === 0 ? "bg-card" : "bg-parchment/30"} ${saving === item.item_name ? "opacity-70" : ""}`}>
+                    <tr key={item.item_name} className={i % 2 === 0 ? "bg-card" : "bg-parchment/30"}>
                       <td className="px-5 py-1.5 font-medium">{item.item_name}</td>
                       <td className="px-5 py-1.5 text-right">
                         <EditableCell
                           value={item.qty_coffre}
+                          isDirty={itemDirty?.qty_coffre !== undefined}
                           onSave={(v) => updateItem(item.item_name, "qty_coffre", v)}
                         />
                       </td>
                       <td className="px-5 py-1.5 text-right">
                         <EditableCell
                           value={item.qty_en_mains}
+                          isDirty={itemDirty?.qty_en_mains !== undefined}
                           onSave={(v) => updateItem(item.item_name, "qty_en_mains", v)}
                         />
                       </td>
@@ -164,6 +182,18 @@ export default function InventoryTable({ initialItems }: { initialItems: Invento
           </div>
         </div>
       ))}
+
+      {hasDirtyChanges && (
+        <div className="sticky bottom-6 flex justify-center">
+          <button
+            onClick={saveAll}
+            disabled={saving}
+            className="px-6 py-3 bg-brand-amber text-foreground font-semibold rounded-lg shadow-lg hover:bg-amber-500 disabled:opacity-50 transition-colors cursor-pointer"
+          >
+            {saving ? "Sauvegarde en cours…" : "Sauvegarder"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
