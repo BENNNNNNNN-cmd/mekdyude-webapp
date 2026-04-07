@@ -5,7 +5,7 @@ import { login } from "@/app/actions/auth";
 import Image from "next/image";
 
 export default function LoginPage() {
-  const [state, action, pending] = useActionState(login, undefined);
+  const [state, action, pending] = useActionState(login, undefined); 
 
   return (
     <div
