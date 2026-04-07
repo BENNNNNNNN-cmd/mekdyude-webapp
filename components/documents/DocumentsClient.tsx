@@ -3,21 +3,26 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import type { Document } from "@/lib/documents";
 import FileIcon from "./FileIcon";
-import CategoryBadge, { getCategoryConfig } from "./CategoryBadge";
+import CategoryBadge, { getCategoryConfig, getCategoryLabel } from "./CategoryBadge";
 
 interface DocumentsClientProps {
   initialDocuments: Document[];
   initialStats: { total_count: number; total_size_bytes: number };
+  existingCategories: string[];
 }
 
-const CATEGORIES = [
-  { value: "all", label: "Tous" },
-  { value: "regles", label: "Regles" },
-  { value: "strategie", label: "Strategie" },
-  { value: "inventaires", label: "Inventaires" },
-  { value: "cartes", label: "Cartes" },
-  { value: "general", label: "General" },
+const DEFAULT_CATEGORIES = [
+  "regles",
+  "strategie",
+  "inventaires",
+  "cartes",
+  "general",
 ];
+
+function getAllCategories(existingCategories: string[]): string[] {
+  const set = new Set([...DEFAULT_CATEGORIES, ...existingCategories]);
+  return [...set];
+}
 
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} o`;
@@ -47,8 +52,10 @@ function getMimeShortName(mime: string): string {
 export default function DocumentsClient({
   initialDocuments,
   initialStats,
+  existingCategories,
 }: DocumentsClientProps) {
   const [documents, setDocuments] = useState<Document[]>(initialDocuments);
+  const [categories, setCategories] = useState(() => getAllCategories(existingCategories));
   const [stats, setStats] = useState(initialStats);
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
@@ -67,6 +74,13 @@ export default function DocumentsClient({
   const showToast = useCallback((message: string, type: "success" | "error") => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
+  }, []);
+
+  const refreshCategories = useCallback(async () => {
+    const res = await fetch("/api/documents");
+    const allDocs: Document[] = await res.json();
+    const docCats = [...new Set(allDocs.map((d) => d.category))];
+    setCategories(getAllCategories(docCats));
   }, []);
 
   const fetchDocuments = useCallback(async (category?: string, searchTerm?: string) => {
@@ -148,6 +162,7 @@ export default function DocumentsClient({
       setUploadFile(null);
       fetchDocuments(filter, search);
       fetchStats();
+      refreshCategories();
     } catch {
       showToast("Erreur de connexion", "error");
     } finally {
@@ -199,6 +214,7 @@ export default function DocumentsClient({
       setSelectedDoc(updated);
       setEditMode(false);
       fetchDocuments(filter, search);
+      refreshCategories();
       showToast("Metadonnees mises a jour", "success");
     } catch {
       showToast("Erreur de connexion", "error");
@@ -301,18 +317,29 @@ export default function DocumentsClient({
 
         {/* Category pills */}
         <div className="flex flex-wrap gap-2">
-          {CATEGORIES.map((cat) => (
+          <button
+            onClick={() => handleFilterChange("all")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              filter === "all"
+                ? "text-white shadow-sm"
+                : "bg-parchment-dark text-foreground/70 hover:bg-parchment-dark/80"
+            }`}
+            style={filter === "all" ? { backgroundColor: "#854F0B", color: "#FAEEDA" } : undefined}
+          >
+            Tous
+          </button>
+          {categories.map((cat) => (
             <button
-              key={cat.value}
-              onClick={() => handleFilterChange(cat.value)}
+              key={cat}
+              onClick={() => handleFilterChange(cat)}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                filter === cat.value
+                filter === cat
                   ? "text-white shadow-sm"
                   : "bg-parchment-dark text-foreground/70 hover:bg-parchment-dark/80"
               }`}
-              style={filter === cat.value ? { backgroundColor: "#854F0B", color: "#FAEEDA" } : undefined}
+              style={filter === cat ? { backgroundColor: "#854F0B", color: "#FAEEDA" } : undefined}
             >
-              {cat.label}
+              {getCategoryLabel(cat)}
             </button>
           ))}
         </div>
@@ -396,6 +423,7 @@ export default function DocumentsClient({
             doc={selectedDoc}
             editMode={editMode}
             editFields={editFields}
+            categories={categories}
             onEdit={() => startEdit(selectedDoc)}
             onEditFieldChange={(fields) => setEditFields({ ...editFields, ...fields })}
             onSave={saveEdit}
@@ -414,6 +442,7 @@ export default function DocumentsClient({
           displayName={uploadDisplayName}
           description={uploadDescription}
           uploading={uploading}
+          categories={categories}
           onCategoryChange={setUploadCategory}
           onDisplayNameChange={setUploadDisplayName}
           onDescriptionChange={setUploadDescription}
@@ -613,6 +642,7 @@ function PreviewPanel({
   doc,
   editMode,
   editFields,
+  categories,
   onEdit,
   onEditFieldChange,
   onSave,
@@ -623,6 +653,7 @@ function PreviewPanel({
   doc: Document;
   editMode: boolean;
   editFields: { display_name: string; category: string; description: string };
+  categories: string[];
   onEdit: () => void;
   onEditFieldChange: (fields: Partial<typeof editFields>) => void;
   onSave: () => void;
@@ -679,15 +710,19 @@ function PreviewPanel({
             </div>
             <div>
               <label className="block text-xs text-foreground/50 mb-1">Categorie</label>
-              <select
+              <input
+                type="text"
+                list="edit-category-list"
                 value={editFields.category}
                 onChange={(e) => onEditFieldChange({ category: e.target.value })}
+                placeholder="Saisir ou choisir une categorie"
                 className="w-full px-3 py-1.5 rounded-lg border border-border bg-parchment text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand-amber/40"
-              >
-                {CATEGORIES.filter((c) => c.value !== "all").map((c) => (
-                  <option key={c.value} value={c.value}>{c.label}</option>
+              />
+              <datalist id="edit-category-list">
+                {categories.map((c) => (
+                  <option key={c} value={c}>{getCategoryLabel(c)}</option>
                 ))}
-              </select>
+              </datalist>
             </div>
             <div>
               <label className="block text-xs text-foreground/50 mb-1">Description</label>
@@ -791,6 +826,7 @@ function UploadDialog({
   displayName,
   description,
   uploading,
+  categories,
   onCategoryChange,
   onDisplayNameChange,
   onDescriptionChange,
@@ -802,6 +838,7 @@ function UploadDialog({
   displayName: string;
   description: string;
   uploading: boolean;
+  categories: string[];
   onCategoryChange: (v: string) => void;
   onDisplayNameChange: (v: string) => void;
   onDescriptionChange: (v: string) => void;
@@ -826,15 +863,19 @@ function UploadDialog({
         <div className="space-y-3">
           <div>
             <label className="block text-xs text-foreground/50 mb-1">Categorie</label>
-            <select
+            <input
+              type="text"
+              list="upload-category-list"
               value={category}
               onChange={(e) => onCategoryChange(e.target.value)}
+              placeholder="Saisir ou choisir une categorie"
               className="w-full px-3 py-2 rounded-lg border border-border bg-parchment text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand-amber/40"
-            >
-              {CATEGORIES.filter((c) => c.value !== "all").map((c) => (
-                <option key={c.value} value={c.value}>{c.label}</option>
+            />
+            <datalist id="upload-category-list">
+              {categories.map((c) => (
+                <option key={c} value={c}>{getCategoryLabel(c)}</option>
               ))}
-            </select>
+            </datalist>
           </div>
           <div>
             <label className="block text-xs text-foreground/50 mb-1">Nom d&apos;affichage (optionnel)</label>

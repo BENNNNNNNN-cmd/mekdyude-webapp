@@ -46,7 +46,9 @@ export function getCategoryConfig(category: string) {
 }
 
 export function getCategoryLabel(category: string): string {
-  return getCategoryConfig(category).label;
+  if (categoryConfig[category]) return categoryConfig[category].label;
+  // Custom category: capitalize first letter
+  return category.charAt(0).toUpperCase() + category.slice(1);
 }
 
 export default function CategoryBadge({ category }: { category: string }) {
