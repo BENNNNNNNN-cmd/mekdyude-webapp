@@ -1,0 +1,19 @@
+import { getAllDocuments, getDocumentStats } from "@/lib/documents";
+import DocumentsClient from "@/components/documents/DocumentsClient";
+
+export default function DocumentsPage() {
+  const documents = getAllDocuments();
+  const stats = getDocumentStats();
+
+  return (
+    <div className="max-w-7xl mx-auto space-y-6">
+      <DocumentsClient
+        initialDocuments={documents}
+        initialStats={{
+          total_count: stats.total_count,
+          total_size_bytes: stats.total_size_bytes,
+        }}
+      />
+    </div>
+  );
+}

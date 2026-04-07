@@ -21,6 +21,10 @@ export function getDb(): Database.Database {
     const schema = fs.readFileSync(SCHEMA_PATH, "utf-8");
     db.exec(schema);
     seedDatabase(db);
+  } else {
+    // Ensure new tables exist on existing databases
+    const schema = fs.readFileSync(SCHEMA_PATH, "utf-8");
+    db.exec(schema);
   }
 
   return db;

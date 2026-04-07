@@ -104,3 +104,20 @@ CREATE TABLE IF NOT EXISTS inventory (
   notes TEXT,
   UNIQUE(guild_id, item_name)
 );
+
+-- DOCUMENTS
+CREATE TABLE IF NOT EXISTS documents (
+  id TEXT PRIMARY KEY,
+  filename TEXT NOT NULL,
+  display_name TEXT,
+  category TEXT NOT NULL DEFAULT 'general',
+  description TEXT,
+  mime_type TEXT NOT NULL,
+  size_bytes INTEGER NOT NULL,
+  file_path TEXT NOT NULL,
+  uploaded_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_documents_category ON documents(category);
+CREATE INDEX IF NOT EXISTS idx_documents_uploaded_at ON documents(uploaded_at DESC);
