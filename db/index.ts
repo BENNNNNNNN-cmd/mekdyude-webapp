@@ -42,16 +42,25 @@ function slugify(name: string): string {
 function seedDatabase(db: Database.Database) {
   const seedPath = path.join(process.cwd(), "public", "seed_data.json");
   const seedData = JSON.parse(fs.readFileSync(seedPath, "utf-8"));
+  const initialAdminUsername = process.env.INITIAL_ADMIN_USERNAME;
+  const initialAdminPassword = process.env.INITIAL_ADMIN_PASSWORD;
 
   db.exec("BEGIN");
 
   try {
-    // Users — seed Admin account
-    const insertUser = db.prepare(
-      "INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)"
-    );
-    const adminHash = hashPassword("Cl@nM3kDyud3");
-    insertUser.run("Admin", adminHash, "admin");
+    if (initialAdminUsername || initialAdminPassword) {
+      if (!initialAdminUsername || !initialAdminPassword) {
+        throw new Error(
+          "INITIAL_ADMIN_USERNAME and INITIAL_ADMIN_PASSWORD must both be set to seed an admin user"
+        );
+      }
+
+      const insertUser = db.prepare(
+        "INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)"
+      );
+      const adminHash = hashPassword(initialAdminPassword);
+      insertUser.run(initialAdminUsername, adminHash, "admin");
+    }
 
     // Guilds
     const insertGuild = db.prepare("INSERT INTO guilds (id, name) VALUES (?, ?)");

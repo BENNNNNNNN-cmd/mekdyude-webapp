@@ -1,9 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { getAllDocuments, insertDocument } from "@/lib/documents";
-import { generateDocumentId, validateFile, saveFile, guessCategoryFromMime } from "@/lib/upload";
+import { getSession } from "@/lib/session";
+import {
+  generateDocumentId,
+  validateFile,
+  saveFile,
+  guessCategoryFromMime,
+  sanitizeFilename,
+} from "@/lib/upload";
+
+async function requireSession() {
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  return session;
+}
 
 export async function GET(request: NextRequest) {
+  const session = await requireSession();
+  if (session instanceof NextResponse) return session;
+
   const { searchParams } = request.nextUrl;
   const category = searchParams.get("category") || undefined;
   const search = searchParams.get("search") || undefined;
@@ -13,6 +32,12 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const session = await requireSession();
+  if (session instanceof NextResponse) return session;
+  if (session.role !== "admin") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const formData = await request.formData();
   const file = formData.get("file") as File | null;
 
@@ -34,7 +59,7 @@ export async function POST(request: NextRequest) {
 
   const doc = insertDocument({
     id,
-    filename: file.name,
+    filename: sanitizeFilename(file.name),
     display_name,
     category,
     description,

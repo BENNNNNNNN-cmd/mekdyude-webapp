@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { SignJWT, jwtVerify } from "jose";
 
 const secretKey = process.env.SESSION_SECRET;
+if (!secretKey) throw new Error("SESSION_SECRET environment variable is required");
 const encodedKey = new TextEncoder().encode(secretKey);
 
 const IDLE_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes

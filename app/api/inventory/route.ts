@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { getDb } from "@/db";
+import { getSession } from "@/lib/session";
 
 export async function GET() {
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const db = getDb();
   const items = db.prepare(`
     SELECT * FROM inventory WHERE guild_id = 'mek_dyude' ORDER BY category, item_name
@@ -11,6 +17,14 @@ export async function GET() {
 }
 
 export async function PATCH(request: NextRequest) {
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (session.role !== "admin") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const body = await request.json();
   const { item_name, qty_coffre, qty_en_mains } = body;
 
