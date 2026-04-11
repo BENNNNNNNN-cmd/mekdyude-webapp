@@ -26,7 +26,7 @@ export async function PATCH(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { item_name, qty_coffre, qty_en_mains } = body;
+  const { item_name, qty_coffre, qty_en_mains, notes } = body;
 
   if (!item_name) {
     return NextResponse.json({ error: "item_name required" }, { status: 400 });
@@ -43,6 +43,10 @@ export async function PATCH(request: NextRequest) {
   if (qty_en_mains !== undefined) {
     updates.push("qty_en_mains = ?");
     values.push(qty_en_mains);
+  }
+  if (notes !== undefined) {
+    updates.push("notes = ?");
+    values.push(notes);
   }
 
   if (updates.length === 0) {

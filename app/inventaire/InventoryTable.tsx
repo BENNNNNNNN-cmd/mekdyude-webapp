@@ -66,7 +66,64 @@ function EditableCell({
   );
 }
 
-type DirtyChanges = Record<string, { qty_coffre?: number; qty_en_mains?: number }>;
+function EditableNotesCell({
+  value,
+  isDirty,
+  onSave,
+}: {
+  value: string | null;
+  isDirty: boolean;
+  onSave: (newValue: string | null) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value ?? "");
+
+  const commit = useCallback(() => {
+    setEditing(false);
+    const normalized = draft.trim();
+    const nextValue = normalized.length > 0 ? normalized : null;
+    if (nextValue !== value) {
+      onSave(nextValue);
+    } else {
+      setDraft(value ?? "");
+    }
+  }, [draft, onSave, value]);
+
+  if (editing) {
+    return (
+      <textarea
+        className="min-h-20 w-full min-w-48 rounded border border-amber-400 bg-card px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-amber-300"
+        value={draft}
+        autoFocus
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+            commit();
+          }
+          if (e.key === "Escape") {
+            setDraft(value ?? "");
+            setEditing(false);
+          }
+        }}
+      />
+    );
+  }
+
+  return (
+    <button
+      className={`block min-h-8 w-full rounded px-2 py-1 text-left text-xs transition-colors hover:bg-parchment-dark hover:ring-1 hover:ring-amber-200 ${isDirty ? "bg-amber-100 ring-1 ring-amber-300 font-semibold text-foreground" : "text-foreground/50"}`}
+      onClick={() => {
+        setDraft(value ?? "");
+        setEditing(true);
+      }}
+    >
+      {value || "—"}
+    </button>
+  );
+}
+
+type DirtyChanges = Record<string, { qty_coffre?: number; qty_en_mains?: number; notes?: string | null }>;
 
 export default function InventoryTable({ initialItems }: { initialItems: InventoryItem[] }) {
   const router = useRouter();
@@ -78,7 +135,11 @@ export default function InventoryTable({ initialItems }: { initialItems: Invento
   const hasDirtyChanges = Object.keys(dirty).length > 0;
 
   const updateItem = useCallback(
-    (itemName: string, field: "qty_coffre" | "qty_en_mains", newValue: number) => {
+    (
+      itemName: string,
+      field: "qty_coffre" | "qty_en_mains" | "notes",
+      newValue: number | string | null
+    ) => {
       setItems((prev) =>
         prev.map((item) =>
           item.item_name === itemName ? { ...item, [field]: newValue } : item
@@ -173,7 +234,13 @@ export default function InventoryTable({ initialItems }: { initialItems: Invento
                       </td>
                       <td className="px-5 py-1.5 text-right text-foreground/60">{item.qty_production}</td>
                       <td className="px-5 py-1.5 text-right font-bold">{total}</td>
-                      <td className="px-5 py-1.5 text-foreground/50 text-xs max-w-48 truncate">{item.notes || "—"}</td>
+                      <td className="px-5 py-1.5 max-w-64 align-top">
+                        <EditableNotesCell
+                          value={item.notes}
+                          isDirty={itemDirty?.notes !== undefined}
+                          onSave={(v) => updateItem(item.item_name, "notes", v)}
+                        />
+                      </td>
                     </tr>
                   );
                 })}
