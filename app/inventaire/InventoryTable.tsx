@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import type { InventoryItem } from "./page";
@@ -10,6 +11,50 @@ const categoryLabels: Record<string, string> = {
   objet: "Objets",
   influence: "Influences",
 };
+
+function formatCurrency(value: number) {
+  return `${value.toLocaleString("fr-CA")} $`;
+}
+
+function buildMarketSearchHref(itemName: string) {
+  return `https://marchecelte.ca/prices?search=${encodeURIComponent(itemName)}`;
+}
+
+function buildNationCelteHref(itemName: string) {
+  return `https://marchecelte.ca/exchanges?search=${encodeURIComponent(itemName)}`;
+}
+
+function getPreviewSeed(itemName: string) {
+  return itemName.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0);
+}
+
+function getExampleNationCeltePrice(item: InventoryItem) {
+  const seed = getPreviewSeed(item.item_name);
+  if (seed % 4 === 0) {
+    return "-$";
+  }
+
+  const base = item.qty_production > 0 ? item.qty_production : (seed % 9) + 4;
+  return formatCurrency(base);
+}
+
+function getExampleMarketPrice(item: InventoryItem) {
+  const seed = getPreviewSeed(item.item_name);
+  const low = (seed % 8) + 3;
+  const average = low + 3;
+  const high = average + 4;
+
+  return `Bas ${formatCurrency(low)} · Moyen ${formatCurrency(average)} · Eleve ${formatCurrency(high)}`;
+}
+
+function getExampleCheapestMarket(item: InventoryItem) {
+  const seed = getPreviewSeed(item.item_name);
+  const comptoirs = ["CCMO", "KMO", "Auberge", "Bastion"];
+  const comptoir = comptoirs[seed % comptoirs.length];
+  const price = (seed % 8) + 3;
+
+  return `${comptoir} (${formatCurrency(price)})`;
+}
 
 function EditableCell({
   value,
@@ -188,6 +233,11 @@ export default function InventoryTable({ initialItems }: { initialItems: Invento
 
   return (
     <div className="space-y-6">
+      <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        Donnees Marche Nation Celte a venir. Les valeurs affichees dans les colonnes de prix sont
+        des exemples visuels seulement.
+      </div>
+
       {error && (
         <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/40 rounded-lg text-sm text-red-700 dark:text-red-400">
           {error}
@@ -209,12 +259,17 @@ export default function InventoryTable({ initialItems }: { initialItems: Invento
                   <th className="px-5 py-2.5 text-right text-xs uppercase tracking-wider text-foreground/60">Production</th>
                   <th className="px-5 py-2.5 text-right text-xs uppercase tracking-wider text-foreground/60 font-bold">Total</th>
                   <th className="px-5 py-2.5 text-left text-xs uppercase tracking-wider text-foreground/60">Notes</th>
+                  <th className="px-5 py-2.5 text-left text-xs uppercase tracking-wider text-foreground/60">Prix Nation Celte</th>
+                  <th className="px-5 py-2.5 text-left text-xs uppercase tracking-wider text-foreground/60">Prix du marche</th>
+                  <th className="px-5 py-2.5 text-left text-xs uppercase tracking-wider text-foreground/60">Marche le moins cher</th>
                 </tr>
               </thead>
               <tbody>
                 {categoryItems.map((item, i) => {
                   const total = item.qty_coffre + item.qty_en_mains + item.qty_production;
                   const itemDirty = dirty[item.item_name];
+                  const marketHref = buildMarketSearchHref(item.item_name);
+                  const nationCelteHref = buildNationCelteHref(item.item_name);
                   return (
                     <tr key={item.item_name} className={i % 2 === 0 ? "bg-card" : "bg-parchment/30"}>
                       <td className="px-5 py-1.5 font-medium">{item.item_name}</td>
@@ -240,6 +295,30 @@ export default function InventoryTable({ initialItems }: { initialItems: Invento
                           isDirty={itemDirty?.notes !== undefined}
                           onSave={(v) => updateItem(item.item_name, "notes", v)}
                         />
+                      </td>
+                      <td className="px-5 py-1.5 text-xs align-top min-w-36">
+                        <Link
+                          href={nationCelteHref}
+                          className="text-brand-amber underline underline-offset-2 hover:text-amber-700"
+                        >
+                          {getExampleNationCeltePrice(item)}
+                        </Link>
+                      </td>
+                      <td className="px-5 py-1.5 text-xs align-top min-w-56">
+                        <Link
+                          href={marketHref}
+                          className="text-brand-amber underline underline-offset-2 hover:text-amber-700"
+                        >
+                          {getExampleMarketPrice(item)}
+                        </Link>
+                      </td>
+                      <td className="px-5 py-1.5 text-xs align-top min-w-40">
+                        <Link
+                          href={marketHref}
+                          className="text-brand-amber underline underline-offset-2 hover:text-amber-700"
+                        >
+                          {getExampleCheapestMarket(item)}
+                        </Link>
                       </td>
                     </tr>
                   );
