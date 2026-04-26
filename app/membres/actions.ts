@@ -13,6 +13,7 @@ interface ClanMemberUpdate {
 }
 
 type UpdateClanMembersResult = { ok: true } | { ok: false; message: string };
+type CreateClanMemberResult = { ok: true; member: ClanMemberUpdate } | { ok: false; message: string };
 
 function normalizeRequired(value: string) {
   return value.trim();
@@ -21,6 +22,70 @@ function normalizeRequired(value: string) {
 function normalizeOptional(value: string | null) {
   const normalized = value?.trim() ?? "";
   return normalized.length > 0 ? normalized : null;
+}
+
+function getNextMemberId(existingIds: string[]) {
+  const nextNumber = existingIds.reduce((max, id) => {
+    const match = /^MEK(\d+)$/.exec(id);
+    return match ? Math.max(max, Number(match[1])) : max;
+  }, 0) + 1;
+
+  return `MEK${nextNumber.toString().padStart(3, "0")}`;
+}
+
+export async function createClanMember(): Promise<CreateClanMemberResult> {
+  const session = await getSession();
+  if (!session) {
+    return { ok: false, message: "Session expirée. Reconnectez-vous avant d'ajouter un membre." };
+  }
+  if (session.role !== "admin") {
+    return { ok: false, message: "Seuls les administrateurs peuvent ajouter un membre du clan." };
+  }
+
+  const db = getDb();
+  const createMember = db.transaction(() => {
+    const idRows = db.prepare(`
+      SELECT id
+      FROM clan_members
+      WHERE guild_id = ?
+    `).all("mek_dyude") as { id: string }[];
+    const sortRow = db.prepare(`
+      SELECT COALESCE(MAX(sort_order), 0) as max_sort_order
+      FROM clan_members
+      WHERE guild_id = ?
+    `).get("mek_dyude") as { max_sort_order: number };
+
+    const member: ClanMemberUpdate = {
+      id: getNextMemberId(idRows.map((row) => row.id)),
+      character_name: "Nouveau membre",
+      real_name: null,
+      email: null,
+      phone: null,
+    };
+
+    db.prepare(`
+      INSERT INTO clan_members (id, guild_id, character_name, real_name, email, phone, sort_order)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      member.id,
+      "mek_dyude",
+      member.character_name,
+      member.real_name,
+      member.email,
+      member.phone,
+      sortRow.max_sort_order + 1
+    );
+
+    return member;
+  });
+
+  try {
+    const member = createMember();
+    revalidatePath("/membres");
+    return { ok: true, member };
+  } catch {
+    return { ok: false, message: "Impossible d'ajouter le nouveau membre." };
+  }
 }
 
 export async function updateClanMembers(updates: ClanMemberUpdate[]): Promise<UpdateClanMembersResult> {
