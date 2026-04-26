@@ -2,6 +2,7 @@ import Database from "better-sqlite3";
 import path from "path";
 import fs from "fs";
 import crypto from "crypto";
+import { seedBicollineData } from "./seed-bicolline";
 
 const DATA_DIR = process.env.DATA_DIR || process.cwd();
 const DB_PATH = path.join(DATA_DIR, "bicolline.db");
@@ -54,6 +55,7 @@ export function getDb(): Database.Database {
   }
 
   ensureClanMembers(db);
+  seedBicollineData(db);
 
   return db;
 }
