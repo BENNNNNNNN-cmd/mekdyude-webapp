@@ -1,4 +1,5 @@
 import { getDb } from "@/db";
+import ScrollToTopButton from "@/app/components/ScrollToTopButton";
 import { listAllCards } from "@/lib/production-tree/engine";
 import ArbreClient from "./ArbreClient";
 
@@ -24,6 +25,8 @@ export default function ArbrePage() {
       <Legend />
 
       <ArbreClient cards={cards} />
+
+      <ScrollToTopButton />
     </div>
   );
 }
