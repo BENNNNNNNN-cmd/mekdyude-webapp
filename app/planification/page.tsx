@@ -27,15 +27,18 @@ export default function PlanificationPage() {
           <p className="mt-3 text-xs text-foreground/50">Phase 1 — disponible</p>
         </Link>
 
-        <div className="block rounded-xl border border-border/60 bg-card/40 p-5 shadow-sm opacity-60">
+        <Link
+          href="/planification/inverse"
+          className="block rounded-xl border border-border bg-card p-5 shadow-sm transition hover:shadow-md hover:border-brand-amber"
+        >
           <h2 className="font-serif text-xl font-semibold text-foreground">Planificateur inverse</h2>
           <p className="mt-2 text-sm text-foreground/70">
             « J&apos;ai besoin de 50 Équipement par an — montrez-moi comment y arriver. »
             Recherche inversée à partir d&apos;une cible : bâtiments à construire,
             staffing requis, coûts, options classées.
           </p>
-          <p className="mt-3 text-xs text-foreground/50">Phase 3 — à venir</p>
-        </div>
+          <p className="mt-3 text-xs text-foreground/50">Phase 3 — disponible</p>
+        </Link>
       </div>
     </div>
   );
