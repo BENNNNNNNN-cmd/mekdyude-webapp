@@ -48,6 +48,21 @@ const navItems = [
     ],
   },
   {
+    href: "/planification",
+    label: "Planification",
+    // Branching tree / Arbre de décision
+    paths: [
+      "M12 4v4",
+      "M12 12v4",
+      "M5 12h14",
+      "M5 12v8",
+      "M19 12v8",
+      "M9 8h6",
+      "M9 8v-2",
+      "M15 8v-2",
+    ],
+  },
+  {
     href: "/regles",
     label: "Règles",
     // Scroll / Parchemin

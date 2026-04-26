@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "verify:seed": "tsx scripts/verify-bicolline-seed.ts"
+    "verify:seed": "tsx scripts/verify-bicolline-seed.ts",
+    "smoke:tree": "tsx scripts/smoke-production-tree.ts"
   },
   "dependencies": {
     "better-sqlite3": "^12.8.0",
