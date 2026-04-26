@@ -13,33 +13,33 @@ const categoryLabels: Record<string, string> = {
 };
 
 function formatCurrency(value: number) {
-  return `${value.toLocaleString("fr-CA")} $`;
+  return `${value.toLocaleString("fr-CA", { maximumFractionDigits: 2 })} $`;
 }
 
 function buildMarketSearchHref(itemName: string) {
   return `https://marchecelte.ca/prices?search=${encodeURIComponent(itemName)}`;
 }
 
-function getPreviewSeed(itemName: string) {
-  return itemName.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0);
+function formatQtyPerLot(qtyPerLot: number) {
+  return qtyPerLot > 1 ? ` x${qtyPerLot}` : "";
 }
 
-function getExampleMarketPrice(item: InventoryItem) {
-  const seed = getPreviewSeed(item.item_name);
-  const low = (seed % 8) + 3;
-  const average = low + 3;
-  const high = average + 4;
+function formatMarketPrice(item: InventoryItem) {
+  const summary = item.market_price;
+  if (!summary) return "—";
 
-  return `Bas ${formatCurrency(low)} · Moyen ${formatCurrency(average)} · Eleve ${formatCurrency(high)}`;
+  if (summary.lowPrice === summary.highPrice) {
+    return formatCurrency(summary.lowPrice);
+  }
+
+  return `Bas ${formatCurrency(summary.lowPrice)} · Moyen ${formatCurrency(summary.averagePrice)} · Haut ${formatCurrency(summary.highPrice)}`;
 }
 
-function getExampleCheapestMarket(item: InventoryItem) {
-  const seed = getPreviewSeed(item.item_name);
-  const comptoirs = ["CCMO", "KMO", "Auberge", "Bastion"];
-  const comptoir = comptoirs[seed % comptoirs.length];
-  const price = (seed % 8) + 3;
+function formatCheapestMarket(item: InventoryItem) {
+  const summary = item.market_price;
+  if (!summary) return "—";
 
-  return `${comptoir} (${formatCurrency(price)})`;
+  return `${summary.cheapestMarketCode} (${formatCurrency(summary.cheapestPrice)}${formatQtyPerLot(summary.cheapestQtyPerLot)})`;
 }
 
 function EditableCell({
@@ -247,11 +247,6 @@ export default function InventoryTable({ initialItems }: { initialItems: Invento
 
   return (
     <div className="space-y-6">
-      <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-        Donnees Marche Nation Celte a venir. Les valeurs affichees dans les colonnes de prix sont
-        des exemples visuels seulement.
-      </div>
-
       {error && (
         <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/40 rounded-lg text-sm text-red-700 dark:text-red-400">
           {error}
@@ -334,7 +329,7 @@ export default function InventoryTable({ initialItems }: { initialItems: Invento
                 {categoryItems.map((item, i) => {
                   const total = item.qty_coffre + item.qty_en_mains + item.qty_production;
                   const itemDirty = dirty[item.item_name];
-                  const marketHref = buildMarketSearchHref(item.item_name);
+                  const marketHref = buildMarketSearchHref(item.market_price?.marketItemName ?? item.item_name);
                   return (
                     <tr key={item.item_name} className={i % 2 === 0 ? "bg-card" : "bg-parchment/30"}>
                       <td className="px-5 py-1.5 font-medium">{item.item_name}</td>
@@ -366,15 +361,16 @@ export default function InventoryTable({ initialItems }: { initialItems: Invento
                           href={marketHref}
                           className="text-brand-amber underline underline-offset-2 hover:text-amber-700"
                         >
-                          {getExampleMarketPrice(item)}
+                          {formatMarketPrice(item)}
                         </Link>
                       </td>
                       <td className="px-5 py-1.5 text-xs align-top min-w-40">
                         <Link
                           href={marketHref}
                           className="text-brand-amber underline underline-offset-2 hover:text-amber-700"
+                          title={item.market_price?.cheapestMarketName}
                         >
-                          {getExampleCheapestMarket(item)}
+                          {formatCheapestMarket(item)}
                         </Link>
                       </td>
                     </tr>
