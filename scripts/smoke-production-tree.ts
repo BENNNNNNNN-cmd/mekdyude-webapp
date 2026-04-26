@@ -9,6 +9,7 @@
 import path from "path";
 import Database from "better-sqlite3";
 import { listAllCards, expandForward, expandReverse, getCardById } from "../lib/production-tree/engine";
+import { annotateForward } from "../lib/production-tree/overlay";
 import type { CardNode, BuildingTreeEntry, ReverseNode } from "../lib/production-tree/types";
 
 const DB_PATH = path.join(process.cwd(), "bicolline.db");
@@ -29,7 +30,10 @@ function renderForward(node: CardNode, depth = 0, max = 3) {
 function renderBuildingEntry(b: BuildingTreeEntry, depth: number, max: number) {
   const inputCard = b.building.inputs.find((i) => i.card_id === b.matchedInputCardId);
   const cap = inputCard ? ` (cap ${inputCard.max_quantity})` : "";
-  console.log(`${indent(depth)}🏛  ${b.building.name}${cap}`);
+  const overlay = b.overlay
+    ? `  [${b.overlay.status === "built" ? "✓" : b.overlay.status === "buildable" ? "⚠" : "✗"} ${b.overlay.summary}]`
+    : "";
+  console.log(`${indent(depth)}🏛  ${b.building.name}${cap}${overlay}`);
   for (const o of b.outputs) {
     const ratio = `${o.output.input_divisor}→${o.output.quantity_per_input}`;
     const bonus = o.output.full_capacity_bonus > 0 ? ` +${o.output.full_capacity_bonus} pleine cap.` : "";
@@ -104,6 +108,16 @@ function main() {
   console.log("─".repeat(60));
   const fp = expandForward(db, 5, { maxDepth: 4 });
   if (fp) renderForward(fp, 0, 5);
+
+  // 6. Phase 2 overlay: Paysan tree annotated with Mek Dyude state.
+  console.log("\n" + "─".repeat(60));
+  console.log("PHASE 2 OVERLAY: Paysan tree with Mek Dyude built/buildable/blocked annotations");
+  console.log("─".repeat(60));
+  const paysanWithOverlay = expandForward(db, 36, { maxDepth: 1 });
+  if (paysanWithOverlay) {
+    annotateForward(db, paysanWithOverlay, "mek_dyude");
+    renderForward(paysanWithOverlay, 0, 2);
+  }
 
   db.close();
   console.log("\n=== ✓ smoke test complete ===");

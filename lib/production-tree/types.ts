@@ -89,6 +89,37 @@ export interface BuildingTreeEntry {
   matchedInputCardId: number;
   /** Recursive expansion: each output becomes a CardNode child. */
   outputs: OutputTreeEntry[];
+  /**
+   * Live-state overlay (Phase 2). Present only when the engine was called
+   * with overlay=true. Null/undefined means generic-rules view.
+   */
+  overlay?: BuildingOverlay;
+}
+
+export interface BuildingOverlay {
+  /** Global status across the guild's domains. */
+  status: "built" | "buildable" | "blocked";
+  /** Domains where this building is already constructed. */
+  builtOn: BuiltInstance[];
+  /** Domains where it could be constructed (any of these passing → buildable). */
+  buildableOn: DomainCandidate[];
+  /** Domains where it's blocked, with reasons. */
+  blockedOn: DomainCandidate[];
+  /** One-line summary suitable for a tooltip. */
+  summary: string;
+}
+
+export interface BuiltInstance {
+  domain_id: string;
+  domain_name: string;
+  assigned_count: number;
+  capacity: number;
+}
+
+export interface DomainCandidate {
+  domain_id: string;
+  domain_name: string;
+  reasons: string[];
 }
 
 export interface OutputTreeEntry {

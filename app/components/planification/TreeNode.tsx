@@ -7,6 +7,7 @@ import type {
   OutputTreeEntry,
   BuildingOutput,
   OutputConstraint,
+  BuildingOverlay,
 } from "@/lib/production-tree/types";
 
 const SCOPE_LABELS: Record<OutputConstraint["scope"], string> = {
@@ -79,9 +80,10 @@ function BuildingRow({ entry, depth }: { entry: BuildingTreeEntry; depth: number
     (i) => i.card_id === entry.matchedInputCardId
   );
   const sphereAccent = SPHERE_ACCENT[entry.building.sphere] ?? DEFAULT_SPHERE_ACCENT;
+  const [showDetails, setShowDetails] = useState(false);
   return (
     <div className={`border-l-2 ${sphereAccent} pl-3`}>
-      <div className="flex items-center gap-2 text-sm">
+      <div className="flex flex-wrap items-center gap-2 text-sm">
         <BuildingIcon />
         <span className="font-semibold text-foreground">{entry.building.name}</span>
         {inputForThisCard && (
@@ -90,13 +92,99 @@ function BuildingRow({ entry, depth }: { entry: BuildingTreeEntry; depth: number
           </span>
         )}
         <span className="text-xs text-foreground/40">· {entry.building.sphere}</span>
+        {entry.overlay && (
+          <button
+            type="button"
+            onClick={() => setShowDetails(!showDetails)}
+            className="ml-auto"
+            title={entry.overlay.summary}
+          >
+            <OverlayChip overlay={entry.overlay} expanded={showDetails} />
+          </button>
+        )}
       </div>
+
+      {entry.overlay && showDetails && (
+        <OverlayDetails overlay={entry.overlay} />
+      )}
 
       {entry.outputs.length > 0 && (
         <div className="mt-1.5 space-y-1.5 pl-6">
           {entry.outputs.map((o) => (
             <OutputRow key={o.output.card_id} entry={o} depth={depth} />
           ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function OverlayChip({ overlay, expanded }: { overlay: BuildingOverlay; expanded: boolean }) {
+  const base = "inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium transition";
+  const caret = expanded ? "▾" : "▸";
+  if (overlay.status === "built") {
+    return (
+      <span className={`${base} bg-accent-green/15 text-accent-green hover:bg-accent-green/25`}>
+        ✓ construit ({overlay.builtOn.length}) {caret}
+      </span>
+    );
+  }
+  if (overlay.status === "buildable") {
+    return (
+      <span className={`${base} bg-accent-amber/15 text-accent-amber hover:bg-accent-amber/25`}>
+        ⚠ constructible ({overlay.buildableOn.length}) {caret}
+      </span>
+    );
+  }
+  return (
+    <span className={`${base} bg-accent-red/15 text-accent-red hover:bg-accent-red/25`}>
+      ✗ bloqué {caret}
+    </span>
+  );
+}
+
+function OverlayDetails({ overlay }: { overlay: BuildingOverlay }) {
+  return (
+    <div className="mt-2 ml-6 rounded-lg border border-border/60 bg-card/60 p-3 text-xs space-y-2">
+      {overlay.builtOn.length > 0 && (
+        <div>
+          <div className="font-semibold text-accent-green">✓ Construit</div>
+          <ul className="mt-1 space-y-0.5 text-foreground/80">
+            {overlay.builtOn.map((b) => (
+              <li key={b.domain_id}>
+                {b.domain_name} —{" "}
+                <span className="font-mono">
+                  {b.assigned_count}/{b.capacity}
+                </span>{" "}
+                {b.capacity > 0 && b.assigned_count < b.capacity && (
+                  <span className="text-accent-amber">⚠ sous-staffé</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {overlay.buildableOn.length > 0 && (
+        <div>
+          <div className="font-semibold text-accent-amber">⚠ Constructible</div>
+          <ul className="mt-1 space-y-0.5 text-foreground/80">
+            {overlay.buildableOn.map((d) => (
+              <li key={d.domain_id}>{d.domain_name}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {overlay.blockedOn.length > 0 && (
+        <div>
+          <div className="font-semibold text-accent-red">✗ Bloqué</div>
+          <ul className="mt-1 space-y-0.5 text-foreground/80">
+            {overlay.blockedOn.map((d) => (
+              <li key={d.domain_id}>
+                <span className="font-medium">{d.domain_name}</span>{" "}
+                <span className="text-foreground/60">— {d.reasons.join(" · ")}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </div>

@@ -16,35 +16,43 @@ import TreeNode from "@/app/components/planification/TreeNode";
 export default function ArbreClient({ cards }: { cards: Card[] }) {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [includeSubs, setIncludeSubs] = useState(false);
+  const [overlay, setOverlay] = useState(true); // default ON — daily-driver mode
   const [tree, setTree] = useState<CardNode | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const inflight = useRef<AbortController | null>(null);
 
-  const fetchTree = useCallback(async (cardId: number, withSubs: boolean) => {
-    inflight.current?.abort();
-    const controller = new AbortController();
-    inflight.current = controller;
+  const fetchTree = useCallback(
+    async (cardId: number, withSubs: boolean, withOverlay: boolean) => {
+      inflight.current?.abort();
+      const controller = new AbortController();
+      inflight.current = controller;
 
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch(
-        `/api/production-tree?card=${cardId}&substitutes=${withSubs ? 1 : 0}`,
-        { signal: controller.signal }
-      );
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data: CardNode = await res.json();
-      if (controller.signal.aborted) return;
-      setTree(data);
-    } catch (e: unknown) {
-      if (e instanceof DOMException && e.name === "AbortError") return;
-      setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      if (!controller.signal.aborted) setLoading(false);
-    }
-  }, []);
+      setLoading(true);
+      setError(null);
+      try {
+        const params = new URLSearchParams({
+          card: String(cardId),
+          substitutes: withSubs ? "1" : "0",
+          overlay: withOverlay ? "1" : "0",
+        });
+        const res = await fetch(`/api/production-tree?${params}`, {
+          signal: controller.signal,
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data: CardNode = await res.json();
+        if (controller.signal.aborted) return;
+        setTree(data);
+      } catch (e: unknown) {
+        if (e instanceof DOMException && e.name === "AbortError") return;
+        setError(e instanceof Error ? e.message : String(e));
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    },
+    []
+  );
 
   function handleCardChange(id: number | null) {
     setSelectedId(id);
@@ -55,12 +63,17 @@ export default function ArbreClient({ cards }: { cards: Card[] }) {
       setLoading(false);
       return;
     }
-    void fetchTree(id, includeSubs);
+    void fetchTree(id, includeSubs, overlay);
   }
 
   function handleSubsToggle(next: boolean) {
     setIncludeSubs(next);
-    if (selectedId != null) void fetchTree(selectedId, next);
+    if (selectedId != null) void fetchTree(selectedId, next, overlay);
+  }
+
+  function handleOverlayToggle(next: boolean) {
+    setOverlay(next);
+    if (selectedId != null) void fetchTree(selectedId, includeSubs, next);
   }
 
   return (
@@ -72,18 +85,33 @@ export default function ArbreClient({ cards }: { cards: Card[] }) {
           onChange={handleCardChange}
         />
 
-        <label className="mt-4 flex items-center gap-2 text-sm text-foreground/80">
-          <input
-            type="checkbox"
-            checked={includeSubs}
-            onChange={(e) => handleSubsToggle(e.target.checked)}
-            className="h-4 w-4 rounded border-border accent-brand-amber"
-          />
-          Inclure les substituts
-          <span className="text-xs text-foreground/50">
-            (Esclave / Forestier / Marin / Nomade / Paysan / Peau verte / Voelhoorn / Homme-bête sont interchangeables)
-          </span>
-        </label>
+        <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-foreground/80">
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={overlay}
+              onChange={(e) => handleOverlayToggle(e.target.checked)}
+              className="h-4 w-4 rounded border-border accent-brand-amber"
+            />
+            <span className="font-medium">Avec mon état</span>
+            <span className="text-xs text-foreground/50">
+              (✓ construit / ⚠ constructible / ✗ bloqué)
+            </span>
+          </label>
+
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={includeSubs}
+              onChange={(e) => handleSubsToggle(e.target.checked)}
+              className="h-4 w-4 rounded border-border accent-brand-amber"
+            />
+            Inclure les substituts
+            <span className="text-xs text-foreground/50">
+              (Paysan / Forestier / Marin / Nomade / Peau verte / Voelhoorn / Esclave / Homme-bête)
+            </span>
+          </label>
+        </div>
       </div>
 
       {selectedId == null && (
