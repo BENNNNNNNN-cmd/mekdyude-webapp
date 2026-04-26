@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import type { InventoryItem } from "./page";
 
@@ -20,22 +20,8 @@ function buildMarketSearchHref(itemName: string) {
   return `https://marchecelte.ca/prices?search=${encodeURIComponent(itemName)}`;
 }
 
-function buildNationCelteHref(itemName: string) {
-  return `https://marchecelte.ca/exchanges?search=${encodeURIComponent(itemName)}`;
-}
-
 function getPreviewSeed(itemName: string) {
   return itemName.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0);
-}
-
-function getExampleNationCeltePrice(item: InventoryItem) {
-  const seed = getPreviewSeed(item.item_name);
-  if (seed % 4 === 0) {
-    return "-$";
-  }
-
-  const base = item.qty_production > 0 ? item.qty_production : (seed % 9) + 4;
-  return formatCurrency(base);
 }
 
 function getExampleMarketPrice(item: InventoryItem) {
@@ -176,8 +162,22 @@ export default function InventoryTable({ initialItems }: { initialItems: Invento
   const [dirty, setDirty] = useState<DirtyChanges>({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
 
   const hasDirtyChanges = Object.keys(dirty).length > 0;
+  const hasActiveFilters = selectedCategory !== "all" || searchTerm.trim().length > 0;
+
+  const categoryOptions = useMemo(() => {
+    const seen = new Set<string>();
+    return items.reduce<string[]>((options, item) => {
+      if (!seen.has(item.category)) {
+        seen.add(item.category);
+        options.push(item.category);
+      }
+      return options;
+    }, []);
+  }, [items]);
 
   const updateItem = useCallback(
     (
@@ -224,12 +224,26 @@ export default function InventoryTable({ initialItems }: { initialItems: Invento
     }
   }, [dirty, router]);
 
-  // Group by category
-  const grouped: Record<string, InventoryItem[]> = {};
-  for (const item of items) {
-    if (!grouped[item.category]) grouped[item.category] = [];
-    grouped[item.category].push(item);
-  }
+  const filteredItems = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLocaleLowerCase("fr-CA");
+
+    return items.filter((item) => {
+      const matchesCategory = selectedCategory === "all" || item.category === selectedCategory;
+      const matchesSearch =
+        normalizedSearch.length === 0 ||
+        item.item_name.toLocaleLowerCase("fr-CA").includes(normalizedSearch);
+
+      return matchesCategory && matchesSearch;
+    });
+  }, [items, searchTerm, selectedCategory]);
+
+  const grouped = useMemo(() => {
+    return filteredItems.reduce<Record<string, InventoryItem[]>>((groups, item) => {
+      if (!groups[item.category]) groups[item.category] = [];
+      groups[item.category].push(item);
+      return groups;
+    }, {});
+  }, [filteredItems]);
 
   return (
     <div className="space-y-6">
@@ -241,6 +255,59 @@ export default function InventoryTable({ initialItems }: { initialItems: Invento
       {error && (
         <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/40 rounded-lg text-sm text-red-700 dark:text-red-400">
           {error}
+        </div>
+      )}
+
+      <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 shadow-sm md:flex-row md:items-end">
+        <label className="flex flex-1 flex-col gap-1 text-sm font-medium text-foreground">
+          Section
+          <select
+            className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-normal text-foreground focus:outline-none focus:ring-2 focus:ring-amber-300"
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+          >
+            <option value="all">Toutes les sections</option>
+            {categoryOptions.map((category) => (
+              <option key={category} value={category}>
+                {categoryLabels[category] || category}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="flex flex-[2] flex-col gap-1 text-sm font-medium text-foreground">
+          Recherche
+          <input
+            type="search"
+            className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-normal text-foreground placeholder:text-foreground/40 focus:outline-none focus:ring-2 focus:ring-amber-300"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Rechercher un item"
+          />
+        </label>
+
+        <div className="flex items-center gap-3 md:pb-0.5">
+          <span className="text-sm text-foreground/60">
+            {filteredItems.length} item{filteredItems.length > 1 ? "s" : ""}
+          </span>
+          {hasActiveFilters && (
+            <button
+              type="button"
+              className="rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-parchment-dark"
+              onClick={() => {
+                setSelectedCategory("all");
+                setSearchTerm("");
+              }}
+            >
+              Effacer
+            </button>
+          )}
+        </div>
+      </div>
+
+      {filteredItems.length === 0 && (
+        <div className="rounded-xl border border-border bg-card px-5 py-6 text-sm text-foreground/60">
+          Aucun item ne correspond aux filtres.
         </div>
       )}
 
@@ -259,7 +326,6 @@ export default function InventoryTable({ initialItems }: { initialItems: Invento
                   <th className="px-5 py-2.5 text-right text-xs uppercase tracking-wider text-foreground/60">Production</th>
                   <th className="px-5 py-2.5 text-right text-xs uppercase tracking-wider text-foreground/60 font-bold">Total</th>
                   <th className="px-5 py-2.5 text-left text-xs uppercase tracking-wider text-foreground/60">Notes</th>
-                  <th className="px-5 py-2.5 text-left text-xs uppercase tracking-wider text-foreground/60">Prix Nation Celte</th>
                   <th className="px-5 py-2.5 text-left text-xs uppercase tracking-wider text-foreground/60">Prix du marche</th>
                   <th className="px-5 py-2.5 text-left text-xs uppercase tracking-wider text-foreground/60">Marche le moins cher</th>
                 </tr>
@@ -269,7 +335,6 @@ export default function InventoryTable({ initialItems }: { initialItems: Invento
                   const total = item.qty_coffre + item.qty_en_mains + item.qty_production;
                   const itemDirty = dirty[item.item_name];
                   const marketHref = buildMarketSearchHref(item.item_name);
-                  const nationCelteHref = buildNationCelteHref(item.item_name);
                   return (
                     <tr key={item.item_name} className={i % 2 === 0 ? "bg-card" : "bg-parchment/30"}>
                       <td className="px-5 py-1.5 font-medium">{item.item_name}</td>
@@ -295,14 +360,6 @@ export default function InventoryTable({ initialItems }: { initialItems: Invento
                           isDirty={itemDirty?.notes !== undefined}
                           onSave={(v) => updateItem(item.item_name, "notes", v)}
                         />
-                      </td>
-                      <td className="px-5 py-1.5 text-xs align-top min-w-36">
-                        <Link
-                          href={nationCelteHref}
-                          className="text-brand-amber underline underline-offset-2 hover:text-amber-700"
-                        >
-                          {getExampleNationCeltePrice(item)}
-                        </Link>
                       </td>
                       <td className="px-5 py-1.5 text-xs align-top min-w-56">
                         <Link
