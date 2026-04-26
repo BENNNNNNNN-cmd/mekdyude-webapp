@@ -18,7 +18,7 @@
 import type Database from "better-sqlite3";
 import { listAllCards, getCardById } from "./engine";
 import { checkConstructionFeasibility } from "@/lib/construction";
-import { computeProduction, isAbbayeProduction } from "@/lib/production";
+import { computeProduction, getProductionSummary, isAbbayeProduction } from "@/lib/production";
 import { scoreOption, sortOptions } from "./scoring";
 
 export interface ReversePlan {
@@ -100,7 +100,7 @@ export function computeReversePlan(
   if (!card) return null;
 
   // Baseline: how much of the target are we currently producing across all domains?
-  const baseline = computeBaseline(card.title, guildId);
+  const baseline = computeBaseline(card.title);
   const gap = Math.max(0, neededQty - baseline.current_production);
 
   // Find buildings that can produce this card.
@@ -147,7 +147,7 @@ export function computeReversePlan(
 
 // ---------------------------------------------------------------------------
 
-function computeBaseline(targetCardTitle: string, _guildId: string) {
+function computeBaseline(targetCardTitle: string) {
   const production = computeProduction();
   const breakdown: ReversePlan["baseline"]["breakdown"] = [];
   let total = 0;
@@ -347,9 +347,7 @@ function buildUpstreamDemand(
 
   // For workers/units, current production + inventory is what matters.
   // For resources, we'd need the same. Use the production summary.
-  const { totals } = require("@/lib/production").getProductionSummary() as {
-    totals: Record<string, number>;
-  };
+  const { totals } = getProductionSummary();
   const currentForCard =
     totals[cardTitle] ?? totals[cardTitle + "s"] ?? totals[cardTitle.replace(/s$/, "")] ?? 0;
   return { card_title: cardTitle, qty, satisfied: currentForCard >= qty };
