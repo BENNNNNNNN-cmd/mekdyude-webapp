@@ -37,7 +37,7 @@ const MARKET_ITEM_ALIASES: Record<string, string[]> = {
   "minerais or": ["minerai d'or"],
   "mentor mil.": ["mentor militaire"],
   "objet de coll.": ["objet de collection"],
-  solaris: ["solar"],
+  Solar: ["solar"],
   "sold. de metier": ["soldat de métier"],
   "sold. de métier": ["soldat de métier"],
 };
