@@ -9,6 +9,32 @@ const SCHEMA_PATH = path.join(process.cwd(), "db", "schema.sql");
 
 let db: Database.Database | null = null;
 
+const defaultClanMembers = [
+  { id: "MEK001", characterName: "Ainmeil Mek Dyude" },
+  { id: "MEK002", characterName: "Alysson Mek Dyude" },
+  { id: "MEK003", characterName: "Amaryllis Mek Dyude" },
+  { id: "MEK004", characterName: "An Barran Mek Dyude" },
+  { id: "MEK005", characterName: "Anna Mek Dyude" },
+  { id: "MEK006", characterName: "Cean Mek Dyude" },
+  { id: "MEK007", characterName: "Coièg Mek Dyude" },
+  { id: "MEK008", characterName: "Dame Zazi" },
+  { id: "MEK009", characterName: "Dorcha Mek Dyude" },
+  { id: "MEK010", characterName: "Fhaine Mek Dyude" },
+  { id: "MEK011", characterName: "Gaìr Mek Dyude" },
+  { id: "MEK012", characterName: "Kiartch Mek Dyude" },
+  { id: "MEK013", characterName: "Leugh Seo Mek Dyude" },
+  { id: "MEK014", characterName: "Maise Mek Dyude" },
+  { id: "MEK015", characterName: "Milis Mek Duyde" },
+  { id: "MEK016", characterName: "Ollamh Myk Dyude" },
+  { id: "MEK017", characterName: "Phaïste Mek Dyude" },
+  { id: "MEK018", characterName: "Poka Mek Dyude" },
+  { id: "MEK019", characterName: "Saor Mek Dyude" },
+  { id: "MEK020", characterName: "Sean Shaid Mek Dyude" },
+  { id: "MEK021", characterName: "Siol Mek Dyude" },
+  { id: "MEK022", characterName: "Sochair Mek Dyude" },
+  { id: "MEK023", characterName: "Teth Iaran Mek Dyude" },
+];
+
 export function getDb(): Database.Database {
   if (db) return db;
 
@@ -26,6 +52,8 @@ export function getDb(): Database.Database {
     const schema = fs.readFileSync(SCHEMA_PATH, "utf-8");
     db.exec(schema);
   }
+
+  ensureClanMembers(db);
 
   return db;
 }
@@ -262,6 +290,29 @@ function seedDatabase(db: Database.Database) {
     db.exec("ROLLBACK");
     throw e;
   }
+}
+
+function ensureClanMembers(db: Database.Database) {
+  const insertMember = db.prepare(`
+    INSERT OR IGNORE INTO clan_members (id, guild_id, character_name, real_name, email, phone, sort_order)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  const insertMembers = db.transaction(() => {
+    defaultClanMembers.forEach((member, index) => {
+      insertMember.run(
+        member.id,
+        "mek_dyude",
+        member.characterName,
+        null,
+        null,
+        null,
+        index + 1
+      );
+    });
+  });
+
+  insertMembers();
 }
 
 export function hashPassword(password: string): string {

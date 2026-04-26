@@ -105,6 +105,19 @@ CREATE TABLE IF NOT EXISTS inventory (
   UNIQUE(guild_id, item_name)
 );
 
+CREATE TABLE IF NOT EXISTS clan_members (
+  id TEXT PRIMARY KEY,
+  guild_id TEXT NOT NULL REFERENCES guilds(id),
+  character_name TEXT NOT NULL,
+  real_name TEXT,
+  email TEXT,
+  phone TEXT,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_clan_members_guild_sort ON clan_members(guild_id, sort_order);
+
 -- DOCUMENTS
 CREATE TABLE IF NOT EXISTS documents (
   id TEXT PRIMARY KEY,
