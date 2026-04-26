@@ -16,16 +16,36 @@ const SCOPE_LABELS: Record<OutputConstraint["scope"], string> = {
   region: "région",
 };
 
+/**
+ * Sphere → left-border tint. Subtle so it doesn't fight the parchment palette,
+ * but enough to scan a list at a glance.
+ *  - Économique:  amber  (resources, trade)
+ *  - Croyance:    purple (faith, magic-adjacent)
+ *  - Militaire:   red    (combat, walls, garrisons)
+ *  - Magie:       blue   (arcane, occult, alchemy)
+ *  - Culture:     green  (arts, monuments, popularity)
+ *  - Other:       neutral
+ */
+const SPHERE_ACCENT: Record<string, string> = {
+  Économique: "border-l-brand-amber",
+  Croyance: "border-l-purple-500/70",
+  Militaire: "border-l-tartan-red",
+  Magie: "border-l-sky-500/70",
+  Culture: "border-l-emerald-500/70",
+};
+
+const DEFAULT_SPHERE_ACCENT = "border-l-foreground/20";
+
 /** Top-level: render a card node and all its consuming buildings. */
 export default function TreeNode({ node }: { node: CardNode }) {
   return (
     <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
-      <CardRow node={node} isRoot />
+      <CardRow node={node} depth={0} isRoot />
     </div>
   );
 }
 
-function CardRow({ node, isRoot = false }: { node: CardNode; isRoot?: boolean }) {
+function CardRow({ node, depth, isRoot = false }: { node: CardNode; depth: number; isRoot?: boolean }) {
   return (
     <div>
       <div className="flex items-center gap-2 font-serif">
@@ -46,7 +66,7 @@ function CardRow({ node, isRoot = false }: { node: CardNode; isRoot?: boolean })
       {node.buildings.length > 0 && (
         <div className="mt-3 space-y-2 border-l-2 border-border/60 pl-4">
           {node.buildings.map((b) => (
-            <BuildingRow key={b.building.id} entry={b} />
+            <BuildingRow key={b.building.id} entry={b} depth={depth} />
           ))}
         </div>
       )}
@@ -54,12 +74,13 @@ function CardRow({ node, isRoot = false }: { node: CardNode; isRoot?: boolean })
   );
 }
 
-function BuildingRow({ entry }: { entry: BuildingTreeEntry }) {
+function BuildingRow({ entry, depth }: { entry: BuildingTreeEntry; depth: number }) {
   const inputForThisCard = entry.building.inputs.find(
     (i) => i.card_id === entry.matchedInputCardId
   );
+  const sphereAccent = SPHERE_ACCENT[entry.building.sphere] ?? DEFAULT_SPHERE_ACCENT;
   return (
-    <div>
+    <div className={`border-l-2 ${sphereAccent} pl-3`}>
       <div className="flex items-center gap-2 text-sm">
         <BuildingIcon />
         <span className="font-semibold text-foreground">{entry.building.name}</span>
@@ -74,7 +95,7 @@ function BuildingRow({ entry }: { entry: BuildingTreeEntry }) {
       {entry.outputs.length > 0 && (
         <div className="mt-1.5 space-y-1.5 pl-6">
           {entry.outputs.map((o) => (
-            <OutputRow key={o.output.card_id} entry={o} />
+            <OutputRow key={o.output.card_id} entry={o} depth={depth} />
           ))}
         </div>
       )}
@@ -82,8 +103,10 @@ function BuildingRow({ entry }: { entry: BuildingTreeEntry }) {
   );
 }
 
-function OutputRow({ entry }: { entry: OutputTreeEntry }) {
-  const [expanded, setExpanded] = useState(false);
+function OutputRow({ entry, depth }: { entry: OutputTreeEntry; depth: number }) {
+  // Auto-expand depth 0 (the root's first level of children) so the user sees
+  // one level of chain without clicking. Deeper levels stay collapsed.
+  const [expanded, setExpanded] = useState(depth === 0);
   const canExpand = !entry.child.alreadyShown && entry.child.buildings.length > 0;
 
   return (
@@ -127,7 +150,7 @@ function OutputRow({ entry }: { entry: OutputTreeEntry }) {
 
       {expanded && canExpand && (
         <div className="ml-6 mt-2 border-l-2 border-border/60 pl-4">
-          <CardRow node={entry.child} />
+          <CardRow node={entry.child} depth={depth + 1} />
         </div>
       )}
     </div>
