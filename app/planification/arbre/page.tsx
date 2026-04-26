@@ -3,6 +3,11 @@ import ScrollToTopButton from "@/app/components/ScrollToTopButton";
 import { listAllCards } from "@/lib/production-tree/engine";
 import ArbreClient from "./ArbreClient";
 
+// Reads directly from SQLite — Next.js can't track invalidation, so force
+// per-request rendering. Without this, the page is prerendered at build time
+// and the first cold visit serves stale data until Cmd+Shift+R.
+export const dynamic = "force-dynamic";
+
 /**
  * Production tree page (Phase 1).
  * Server-side: prefetch the card list for the picker.

@@ -1,5 +1,10 @@
 import { getDb } from "@/db";
 
+// Reads directly from SQLite — Next.js can't track invalidation, so force
+// per-request rendering. Without this, the page is prerendered at build time
+// and the first cold visit serves stale data until Cmd+Shift+R.
+export const dynamic = "force-dynamic";
+
 interface DomainRow {
   id: string;
   name: string;

@@ -1,6 +1,11 @@
 import { getDb } from "@/db";
 import ReglesClient from "./ReglesClient";
 
+// Reads directly from SQLite — Next.js can't track invalidation, so force
+// per-request rendering. Without this, the page is prerendered at build time
+// and the first cold visit serves stale data until Cmd+Shift+R.
+export const dynamic = "force-dynamic";
+
 export interface BuildingTemplate {
   id: string;
   name: string;

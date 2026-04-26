@@ -3,6 +3,11 @@ import { getProductionSummary, isAbbayeProduction } from "@/lib/production";
 import { computeMaintenance } from "@/lib/maintenance";
 import { checkConstructionFeasibility } from "@/lib/construction";
 
+// Reads directly from SQLite — Next.js can't track invalidation, so force
+// per-request rendering. Without this, the page is prerendered at build time
+// and the first cold visit serves stale data until Cmd+Shift+R.
+export const dynamic = "force-dynamic";
+
 function StatusBadge({ status }: { status: string }) {
   if (status === "full") return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-400">✓ Plein</span>;
   if (status === "partial") return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-400">⚠ Partiel</span>;

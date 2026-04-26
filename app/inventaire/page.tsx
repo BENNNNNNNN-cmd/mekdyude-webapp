@@ -3,6 +3,11 @@ import { getDb } from "@/db";
 import { getMarketPriceSummaries, type MarketPriceSummary } from "@/lib/market-prices";
 import InventoryTable from "./InventoryTable";
 
+// Reads directly from SQLite — Next.js can't track invalidation, so force
+// per-request rendering. Without this, the page is prerendered at build time
+// and the first cold visit serves stale data until Cmd+Shift+R.
+export const dynamic = "force-dynamic";
+
 export interface InventoryItem {
   id: number;
   item_name: string;

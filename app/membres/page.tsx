@@ -1,6 +1,12 @@
 import { getDb } from "@/db";
 import MembresClanTable from "./MembresClanTable";
 
+// Force dynamic rendering: this page reads directly from SQLite, which Next.js
+// cannot track for cache invalidation. Without this, the page is prerendered at
+// build time and only refreshes after revalidatePath() — meaning the FIRST
+// visit (cold router cache) shows stale data until a hard reload.
+export const dynamic = "force-dynamic";
+
 interface ClanMemberRow {
   id: string;
   character_name: string;

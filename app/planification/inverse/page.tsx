@@ -2,6 +2,11 @@ import { getDb } from "@/db";
 import { listAllCards } from "@/lib/production-tree/engine";
 import InverseClient from "./InverseClient";
 
+// Reads directly from SQLite — Next.js can't track invalidation, so force
+// per-request rendering. Without this, the page is prerendered at build time
+// and the first cold visit serves stale data until Cmd+Shift+R.
+export const dynamic = "force-dynamic";
+
 /**
  * Reverse planner page (Phase 3).
  * Server-side: prefetch the card list (filtered to "produceable" cards — those
