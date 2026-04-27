@@ -1,0 +1,117 @@
+bicolline_id,local_title,local_category,pg_id,pg_nameFr,pg_nameEn,pg_section,pg_category,match_method
+1,Armement,6,cmoeauiyt000hmn0qs5h4773c,Armement,Weaponry,Lots de production — Base,économique,v4_final
+2,Milice,7,cmoeauiyt001gmn0qnsx3keur,Milice,Militia,Unités — Humains,militaire,v4_final
+3,Manthora,3,cmoeauiyt002bmn0qafw0dvhx,Manthora,Manthora,Énergies magiques,magique,v4_final
+9,Influence Andore,2,cmoeauiyu0041mn0qs0sdj8za,Influence d'Andore,Andore Influence,Influence & politique,politique,v4_final
+10,Influence Fédération argannaise,2,cmoeauiyu003vmn0qtz4psm2d,Influence d'Arganne,Arganne Influence,Influence & politique,politique,v4_final
+11,Influence Autre région,2,cmoeauiyu002omn0qb6klc14a,Influence régionale,Regional Influence,Influence & politique,politique,v4_final
+12,Influence Berkwald,2,cmoeauiyu0042mn0q16b4w444,Influence de Berkwald,Berkwald Influence,Influence & politique,politique,v4_final
+13,Influence Cité des sables,2,cmoeauiyu003xmn0q6nq9zob5,Influence de la Cité des sables,Sand City Influence,Influence & politique,politique,v4_final
+14,Influence Carcosa,2,cmoeauiyu003wmn0q3or3hd50,Influence Carcosa,Carcosa Influence,Influence & politique,politique,v4_final
+15,Influence Pays de Kafe,2,cmoeauiyu0044mn0qc3vl3aid,Influence de Kafe,Kafe Influence,Influence & politique,politique,v4_final
+16,Influence Empire,2,cmoeauiyu0043mn0qr7i4s0i2,Influence de l'Empire,Empire Influence,Influence & politique,politique,v4_final
+17,Influence Irendille,2,cmoeauiyu0045mn0qaietm0x9,Influence d'Irendille,Irendille Influence,Influence & politique,politique,v4_final
+18,Influence Nasgaroth,2,cmoeauiyu003ymn0qh7bnunw0,Influence de Nasgaroth,Nasgaroth Influence,Influence & politique,politique,v4_final
+19,Influence Ozame,2,cmoeauiyu003zmn0qg6629jsc,Influence d'Ozame,Ozame Influence,Influence & politique,politique,v4_final
+20,Influence Terres du Sud,2,cmoeauiyu0040mn0q1aj3co9n,Influence des Terres du Sud,Southern Lands Influence,Influence & politique,politique,v4_final
+21,Crâne,3,cmoeauiyt002hmn0qx42ecych,Crâne,Skull Energy,Énergies occultes & spéciales,occulte,v4_final
+22,Énergie pure,3,cmoeauiyu002lmn0qloqz3rj9,Énergie pure,Pure Energy,Énergies occultes & spéciales,magique,v4_final
+24,Golhir,3,cmoeauiyt002dmn0q4aya1xt8,Golhir,Golhir,Énergies magiques,magique,v4_final
+25,Ingrédient,3,cmoeauiyt002jmn0q2j2chhhl,Ingrédient,Ingredient,Énergies occultes & spéciales,occulte,v4_final
+27,Miguisse,3,cmoeauiyt002emn0qjv4i9mxk,Miguisse,Miguisse,Énergies magiques,magique,v4_final
+28,Points de pouvoir,3,cmoeauiyu002mmn0qln8b78p1,Point de pouvoir,Power Point,Énergies occultes & spéciales,croyance,v4_final
+29,Souffle de vie,3,cmoeauiyt002fmn0q5bp1p6l5,Souffle de vie,Spirit Energy,Énergies magiques,magique,v4_final
+30,Svir-Kala,3,cmoeauiyt002cmn0q95lqatjm,Svir-Kala,Svir-Kala,Énergies magiques,magique,v4_final
+31,Esclave,4,cmoeauiyt000umn0qqif8c4dh,Esclave,Slave,Main-d'œuvre,économique,v4_final
+32,Forestier,4,cmoeauiyt000xmn0qn6ax8gtu,Forestier,Woodsman,Main-d'œuvre,économique,v4_final
+33,Voelhoorn,4,cmoeauiyt000zmn0qkndhk40w,Voelhoorn,,Main-d'œuvre,maritime,v4_final
+34,Marin,4,cmoeauiyt000vmn0q2661310n,Marin,Sailor,Main-d'œuvre,maritime,v4_final
+35,Nomade,4,cmoeauiyt000wmn0qm4qv91rn,Nomade,Nomad,Main-d'œuvre,économique,v4_final
+36,Paysan,4,cmoeauiyt000tmn0qbpe611qf,Paysan,Peasant,Main-d'œuvre,économique,v4_final
+37,Mentor d'aventurier,5,cmoeauiyt001emn0qldrrsalx,Mentor aventurier,Adventurer Mentor,Mentors,exploration,v4_final
+38,Mentor militaire,5,cmoeauiyt001dmn0qv6rtah1d,Mentor militaire,Military Mentor,Mentors,militaire,v4_final
+39,Mentor maritime,5,cmoeauiyt001fmn0q8m4tb9ug,Mentor maritime,Maritime Mentor,Mentors,maritime,v4_final
+42,Bateau de pêche,5,cmoeauiyt0011mn0qjuejthg9,Bateau de pêche,Fishing Boat,Main-d'œuvre,maritime,v4_final
+43,Charpentier,5,cmoeauiyt0012mn0qw4b04huq,Charpentier,Carpenter,Maîtres,construction,v4_final
+44,Croyant,5,cmoeauiyt0019mn0qg9yx8kl2,Croyant,Worshipper,Maîtres,croyance,v4_final
+45,Forgeron,5,cmoeauiyt0013mn0qqamswa4t,Forgeron,Blacksmith,Maîtres,construction,v4_final
+46,Ingénieur,5,cmoeauiyt0015mn0q7ryno9g1,Ingénieur,Engineer,Maîtres,militaire,v4_final
+47,Intendant,5,cmoeauiyt0016mn0q0yw0e0rl,Intendant,Steward,Maîtres,politique,v4_final
+48,Laborantin,5,cmoeauiyt0017mn0qvt0accnk,Laborantin,Lab Assistant,Maîtres,occulte,v4_final
+49,Maçon,5,cmoeauiyt0014mn0q6uwgchly,Maçon,Mason,Maîtres,construction,v4_final
+52,Bétail,6,cmoeauiys000dmn0qbupvb5wc,Bétail,Livestock,Lots de production — Base,économique,v4_final
+53,Céréales,6,cmoeauiys000cmn0q6dvqr3sa,Céréale,Grain,Lots de production — Base,économique,v4_final
+54,Équipement,6,cmoeauiyt000gmn0qtl4zq3sz,Équipement,Equipment,Lots de production — Base,économique,v4_final
+56,Minerai d'argent,6,cmoeauiyt000kmn0qogi5lew1,Minerai d'argent,Silver Ore,Lots de production — Spéciaux,économique,v4_final
+57,Minerai d'or,6,cmoeauiyt000lmn0qgtl9safk,Minerai d'or,Gold Ore,Lots de production — Spéciaux,économique,v4_final
+58,Pierre précieuse,6,cmoeauiyt000jmn0q3yh8jn93,Pierre précieuse,Precious Gem,Lots de production — Spéciaux,économique,v4_final
+61,Ressource,6,cmoeauiyt000emn0qgqn0qb41,Ressource,Resource,Lots de production — Base,économique,v4_final
+62,Sépium,6,cmoeauiyt000imn0qmuboq8ii,Sépium,Sepium,Lots de production — Spéciaux,clandestin,v4_final
+63,Victuailles,6,cmoeauiyt000fmn0qzhm81h4r,Victuaille,Food,Lots de production — Base,économique,v4_final
+66,Artilleur,7,cmoeauiyt001mmn0qpjw012lj,Artilleur,Artillerist,Unités — Humains,militaire,v4_final
+67,Assassin,7,cmoeauiyt0021mn0q2czxeouc,Assassin,Assassin,Unités — Clandestin & Exploration,clandestin,v4_final
+68,Aventurier,7,cmoeauiyt0023mn0qzd3dcfvl,Aventurier,Adventurer,Unités — Clandestin & Exploration,exploration,v4_final
+70,Brigand,7,cmoeauiyt0020mn0qvy8kpzlh,Brigand,Brigand,Unités — Clandestin & Exploration,clandestin,v4_final
+71,Canon,7,cmoeauiyt001omn0qtau79166,Canon,Cannon,Unités — Humains,militaire,v4_final
+72,Cavalier,7,cmoeauiyt001imn0qhb8tpz1f,Cavalier,Cavalry,Unités — Humains,militaire,v4_final
+73,Chevalier,7,cmoeauiyt001jmn0qmcbw08yq,Chevalier,Knight,Unités — Humains,militaire,v4_final
+74,Chevaucheur de loup,7,cmoeauiyt001qmn0qoks703c6,Chevaucheur de loup,Wolf Rider,Unités — Orques,militaire,v4_final
+75,Combattant embarqué,7,cmoeauiyt0025mn0quslvdl13,Combattant embarqué,Naval Fighter,Unités maritimes,maritime,v4_final
+76,Flobart,7,cmoeauiyt0026mn0q8cjoyy1e,Flobart,War Sailboat,Unités maritimes,maritime,v4_final
+77,Guerrier orque,7,cmoeauiys0003mn0qo9wpktyn,Guerrier orque,Orc Warrior,Unités — Orques,militaire,v4_final
+79,Ilta-matcha,7,cmoeauiyt001tmn0qupx5vkfi,Ilta-matcha,Elven Soldier,Unités — Elfes,militaire,v4_final
+80,Mercenaire,7,cmoeauiyt001kmn0q1m32976m,Mercenaire,Mercenary,Unités — Humains,militaire,v4_final
+82,Milice elfique,7,cmoeauiyt001smn0qj7yinxjw,Milice elfique,Elven Militia,Unités — Elfes,militaire,v4_final
+84,Mort-vivant,7,cmoeauiyt0029mn0qeaijopds,Mort-vivant,Undead,Unités surnaturelles,magique,v4_final
+85,Peau verte,4,cmoeauiyt000ymn0q0gbcrwm8,Peau verte,Greenskin,Main-d'œuvre,économique,v4_final
+86,Pirate,7,cmoeauiyt0027mn0q9e8l7kra,Pirate,Pirate,Unités maritimes,maritime,v4_final
+87,Soldat de métier,7,cmoeauiyt001hmn0qyvh34jhh,Soldat de métier,Professional Soldier,Unités — Humains,militaire,v4_final
+88,Tirailleurs,7,cmoeauiyt0022mn0q9qjdq2ib,Tirailleur,Skirmisher,Unités — Clandestin & Exploration,exploration,v4_final
+89,Trébuchet,7,cmoeauiyt001nmn0qgligezhh,Trébuchet,Trebuchet,Unités — Humains,militaire,v4_final
+90,Hommes-rats,7,cmoeauiyt0024mn0q0doqv7fq,Homme-rat,Rat-man,Unités — Clandestin & Exploration,exploration,v4_final
+91,Voile de guerre,7,cmoeauiyt0028mn0q86um6v9b,Voile de guerre,Man-o-war,Unités maritimes,maritime,v4_final
+93,Solars,10,cmoeauiyu003gmn0qgw1hs97v,Solar,Solar,Actifs financiers,économique,v4_final
+96,Invention,3,cmoeauiyt002kmn0qs93g76z6,Invention,Invention,Énergies occultes & spéciales,occulte,v4_final
+97,Objet de collection,10,cmoeauiyt000omn0qb7y54k1v,Objet de collection,Collectible,Richesses,politique,v4_final
+100,Butin,10,cmoeauiyt000mmn0q5hnle2ys,Butin,Booty,Richesses,économique,v4_final
+101,Cargaison,10,cmoeauiyt000nmn0q2bltmuqt,Cargaison,Cargo,Richesses,économique,v4_final
+102,Lingot d'argent,10,cmoeauiyt000qmn0qtpwmwm50,Lingot d'argent,Silver Ingot,Richesses,politique,v4_final
+103,Lingot d'or,10,cmoeauiyt000rmn0q6g7rszdv,Lingot d'or,Gold Ingot,Richesses,politique,v4_final
+115,Démon,7,cmoeauiyt002amn0qaa8cn09a,Démon,Demon,Unités surnaturelles,occulte,v4_final
+117,Influence Terre d'Auquesse,2,cmoeauiyu0046mn0qw2zta2gl,Influence d'Auquess,Auquess Influence,Influence & politique,politique,v4_final
+118,Appâts,3,cmoeauiyu0030mn0qi2ycajmx,Appâts,Bait,Potions & babioles,maritime,v4_final
+119,Raff,3,cmoeauiyu0033mn0q5cd8s7kv,Raff,Raff,Objets spéciaux,,v4_final
+120,Fourrage enrichi,3,cmoeauiyu002zmn0qvd3u5rpm,Fourrage enrichi,Enriched Fodder,Potions & babioles,économique,v4_final
+121,Poudre à canon,3,cmoeauiyu002ymn0qh52wza6j,Poudre à canon,Gunpowder,Potions & babioles,occulte,v4_final
+122,Potion d'assainissement,3,cmoeauiyu002umn0qo9hfek0e,Potion d'assainissement,Sanitation Potion,Potions & babioles,occulte,v4_final
+123,Potion d'héroïsme,3,cmoeauiyu002vmn0qwrn41u7p,Potion d'héroïsme,Potion of Heroism,Potions & babioles,occulte,v4_final
+124,Potion d'apprentissage rapide,3,cmoeauiyu002wmn0q8fej6a8f,Potion d'apprentissage rapide,Quick Learning Potion,Potions & babioles,occulte,v4_final
+125,Potion de guérison,3,cmoeauiyu002tmn0q66jmmon6,Potion de guérison,Healing Potion,Potions & babioles,occulte,v4_final
+126,Poison de lame,3,cmoeauiyu002xmn0q6u9lrx2q,Poison de lame,Blade Poison,Potions & babioles,occulte,v4_final
+127,Encre Magique,3,cmoeauiyu0031mn0q23ugyh6b,Encre magique,Magical Ink,Potions & babioles,occulte,v4_final
+128,Essieux renforcés,3,cmoeauiyu0035mn0q0vbmjqlb,Essieux renforcés,Reinforced Axles,Objets spéciaux,économique,v4_final
+129,Canon à chaines,3,cmoeauiyu0038mn0qda1hlz7q,Canon à chaîne,Chains Cannon,Objets spéciaux,maritime,v4_final
+130,Bélier,3,cmoeauiyu0034mn0qjso0eiq2,Bélier,Ram,Objets spéciaux,militaire,v4_final
+131,Radeau de Fortune,3,cmoeauiys0002mn0qw0e02ahm,Radeau de fortune,Raft,Objets spéciaux,maritime,v4_final
+132,Dirigeable,3,cmoeauiyu003amn0qsiwvlwr5,Dirigeable,Airship,Objets spéciaux,,v4_final
+133,Filtre-à-puit,3,cmoeauiyu0037mn0qy8w89hz8,Filtre-à-puit,Rain Filter,Objets spéciaux,,v4_final
+134,Paratellutruc,3,cmoeauiyu0039mn0quczrof07,Paratellutruc,Paratellutruc,Objets spéciaux,,v4_final
+135,Tromblon à ferraille,3,cmoeauiyu003bmn0q4gut80kf,Tromblons à ferraille,Scrap Blunderbuss,Objets spéciaux,militaire,v4_final
+137,Baril explosif,3,cmoeauiyu0036mn0q8ipbkotr,Baril explosif,Explosive Barrel,Objets spéciaux,militaire,v4_final
+138,Oeuvre,10,cmoeauiyt000pmn0qq8dp4glp,Œuvre,Artwork,Richesses,art,v4_final
+139,Scribe,5,cmoeauiyt0018mn0q65nsljmn,Scribe,Scribe,Maîtres,magique,v4_final
+140,Admirateur,5,cmoeauiyt001amn0qeb5x0cbh,Admirateur,Admirer,Maîtres,art,v4_final
+141,Roquen,7,cmoeauiyt001umn0qwbvps7po,Roquen,Elven Cavalry,Unités — Elfes,militaire,v4_final
+142,Ushatar,7,cmoeauiyt001pmn0q5jj6dut5,Ushatar,Orc Soldier,Unités — Orques,militaire,v4_final
+143,Arquen,7,cmoeauiyt001vmn0qfdr97jt9,Arquen,Elven Knight,Unités — Elfes,militaire,v4_final
+144,Vargkwen,7,cmoeauiyt001rmn0qlo2stss2,Vargkwen,Orc Knight,Unités — Orques,militaire,v4_final
+146,Composante surnaturelle,3,cmoeauiyu002nmn0q4v3021dh,Composante surnaturelle,Supernatural Component,Énergies occultes & spéciales,magique,v4_final
+148,Artiste,10,cmoeauiyt001bmn0qxuk49h2o,Artiste,Artist,Maîtres,art,v4_final
+149,Homme-bête,4,cmoeauiyt0010mn0qg48zcxn7,Homme-bête,Beast-man,Main-d'œuvre,économique,v4_final
+150,Archer,8,cmoeauiyt001lmn0qmpvrd9fn,Archer,Archer,Unités — Humains,militaire,v4_final
+151,Influence Territoire de l'Oubli,2,cmoeauiyu0047mn0ql0b3bj84,Influence de Kalthera Territoire de l'Oubli,Kaltera Oblivion Territory Influence,Influence & politique,politique,v4_final
+152,Mécène,5,cmoeauiyt001cmn0qt3rx0pc5,Mécène,Patron,Maîtres,art,v4_final
+153,Influence Terres des Brumes,2,cmoeauiyu0049mn0qvf6znx9o,Influence des Terres des brumes,Mist Lands Influence,Influence & politique,politique,v4_final
+154,Renommée artistique,2,cmoeauiyu002smn0qn6qnvtm9,Renommée artistique,Artistic Renown,Influence & politique,art,v4_final
+155,Marqué,7,cmoeauiyt001wmn0qxrztmpee,Marqué,Branded,Unités — Esclaves,militaire,v4_final
+156,Kornac,7,cmoeauiyt001zmn0qkdac5u46,Kornac,Kornac,Unités — Esclaves,militaire,v4_final

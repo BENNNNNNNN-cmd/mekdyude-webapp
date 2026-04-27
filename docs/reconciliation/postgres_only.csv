@@ -1,0 +1,60 @@
+pg_id,pg_nameFr,pg_nameEn,pg_section,pg_category,pg_sortOrder
+cmoeauiys0004mn0qmljclqq7,Activité,Activity,Fiches de population,,0
+cmoeauiys0005mn0qelt7lfx4,Grande Bataille,Great Battle (GB),Fiches de population,,1
+cmoeauiys0006mn0qvyl3jljc,Campagne,Campaign,Fiches de population,,2
+cmoeauiys0007mn0qjrd1w91r,Tournoi des Nations,Tournament of Nations,Fiches de population,,3
+cmoeauiys0008mn0q4gjpmdcr,Événement spécial (verte),Special Event (Green),Fiches de population,,4
+cmoeauiys0009mn0qbdvfpm4z,Ducasse,Ducasse,Fiches de population,,5
+cmoeauiys000amn0qdct0iy8z,Thématique,Themed Activity,Fiches de population,,6
+cmoeauiys000bmn0qat5qgnez,Bal Pourpre,Bal Pourpre,Fiches de population,,7
+cmoeauiyt000smn0qnqwfyupe,Lettre de change,Bill of Exchange,Richesses,économique,24
+cmoeauiys0000mn0qsgoqjslu,Farfouilleur,Scrounger,Main-d'œuvre,économique,33
+cmoeauiys0001mn0qokjgq3st,Homme-bleu,Blue Man,Main-d'œuvre,économique,34
+cmoeauiyt001xmn0qdl8gzld7,Janissaire,Janissary,Unités — Esclaves,militaire,68
+cmoeauiyt001ymn0q6lxb3scd,Mamelouk,Mameluke,Unités — Esclaves,militaire,69
+cmoeauiyt002gmn0qt3w9bmns,Esprit de la forêt,Forest Energy,Énergies magiques,magique,87
+cmoeauiyt002imn0qfhw1z2pk,Mystérium,Mysterium,Énergies occultes & spéciales,magique,89
+cmoeauiyu002pmn0qbzsnm2mw,Faveur divine,Divine Favor,Influence & politique,croyance,96
+cmoeauiyu002qmn0qbm2yx5z5,Faveur magique,Magical Favor,Influence & politique,magique,97
+cmoeauiyu002rmn0qwvprggb8,Faveur occulte,Occult Favor,Influence & politique,occulte,98
+cmoeauiyu0032mn0q45is4w0h,Parchemin de guérison,Healing Scroll,Potions & babioles,magique,109
+cmoeauiyu003cmn0qoyu1wkrb,Caravelle,Caravel,Navires,maritime,120
+cmoeauiyu003dmn0qgs1qboxq,Galion,Galleon,Navires,maritime,121
+cmoeauiyu003emn0qrg37fyvd,Frégate,Frigate,Navires,maritime,122
+cmoeauiyu003fmn0qqdcdryh8,Actions du CCEH,CCEH Shares,Actifs financiers,économique,123
+cmoeauiyu003hmn0qoo2lf7cm,Actions du BAT,BAT Shares,Actifs financiers,économique,125
+cmoeauiyu003imn0qo992kix0,Actions du CCK,CCK Shares,Actifs financiers,économique,126
+cmoeauiyu003jmn0q9vlbyt4o,Actions du FIVV,FIVV Shares,Actifs financiers,économique,127
+cmoeauiyu003kmn0qakfibfoz,Actions du Hall du Silfrman,Silfrman Hall Shares,Actifs financiers,économique,128
+cmoeauiyu003lmn0qj4eypeoq,Actions du CCHV,CCHV Shares,Actifs financiers,économique,129
+cmoeauiyu003mmn0q882566p1,Actions du CCMO,CCMO Shares,Actifs financiers,économique,130
+cmoeauiyu003nmn0qdphnuves,Paysans/Forestiers/Nomades/Peaux-vertes (interchangeables),Peasants/Woodsmen/Nomads/Greenskins (interchangeable),Main-d'œuvre,économique,132
+cmoeauiyu003omn0qov5w953l,Pécheur de crevette,Shrimp Fisher,Terra Kana,économique,133
+cmoeauiyu003pmn0qxat0k90l,Tarte All Djote,All Djote Pie,Terra Kana,économique,134
+cmoeauiyu003qmn0qabyjtjan,La Faya Catar,La Faya Catar,Terra Kana,économique,135
+cmoeauiyu003rmn0qs0l37j96,Pavés de Quenast,Quenast Cobblestones,Terra Kana,économique,136
+cmoeauiyu003smn0qyqtyemih,Cuberdon,Cuberdon,Terra Kana,économique,137
+cmoeauiyu003tmn0qt2c9ngm0,Roll Mops,Roll Mops,Terra Kana,économique,138
+cmoeauiyu003umn0qk8dj9622,Boulet Sauce lapin,Rabbit Sauce Meatball,Terra Kana,économique,139
+cmoeauiyu0048mn0qhh5o7d69,Lingot de pierre,Stone Ingot,Richesses,politique,152
+cmoeauiyv004umn0qk22zo5nx,Parchemin d'absorption,Absorption Scroll,Potions & babioles,magique,153
+cmoeauiyu004amn0q16yu6rrq,Liste (composante),Liste (component),Composantes surnaturelles,magique,154
+cmoeauiyu004bmn0qxo8eqjeh,Aphalite Neuroïde,Neuroid Aphalite,Composantes surnaturelles,magique,155
+cmoeauiyu004cmn0qflx4r8q0,Cri d'une banshee,Banshee's Cry,Composantes surnaturelles,magique,156
+cmoeauiyu004dmn0quh6pth16,Coprinus Ephemere,Coprinus Ephemere,Composantes surnaturelles,magique,157
+cmoeauiyu004emn0q4k6esygm,Plume de Vautour de Braise,Ember Vulture Feather,Composantes surnaturelles,magique,158
+cmoeauiyu004fmn0qx9fkk5ny,Écorse de dryade,Dryad Bark,Composantes surnaturelles,magique,159
+cmoeauiyu004gmn0q2pm4s9g2,Champignons phosphorescents,Phosphorescent Mushrooms,Composantes surnaturelles,magique,160
+cmoeauiyu004hmn0qmlxwl20f,Terre cuite de Khadidja,Khadidja's Terracotta,Composantes surnaturelles,magique,161
+cmoeauiyu004imn0qe83ytj8z,Scarabée Iridescent,Iridescent Scarab,Composantes surnaturelles,magique,162
+cmoeauiyu004jmn0qhila2c06,Cœur de Tarentelle,Tarentelle Heart,Composantes surnaturelles,magique,163
+cmoeauiyu004kmn0qx50ia0ye,Langue de Chimère,Chimera Tongue,Composantes surnaturelles,magique,164
+cmoeauiyv004lmn0qmon8jske,Fleurs de pousses-morts,Deadshoot Flowers,Composantes surnaturelles,magique,165
+cmoeauiyv004mmn0qapfilpdi,Serpe en Bronze antique,Antique Bronze Sickle,Composantes surnaturelles,magique,166
+cmoeauiyv004nmn0qkzo5mesu,Mousse Fantome,Phantom Moss,Composantes surnaturelles,magique,167
+cmoeauiyv004omn0qw412ispy,Creuset Kadoum,Kadoum Crucible,Composantes surnaturelles,magique,168
+cmoeauiyv004pmn0quppu0bcr,Serpe Kadoum,Kadoum Sickle,Composantes surnaturelles,magique,169
+cmoeauiyv004qmn0qot02lnqs,Arbutus Unedo,Arbutus Unedo,Composantes surnaturelles,magique,170
+cmoeauiyv004rmn0qwj5wj2a3,Os de marée,Tide Bone,Composantes surnaturelles,magique,171
+cmoeauiyv004smn0qmt5gvytk,Os de Dragon noir,Black Dragon Bone,Composantes surnaturelles,magique,172
+cmoeauiyv004tmn0qhzft3rzw,Saphir Tellurique,Telluric Sapphire,Composantes surnaturelles,magique,173
