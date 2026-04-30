@@ -2,13 +2,18 @@ import Database from "better-sqlite3";
 import path from "path";
 import fs from "fs";
 import crypto from "crypto";
-import { seedBicollineData } from "./seed-bicolline";
+import {
+  getBatimentSlugMapping,
+  getStadeIdFromLegacySlug,
+} from "../lib/reference-postgres";
 
 const DATA_DIR = process.env.DATA_DIR || process.cwd();
 const DB_PATH = path.join(DATA_DIR, "bicolline.db");
 const SCHEMA_PATH = path.join(process.cwd(), "db", "schema.sql");
 
 let db: Database.Database | null = null;
+let referenceMigrationDone = false;
+let referenceMigrationPromise: Promise<void> | null = null;
 
 const defaultClanMembers = [
   { id: "MEK001", characterName: "Ainmeil Mek Dyude" },
@@ -36,6 +41,18 @@ const defaultClanMembers = [
   { id: "MEK023", characterName: "Teth Iaran Mek Dyude" },
 ];
 
+const LEGACY_REFERENCE_TABLES = [
+  "card_substitutes",
+  "building_inputs",
+  "building_outputs",
+  "building_output_constraints",
+  "construction_costs",
+  "maintenance_templates",
+  "cards",
+  "building_templates",
+  "stage_templates",
+];
+
 export function getDb(): Database.Database {
   if (db) return db;
 
@@ -44,29 +61,95 @@ export function getDb(): Database.Database {
   db.pragma("journal_mode = WAL");
   db.pragma("foreign_keys = ON");
 
-  if (isNew) {
-    const schema = fs.readFileSync(SCHEMA_PATH, "utf-8");
-    db.exec(schema);
-    seedDatabase(db);
-  } else {
-    // Ensure new tables exist on existing databases
-    const schema = fs.readFileSync(SCHEMA_PATH, "utf-8");
-    db.exec(schema);
-  }
+  const schema = fs.readFileSync(SCHEMA_PATH, "utf-8");
+  db.exec(schema);
+
+  if (isNew) seedDatabase(db);
 
   ensureClanMembers(db);
-  seedBicollineData(db);
-
   return db;
 }
 
-function slugify(name: string): string {
-  return name
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_|_$/g, "");
+/**
+ * Phase 2 migration: drop legacy reference tables and remap operational FK
+ * fields from MekDyude-local slugs to Postgres canonical IDs.
+ *
+ * Idempotent: subsequent runs find no tables to drop and no slugs to migrate.
+ *
+ * Async because slug -> BAT_x / STADE_x lookups read from Postgres. Cached
+ * after first successful run; subsequent calls return immediately.
+ */
+export async function ensureReferenceMigration(): Promise<void> {
+  if (referenceMigrationDone) return;
+  if (referenceMigrationPromise) return referenceMigrationPromise;
+
+  referenceMigrationPromise = runReferenceMigration().then(() => {
+    referenceMigrationDone = true;
+  });
+  return referenceMigrationPromise;
+}
+
+async function runReferenceMigration(): Promise<void> {
+  const conn = getDb();
+
+  for (const table of LEGACY_REFERENCE_TABLES) {
+    conn.exec(`DROP TABLE IF EXISTS ${table}`);
+  }
+
+  const buildingRows = conn
+    .prepare("SELECT DISTINCT building_template_id FROM domain_buildings")
+    .all() as Array<{ building_template_id: string }>;
+  const stageRows = conn
+    .prepare("SELECT DISTINCT stage_id FROM domains")
+    .all() as Array<{ stage_id: string }>;
+
+  const needsBuildingMigration = buildingRows.some(
+    (r) => !r.building_template_id.startsWith("BAT_")
+  );
+  const needsStageMigration = stageRows.some((r) => !r.stage_id.startsWith("STADE_"));
+
+  if (needsBuildingMigration) {
+    const slugMap = await getBatimentSlugMapping();
+    const buildingEntries: Array<{ from: string; to: string }> = [];
+    for (const row of buildingRows) {
+      if (row.building_template_id.startsWith("BAT_")) continue;
+      const target = slugMap.get(row.building_template_id);
+      if (!target) {
+        console.warn(
+          `[migration] domain_buildings.building_template_id="${row.building_template_id}" doesn't map to any BAT_*; row left as-is`
+        );
+        continue;
+      }
+      buildingEntries.push({ from: row.building_template_id, to: target });
+    }
+    const updateBuilding = conn.prepare(
+      "UPDATE domain_buildings SET building_template_id = ? WHERE building_template_id = ?"
+    );
+    const buildingTx = conn.transaction(() => {
+      for (const { from, to } of buildingEntries) updateBuilding.run(to, from);
+    });
+    buildingTx();
+  }
+
+  if (needsStageMigration) {
+    const stageEntries: Array<{ from: string; to: string }> = [];
+    for (const row of stageRows) {
+      if (row.stage_id.startsWith("STADE_")) continue;
+      const target = await getStadeIdFromLegacySlug(row.stage_id);
+      if (!target) {
+        console.warn(
+          `[migration] domains.stage_id="${row.stage_id}" doesn't map to any STADE_*; row left as-is`
+        );
+        continue;
+      }
+      stageEntries.push({ from: row.stage_id, to: target });
+    }
+    const updateStage = conn.prepare("UPDATE domains SET stage_id = ? WHERE stage_id = ?");
+    const stageTx = conn.transaction(() => {
+      for (const { from, to } of stageEntries) updateStage.run(to, from);
+    });
+    stageTx();
+  }
 }
 
 function seedDatabase(db: Database.Database) {
@@ -92,7 +175,6 @@ function seedDatabase(db: Database.Database) {
       insertUser.run(initialAdminUsername, adminHash, "admin");
     }
 
-    // Guilds
     const insertGuild = db.prepare("INSERT INTO guilds (id, name) VALUES (?, ?)");
     const guilds = [
       { id: "mek_dyude", name: "Mek Dyude" },
@@ -100,18 +182,14 @@ function seedDatabase(db: Database.Database) {
       { id: "macrae", name: "MacRae" },
       { id: "macmairt", name: "Mac'Mairt" },
     ];
-    for (const g of guilds) {
-      insertGuild.run(g.id, g.name);
-    }
+    for (const g of guilds) insertGuild.run(g.id, g.name);
 
-    // Provinces
     const insertProvince = db.prepare(
       "INSERT INTO provinces (id, name, region, is_independent) VALUES (?, ?, ?, ?)"
     );
     insertProvince.run("iles_celtes", "Îles Celtes", null, 1);
     insertProvince.run("dinant", "Dinant", "Fédération argannaise", 0);
 
-    // Fiefs
     const insertFief = db.prepare(
       "INSERT INTO fiefs (id, name, province_id) VALUES (?, ?, ?)"
     );
@@ -119,66 +197,6 @@ function seedDatabase(db: Database.Database) {
     insertFief.run("tara", "Tara", "iles_celtes");
     insertFief.run("pecheux", "Pécheux", "dinant");
 
-    // Stage templates
-    const insertStage = db.prepare(
-      "INSERT INTO stage_templates (id, name, max_buildings) VALUES (?, ?, ?)"
-    );
-    const stages = [
-      { id: "campement", name: "Campement", max: 3 },
-      { id: "hameau", name: "Hameau", max: 6 },
-      { id: "bourgade", name: "Bourgade", max: 10 },
-      { id: "village", name: "Village", max: 16 },
-      { id: "ville", name: "Ville", max: 23 },
-      { id: "cite", name: "Cité", max: 35 },
-    ];
-    for (const s of stages) {
-      insertStage.run(s.id, s.name, s.max);
-    }
-
-    // Maintenance templates
-    const insertMaint = db.prepare(
-      "INSERT INTO maintenance_templates (stage_id, resource_type, annual_cost) VALUES (?, ?, ?)"
-    );
-    const maintenance: Record<string, Record<string, number>> = seedData.maintenance_by_stage;
-    for (const [stageId, costs] of Object.entries(maintenance)) {
-      // Map accented stage IDs
-      const dbStageId = stageId === "cité" ? "cite" : stageId;
-      for (const [resource, amount] of Object.entries(costs)) {
-        if (amount > 0) {
-          insertMaint.run(dbStageId, resource, amount);
-        }
-      }
-    }
-
-    // Building templates
-    const insertBuilding = db.prepare(`
-      INSERT INTO building_templates (id, name, sphere, capacity, assignment_type, resource_produced, ratio_per_unit, domain_limitation, prerequisite_building, structure_points, notes)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-    const insertCost = db.prepare(
-      "INSERT INTO construction_costs (building_id, resource_type, amount) VALUES (?, ?, ?)"
-    );
-
-    for (const bt of seedData.building_templates) {
-      const id = slugify(bt.name);
-      const capacity = typeof bt.capacity === "string" ? parseInt(bt.capacity) || 0 : (bt.capacity ?? 0);
-      const ratio = typeof bt.ratio_per_unit === "string" ? 0 : (bt.ratio_per_unit ?? 0);
-      const prereq = bt.prerequisite_building ? slugify(bt.prerequisite_building) : null;
-
-      insertBuilding.run(
-        id, bt.name, bt.sphere, capacity, bt.assignment_type,
-        bt.resource_produced, ratio, bt.domain_limitation || null,
-        prereq, bt.structure_points || 0, bt.notes || null
-      );
-
-      if (bt.construction_costs) {
-        for (const [resource, amount] of Object.entries(bt.construction_costs)) {
-          insertCost.run(id, resource, amount as number);
-        }
-      }
-    }
-
-    // Domains
     const insertDomain = db.prepare(`
       INSERT INTO domains (id, name, guild_id, stage_id, province_id, fief_id, production_type, syta_quadrant, deposit_type, deposit_size, coord_x, coord_y, is_coastal, buildings_used, buildings_max)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -188,6 +206,8 @@ function seedDatabase(db: Database.Database) {
       VALUES (?, ?, ?, ?)
     `);
 
+    // Seed uses legacy slug-style IDs; ensureReferenceMigration() rewrites them
+    // to BAT_*/STADE_* on first boot once Postgres is reachable.
     const domainsData = [
       {
         id: "kewtail", name: "Kewtail", guild_id: "mek_dyude",
@@ -259,14 +279,12 @@ function seedDatabase(db: Database.Database) {
       }
     }
 
-    // Inventory
     const insertInventory = db.prepare(`
       INSERT INTO inventory (guild_id, item_name, category, qty_coffre, qty_en_mains, qty_production, notes)
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `);
 
     for (const item of seedData.inventory) {
-      // Determine category based on item type
       let category = "ressource";
       const unitItems = [
         "Charpentier", "Chevalier", "Croyant", "Forgeron", "Ingénieur", "Intendant",

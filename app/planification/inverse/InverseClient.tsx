@@ -9,7 +9,7 @@ import OptionCard from "@/app/components/planification/OptionCard";
 const DEFAULT_QTY = 50;
 
 export default function InverseClient({ cards }: { cards: Card[] }) {
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [qty, setQty] = useState<number>(DEFAULT_QTY);
   const [plan, setPlan] = useState<ReversePlan | null>(null);
   const [loading, setLoading] = useState(false);
@@ -17,7 +17,7 @@ export default function InverseClient({ cards }: { cards: Card[] }) {
 
   const inflight = useRef<AbortController | null>(null);
 
-  const fetchPlan = useCallback(async (cardId: number, q: number) => {
+  const fetchPlan = useCallback(async (cardId: string, q: number) => {
     inflight.current?.abort();
     const controller = new AbortController();
     inflight.current = controller;
@@ -26,7 +26,7 @@ export default function InverseClient({ cards }: { cards: Card[] }) {
     setError(null);
     try {
       const res = await fetch(
-        `/api/production-tree/reverse?card=${cardId}&qty=${q}`,
+        `/api/production-tree/reverse?card=${encodeURIComponent(cardId)}&qty=${q}`,
         { signal: controller.signal }
       );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -41,7 +41,7 @@ export default function InverseClient({ cards }: { cards: Card[] }) {
     }
   }, []);
 
-  function handleCardChange(id: number | null) {
+  function handleCardChange(id: string | null) {
     setSelectedId(id);
     if (id == null) {
       inflight.current?.abort();

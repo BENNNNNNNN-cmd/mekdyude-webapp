@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ensureReferenceMigration } from "@/db";
 import { checkConstructionFeasibility } from "@/lib/construction";
 
 export async function GET(request: NextRequest) {
@@ -13,6 +14,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const result = checkConstructionFeasibility(building, domain);
+  await ensureReferenceMigration();
+  const result = await checkConstructionFeasibility(building, domain);
   return NextResponse.json(result);
 }

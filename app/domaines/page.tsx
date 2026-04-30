@@ -1,13 +1,13 @@
-import { getDb } from "@/db";
+import { ensureReferenceMigration, getDb } from "@/db";
+import { loadRepo } from "@/lib/production-tree/engine";
+import { getStades } from "@/lib/reference-postgres";
 
-// Reads directly from SQLite — Next.js can't track invalidation, so force
-// per-request rendering. Without this, the page is prerendered at build time
-// and the first cold visit serves stale data until Cmd+Shift+R.
 export const dynamic = "force-dynamic";
 
 interface DomainRow {
   id: string;
   name: string;
+  stage_id: string;
   stage_name: string;
   production_type: string;
   syta_quadrant: string | null;
@@ -22,16 +22,16 @@ interface DomainRow {
 
 interface BuildingRow {
   domain_id: string;
+  building_id: string;
   building_name: string;
   assigned_count: number;
   capacity: number;
   assignment_type: string;
-  resource_produced: string;
-  ratio_per_unit: number;
+  outputs: { resource: string; amount: number }[];
   sphere: string;
 }
 
-function StaffBadge({ assigned, capacity, name }: { assigned: number; capacity: number; name: string }) {
+function StaffBadge({ assigned, capacity }: { assigned: number; capacity: number }) {
   if (capacity <= 0) return <span className="text-xs text-foreground/40">—</span>;
   if (assigned >= capacity) return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-400">✓ {assigned}/{capacity}</span>;
   if (assigned > 0) return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-400">⚠ {assigned}/{capacity}</span>;
@@ -39,15 +39,21 @@ function StaffBadge({ assigned, capacity, name }: { assigned: number; capacity: 
 }
 
 function ProductionDisplay({ building }: { building: BuildingRow }) {
-  if (building.building_name === "Abbaye") {
-    const v = building.assigned_count * 7;
-    const e = building.assigned_count * 7;
-    const a = building.assigned_count * 3;
-    return <span className="font-mono text-xs">V{v} / É{e} / A{a}</span>;
+  if (building.outputs.length === 0)
+    return <span className="text-xs text-foreground/40">—</span>;
+  if (building.outputs.length > 1) {
+    return (
+      <span className="font-mono text-xs">
+        {building.outputs.map((o) => `${o.amount} ${o.resource}`).join(" / ")}
+      </span>
+    );
   }
-  const amount = building.assigned_count * (building.ratio_per_unit ?? 0);
-  if (amount > 0) return <span className="text-xs">{amount} {building.resource_produced}</span>;
-  return <span className="text-xs text-foreground/40">{building.resource_produced || "—"}</span>;
+  const o = building.outputs[0];
+  return o.amount > 0 ? (
+    <span className="text-xs">{o.amount} {o.resource}</span>
+  ) : (
+    <span className="text-xs text-foreground/40">{o.resource}</span>
+  );
 }
 
 const prodTypeLabels: Record<string, string> = {
@@ -56,33 +62,57 @@ const prodTypeLabels: Record<string, string> = {
   betail: "Bétail",
 };
 
-export default function DomainesPage() {
+export default async function DomainesPage() {
+  await ensureReferenceMigration();
   const db = getDb();
+  const [repo, stades] = await Promise.all([loadRepo(), getStades()]);
+  const stadeById = new Map(stades.map((s) => [s.id, s]));
 
-  const domains = db.prepare(`
-    SELECT d.*, st.name as stage_name, p.name as province_name, f.name as fief_name
+  const domainRows = db.prepare(`
+    SELECT d.*, p.name AS province_name, f.name AS fief_name
     FROM domains d
-    JOIN stage_templates st ON st.id = d.stage_id
     JOIN provinces p ON p.id = d.province_id
     LEFT JOIN fiefs f ON f.id = d.fief_id
     WHERE d.guild_id = 'mek_dyude'
     ORDER BY d.name
-  `).all() as DomainRow[];
+  `).all() as Array<DomainRow>;
 
-  const buildings = db.prepare(`
-    SELECT db.domain_id, bt.name as building_name, db.assigned_count, bt.capacity,
-           bt.assignment_type, bt.resource_produced, bt.ratio_per_unit, bt.sphere
+  const domains = domainRows.map((d) => ({
+    ...d,
+    stage_name: stadeById.get(d.stage_id)?.nameFr ?? d.stage_id,
+  }));
+
+  const dbBuildings = db.prepare(`
+    SELECT db.domain_id, db.building_template_id, db.assigned_count
     FROM domain_buildings db
-    JOIN building_templates bt ON bt.id = db.building_template_id
     JOIN domains d ON d.id = db.domain_id
     WHERE d.guild_id = 'mek_dyude'
-    ORDER BY bt.name
-  `).all() as BuildingRow[];
+  `).all() as Array<{ domain_id: string; building_template_id: string; assigned_count: number }>;
 
   const buildingsByDomain: Record<string, BuildingRow[]> = {};
-  for (const b of buildings) {
-    if (!buildingsByDomain[b.domain_id]) buildingsByDomain[b.domain_id] = [];
-    buildingsByDomain[b.domain_id].push(b);
+  for (const row of dbBuildings) {
+    const building = repo.getBuilding(row.building_template_id);
+    if (!building) continue;
+    const cap = building.inputs[0]?.max_quantity ?? 0;
+    const outputs = building.outputs.map((o) => {
+      const per = o.quantity_per_input / Math.max(1, o.input_divisor);
+      const base = row.assigned_count * per;
+      const bonus = cap > 0 && row.assigned_count >= cap ? o.full_capacity_bonus : 0;
+      return { resource: o.card_title, amount: base + bonus };
+    });
+    (buildingsByDomain[row.domain_id] ??= []).push({
+      domain_id: row.domain_id,
+      building_id: building.id,
+      building_name: building.name,
+      assigned_count: row.assigned_count,
+      capacity: cap,
+      assignment_type: building.inputs[0]?.card_title ?? "",
+      outputs,
+      sphere: building.sphere,
+    });
+  }
+  for (const list of Object.values(buildingsByDomain)) {
+    list.sort((a, b) => a.building_name.localeCompare(b.building_name, "fr"));
   }
 
   return (
@@ -142,7 +172,7 @@ export default function DomainesPage() {
                         <td className="px-5 py-1.5 text-foreground/60 text-xs">{b.sphere}</td>
                         <td className="px-5 py-1.5"><ProductionDisplay building={b} /></td>
                         <td className="px-5 py-1.5 text-center">
-                          <StaffBadge assigned={b.assigned_count} capacity={b.capacity} name={b.building_name} />
+                          <StaffBadge assigned={b.assigned_count} capacity={b.capacity} />
                         </td>
                       </tr>
                     ))}

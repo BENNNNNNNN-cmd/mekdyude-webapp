@@ -15,17 +15,22 @@
  * Scoring is in scoring.ts.
  */
 
-import type Database from "better-sqlite3";
-import { listAllCards, getCardById } from "./engine";
+import { getDb } from "@/db";
+import { loadRepo, type Repo } from "./engine";
 import { checkConstructionFeasibility } from "@/lib/construction";
-import { computeProduction, getProductionSummary, isAbbayeProduction } from "@/lib/production";
+import {
+  computeProduction,
+  getProductionSummary,
+  isMultiOutputProduction,
+} from "@/lib/production";
 import { scoreOption, sortOptions } from "./scoring";
+import { normalizeName } from "@/lib/reference-postgres";
+import type { Card } from "./types";
 
 export interface ReversePlan {
-  target: { card_id: number; card_title: string; needed_qty: number };
+  target: { card_id: string; card_title: string; needed_qty: number };
   baseline: {
     current_production: number;
-    /** All current producer breakdowns (which building on which domain). */
     breakdown: Array<{
       domain_name: string;
       building_name: string;
@@ -34,18 +39,14 @@ export interface ReversePlan {
       amount: number;
     }>;
   };
-  /** Need − current. Negative means surplus (the planner short-circuits then). */
   gap: number;
   options: ReverseOption[];
-  /** Buildings that produce the target card but had zero applicable options
-      (e.g. you don't own any domain where it could be built or staffed). */
   unreachable_producers: string[];
 }
 
 export type ReverseOption = StaffUpOption | BuildNewOption;
 
 interface BaseOption {
-  /** Stable id for React keys. */
   id: string;
   kind: "staff_up" | "build_new";
   building_id: string;
@@ -53,20 +54,15 @@ interface BaseOption {
   building_sphere: string;
   domain_id: string;
   domain_name: string;
-  /** Yearly output produced by this option (delta over current). */
   yield_per_year: number;
-  /** Score (lower = simpler, higher = costlier). */
   score: number;
-  /** Free-text reasons explaining the option. */
   notes: string[];
-  /** Upstream demand created by taking this action: e.g. "needs +20 Paysan". */
   upstream_demand: UpstreamDemand[];
 }
 
 export interface UpstreamDemand {
   card_title: string;
   qty: number;
-  /** Is your current production of this card sufficient to absorb the demand? */
   satisfied: boolean;
 }
 
@@ -74,56 +70,47 @@ export interface StaffUpOption extends BaseOption {
   kind: "staff_up";
   current_assigned: number;
   capacity: number;
-  /** How many additional units to assign to fully exploit OR meet the gap. */
   additional_units_needed: number;
-  /** Yield if the building reaches full capacity (informational). */
   yield_at_full_capacity: number;
 }
 
 export interface BuildNewOption extends BaseOption {
   kind: "build_new";
-  /** Cost lines from feasibility check. */
-  costs: Array<{ resource: string; required: number; available: number; status: "ok" | "missing" | "manual" }>;
-  /** Reasons it's blocked (empty if buildable). */
+  costs: Array<{
+    resource: string;
+    required: number;
+    available: number;
+    status: "ok" | "missing" | "manual";
+  }>;
   blocked_reasons: string[];
 }
 
 const DEFAULT_GUILD_ID = "mek_dyude";
 
-export function computeReversePlan(
-  db: Database.Database,
-  targetCardId: number,
+export async function computeReversePlan(
+  targetCardId: string,
   neededQty: number,
   guildId: string = DEFAULT_GUILD_ID
-): ReversePlan | null {
-  const card = getCardById(db, targetCardId);
+): Promise<ReversePlan | null> {
+  const repo = await loadRepo();
+  const card = repo.getCard(targetCardId);
   if (!card) return null;
 
-  // Baseline: how much of the target are we currently producing across all domains?
-  const baseline = computeBaseline(card.title);
+  const baseline = await computeBaseline(card.title, guildId);
   const gap = Math.max(0, neededQty - baseline.current_production);
 
-  // Find buildings that can produce this card.
-  const producerRows = db.prepare(
-    `SELECT DISTINCT bt.id, bt.name, bt.sphere
-     FROM building_outputs bo
-     JOIN building_templates bt ON bt.id = bo.building_id
-     WHERE bo.output_card_id = ?
-     ORDER BY bt.name`
-  ).all(targetCardId) as Array<{ id: string; name: string; sphere: string }>;
-
-  const cards = listAllCards(db);
-  const cardByTitle = new Map(cards.map((c) => [c.title, c]));
+  const producers = repo.buildingsProducing(targetCardId);
+  const cards = repo.listCards();
+  const cardByTitle = new Map<string, Card>();
+  for (const c of cards) cardByTitle.set(c.title, c);
 
   const options: ReverseOption[] = [];
   const unreachable: string[] = [];
 
-  for (const producer of producerRows) {
-    const buildingOpts = optionsForProducer(
-      db,
+  for (const producer of producers) {
+    const buildingOpts = await optionsForProducer(
+      repo,
       producer.id,
-      producer.name,
-      producer.sphere,
       targetCardId,
       gap,
       guildId,
@@ -145,21 +132,17 @@ export function computeReversePlan(
   };
 }
 
-// ---------------------------------------------------------------------------
-
-function computeBaseline(targetCardTitle: string) {
-  const production = computeProduction();
+async function computeBaseline(targetCardTitle: string, guildId: string) {
+  const production = await computeProduction(guildId);
   const breakdown: ReversePlan["baseline"]["breakdown"] = [];
   let total = 0;
 
-  // Map both "Équipement" and "Équipements" — your local resource_produced
-  // strings sometimes have plural forms. Match on prefix.
-  const normalized = targetCardTitle.replace(/s$/, "").toLowerCase();
+  const targetNorm = normalizeName(targetCardTitle).replace(/s$/, "");
 
   for (const entry of production) {
-    if (isAbbayeProduction(entry)) {
+    if (isMultiOutputProduction(entry)) {
       for (const line of entry.lines) {
-        if (line.resource.replace(/s$/, "").toLowerCase() === normalized) {
+        if (normalizeName(line.resource).replace(/s$/, "") === targetNorm) {
           total += line.amount;
           breakdown.push({
             domain_name: entry.domainName,
@@ -170,91 +153,74 @@ function computeBaseline(targetCardTitle: string) {
           });
         }
       }
-    } else {
-      if (entry.resource.replace(/s$/, "").toLowerCase() === normalized && entry.amount > 0) {
-        total += entry.amount;
-        breakdown.push({
-          domain_name: entry.domainName,
-          building_name: entry.buildingName,
-          assigned: entry.assignedCount,
-          capacity: entry.capacity,
-          amount: entry.amount,
-        });
-      }
+    } else if (
+      normalizeName(entry.resource).replace(/s$/, "") === targetNorm &&
+      entry.amount > 0
+    ) {
+      total += entry.amount;
+      breakdown.push({
+        domain_name: entry.domainName,
+        building_name: entry.buildingName,
+        assigned: entry.assignedCount,
+        capacity: entry.capacity,
+        amount: entry.amount,
+      });
     }
   }
 
   return { current_production: total, breakdown };
 }
 
-function optionsForProducer(
-  db: Database.Database,
+async function optionsForProducer(
+  repo: Repo,
   buildingId: string,
-  buildingName: string,
-  sphere: string,
-  targetCardId: number,
+  targetCardId: string,
   gap: number,
   guildId: string,
-  cardByTitle: Map<string, { id: number; title: string; substitutes: number[] }>
-): ReverseOption[] {
+  cardByTitle: Map<string, Card>
+): Promise<ReverseOption[]> {
+  const db = getDb();
   const options: ReverseOption[] = [];
 
-  // Output spec for this building → target card
-  const output = db.prepare(
-    `SELECT quantity_per_input, input_divisor, full_capacity_bonus
-     FROM building_outputs
-     WHERE building_id = ? AND output_card_id = ?`
-  ).get(buildingId, targetCardId) as {
-    quantity_per_input: number;
-    input_divisor: number;
-    full_capacity_bonus: number;
-  } | undefined;
+  const building = repo.getBuilding(buildingId);
+  if (!building) return options;
 
+  const output = building.outputs.find((o) => o.card_id === targetCardId);
   if (!output) return options;
 
-  // Per-input yield (e.g. Atelier: 5/Paysan)
   const perInput = output.quantity_per_input / Math.max(1, output.input_divisor);
+  const primaryInput = building.inputs[0];
+  const buildingCapacity = primaryInput?.max_quantity ?? 0;
 
-  // Building's primary input card (most buildings have one).
-  const inputs = db.prepare(
-    `SELECT bi.input_card_id, bi.max_quantity, c.title
-     FROM building_inputs bi
-     JOIN cards c ON c.id = bi.input_card_id
-     WHERE bi.building_id = ?`
-  ).all(buildingId) as Array<{ input_card_id: number; max_quantity: number; title: string }>;
-
-  const primaryInput = inputs[0];
-
-  // === Existing instances: "staff up" options =================================
-  const existingInstances = db.prepare(
-    `SELECT db.domain_id, db.assigned_count, d.name as domain_name, bt.capacity
-     FROM domain_buildings db
-     JOIN domains d ON d.id = db.domain_id
-     JOIN building_templates bt ON bt.id = db.building_template_id
-     WHERE db.building_template_id = ? AND d.guild_id = ?`
-  ).all(buildingId, guildId) as Array<{
-    domain_id: string; assigned_count: number; domain_name: string; capacity: number;
+  const existingInstances = db
+    .prepare(
+      `SELECT db.domain_id, db.assigned_count, d.name AS domain_name
+       FROM domain_buildings db
+       JOIN domains d ON d.id = db.domain_id
+       WHERE db.building_template_id = ? AND d.guild_id = ?`
+    )
+    .all(buildingId, guildId) as Array<{
+    domain_id: string;
+    assigned_count: number;
+    domain_name: string;
   }>;
 
   for (const inst of existingInstances) {
-    const room = inst.capacity - inst.assigned_count;
+    const room = buildingCapacity - inst.assigned_count;
     if (room <= 0) continue;
 
-    // How many more units do we actually need to assign?
     const unitsToCloseGap = perInput > 0 ? Math.ceil(gap / perInput) : 0;
     const unitsToAssign = Math.min(room, Math.max(1, unitsToCloseGap));
     const yieldDelta = unitsToAssign * perInput;
     const yieldAtFull = room * perInput;
 
     const upstream: UpstreamDemand[] = primaryInput
-      ? [
-          buildUpstreamDemand(primaryInput.title, unitsToAssign, cardByTitle),
-        ]
+      ? [await buildUpstreamDemand(primaryInput.card_title, unitsToAssign, cardByTitle, guildId)]
       : [];
 
     const notes: string[] = [];
-    if (room === inst.capacity) notes.push("Bâtiment vide — staffing complet recommandé");
-    else notes.push(`${inst.assigned_count}/${inst.capacity} actuellement staffé`);
+    if (room === buildingCapacity) notes.push("Bâtiment vide — staffing complet recommandé");
+    else notes.push(`${inst.assigned_count}/${buildingCapacity} actuellement staffé`);
     if (yieldDelta < gap)
       notes.push(`Couvre seulement ${yieldDelta}/${gap} du besoin (capacité limitée)`);
 
@@ -262,12 +228,12 @@ function optionsForProducer(
       id: `staff_${buildingId}_${inst.domain_id}`,
       kind: "staff_up",
       building_id: buildingId,
-      building_name: buildingName,
-      building_sphere: sphere,
+      building_name: building.name,
+      building_sphere: building.sphere,
       domain_id: inst.domain_id,
       domain_name: inst.domain_name,
       current_assigned: inst.assigned_count,
-      capacity: inst.capacity,
+      capacity: buildingCapacity,
       additional_units_needed: unitsToAssign,
       yield_per_year: yieldDelta,
       yield_at_full_capacity: yieldAtFull,
@@ -279,34 +245,30 @@ function optionsForProducer(
     options.push(opt);
   }
 
-  // === New instances on every domain that doesn't already have one ===========
-  const allDomains = db.prepare(
-    "SELECT id, name FROM domains WHERE guild_id = ? ORDER BY name"
-  ).all(guildId) as Array<{ id: string; name: string }>;
-
+  const allDomains = db
+    .prepare("SELECT id, name FROM domains WHERE guild_id = ? ORDER BY name")
+    .all(guildId) as Array<{ id: string; name: string }>;
   const existingDomainIds = new Set(existingInstances.map((i) => i.domain_id));
 
   for (const d of allDomains) {
     if (existingDomainIds.has(d.id)) continue;
-    const result = checkConstructionFeasibility(buildingId, d.id);
+    const result = await checkConstructionFeasibility(buildingId, d.id);
     const reasons = result.reasons.filter((r) => !r.startsWith("Déjà construit"));
 
-    const buildingCapacity = db.prepare(
-      "SELECT capacity FROM building_templates WHERE id = ?"
-    ).get(buildingId) as { capacity: number } | undefined;
-    const cap = buildingCapacity?.capacity ?? 0;
-
     const unitsToCloseGap = perInput > 0 ? Math.ceil(gap / perInput) : 0;
-    const unitsToAssign = Math.min(cap || unitsToCloseGap, Math.max(1, unitsToCloseGap));
+    const unitsToAssign = Math.min(
+      buildingCapacity || unitsToCloseGap,
+      Math.max(1, unitsToCloseGap)
+    );
     const yieldDelta = unitsToAssign * perInput;
 
     const upstream: UpstreamDemand[] = primaryInput
-      ? [buildUpstreamDemand(primaryInput.title, unitsToAssign, cardByTitle)]
+      ? [await buildUpstreamDemand(primaryInput.card_title, unitsToAssign, cardByTitle, guildId)]
       : [];
 
     const notes: string[] = [];
     if (yieldDelta < gap)
-      notes.push(`À pleine cap. (${cap}/${cap}), couvre ${yieldDelta}/${gap}`);
+      notes.push(`À pleine cap. (${buildingCapacity}/${buildingCapacity}), couvre ${yieldDelta}/${gap}`);
     if (output.full_capacity_bonus > 0)
       notes.push(`+${output.full_capacity_bonus} bonus pleine capacité`);
 
@@ -314,8 +276,8 @@ function optionsForProducer(
       id: `build_${buildingId}_${d.id}`,
       kind: "build_new",
       building_id: buildingId,
-      building_name: buildingName,
-      building_sphere: sphere,
+      building_name: building.name,
+      building_sphere: building.sphere,
       domain_id: d.id,
       domain_name: d.name,
       yield_per_year: yieldDelta,
@@ -332,23 +294,22 @@ function optionsForProducer(
   return options;
 }
 
-function buildUpstreamDemand(
+async function buildUpstreamDemand(
   cardTitle: string,
   qty: number,
-  cardByTitle: Map<string, { id: number; title: string; substitutes: number[] }>
-): UpstreamDemand {
-  // Best-effort satisfaction check: do we currently produce/have enough of
-  // this card to absorb this demand? Rough — uses inventory + production
-  // total without complex routing analysis. Phase 3+ could refine.
+  cardByTitle: Map<string, Card>,
+  guildId: string
+): Promise<UpstreamDemand> {
   const card = cardByTitle.get(cardTitle);
   if (!card) {
     return { card_title: cardTitle, qty, satisfied: false };
   }
 
-  // For workers/units, current production + inventory is what matters.
-  // For resources, we'd need the same. Use the production summary.
-  const { totals } = getProductionSummary();
-  const currentForCard =
-    totals[cardTitle] ?? totals[cardTitle + "s"] ?? totals[cardTitle.replace(/s$/, "")] ?? 0;
+  const { totals } = await getProductionSummary(guildId);
+  const targetNorm = normalizeName(cardTitle).replace(/s$/, "");
+  let currentForCard = 0;
+  for (const [resource, amount] of Object.entries(totals)) {
+    if (normalizeName(resource).replace(/s$/, "") === targetNorm) currentForCard += amount;
+  }
   return { card_title: cardTitle, qty, satisfied: currentForCard >= qty };
 }

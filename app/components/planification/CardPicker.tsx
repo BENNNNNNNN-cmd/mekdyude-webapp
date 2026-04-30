@@ -3,22 +3,10 @@
 import { useMemo, useState } from "react";
 import type { Card } from "@/lib/production-tree/types";
 
-const CATEGORY_LABELS: Record<string, string> = {
-  "1": "Population",
-  "2": "Influences",
-  "3": "Spécial / Magie",
-  "4": "Travailleurs",
-  "5": "Mentors / Spécialistes",
-  "6": "Ressources",
-  "7": "Militaire",
-  "8": "Tireurs",
-  "10": "Richesses / Art",
-};
-
 interface CardPickerProps {
   cards: Card[];
-  value: number | null;
-  onChange: (id: number | null) => void;
+  value: string | null;
+  onChange: (id: string | null) => void;
 }
 
 export default function CardPicker({ cards, value, onChange }: CardPickerProps) {
@@ -31,7 +19,7 @@ export default function CardPicker({ cards, value, onChange }: CardPickerProps) 
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(c);
     }
-    return [...map.entries()].sort((a, b) => a[0].padStart(2, "0").localeCompare(b[0].padStart(2, "0")));
+    return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0], "fr"));
   }, [cards]);
 
   const searchMatches = useMemo(() => {
@@ -52,12 +40,12 @@ export default function CardPicker({ cards, value, onChange }: CardPickerProps) 
           value={value ?? ""}
           onChange={(e) => {
             const v = e.target.value;
-            onChange(v ? Number(v) : null);
+            onChange(v || null);
           }}
         >
           <option value="">— Choisir une carte —</option>
           {grouped.map(([cat, list]) => (
-            <optgroup key={cat} label={CATEGORY_LABELS[cat] ?? `Catégorie ${cat}`}>
+            <optgroup key={cat} label={cat}>
               {list.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.title}
@@ -93,9 +81,7 @@ export default function CardPicker({ cards, value, onChange }: CardPickerProps) 
                   className="block w-full px-3 py-2 text-left text-sm text-foreground hover:bg-brand-amber/10"
                 >
                   <span>{c.title}</span>
-                  <span className="ml-2 text-xs text-foreground/50">
-                    {CATEGORY_LABELS[c.category] ?? c.category}
-                  </span>
+                  <span className="ml-2 text-xs text-foreground/50">{c.category}</span>
                 </button>
               </li>
             ))}

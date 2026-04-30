@@ -1,26 +1,25 @@
 /**
- * Production-tree engine — pure functions over a Database.
+ * Production-tree engine — pure async functions over Postgres reference data.
  *
  * Two walks share the same data layer:
  *   - expandForward: card → buildings consuming it → outputs → recurse
  *   - expandReverse: target card → producers → required inputs → recurse
  *
- * Phase 1 wires expandForward into the UI. expandReverse is implemented but
- * not yet routed; Phase 3 will surface it.
- *
  * Loop detection: each recursive walk carries an `ancestry` set of card ids.
  * If a card's id is already in ancestry, the node is rendered with
  * `alreadyShown: true` and not expanded — same UX as bicolline.online's
  * "déjà affiché" badge.
+ *
+ * Phase 2: data comes from `lib/reference-postgres.ts` (Carte, Batiment,
+ * Effet) instead of SQLite. The Repo loader derives MekDyude-shaped
+ * structured fields from Postgres prose via `parse-production.ts`.
  */
 
-import type Database from "better-sqlite3";
 import type {
   Card,
   BuildingNode,
   BuildingOutput,
   BuildingInput,
-  OutputConstraint,
   CardNode,
   BuildingTreeEntry,
   OutputTreeEntry,
@@ -29,215 +28,252 @@ import type {
   ReverseInputEntry,
   TreeOptions,
 } from "./types";
+import {
+  getBatiments,
+  getCartes,
+  getEffets,
+  normalizeName,
+  type Batiment,
+  type Carte,
+  type Effet,
+} from "../reference-postgres";
+import { getCardSubstitutes } from "../card-substitutes";
+import { parseProductionText } from "./parse-production";
 
 const DEFAULT_MAX_DEPTH = 6;
 
 // =============================================================================
-// Repository — all DB I/O lives here. Loaders cache per-engine call so a single
-// tree expansion never re-queries the same row.
+// Repository — all Postgres I/O lives here. A single Repo instance is reused
+// across an entire tree expansion, so we never re-derive from raw rows twice.
+// Top-level Postgres reads are cached for 5 min in `reference-postgres.ts`.
 // =============================================================================
 
-class Repo {
-  private cardById = new Map<number, Card>();
-  private allCardsLoaded = false;
-  private buildingBySlug = new Map<string, BuildingNode>();
-  private buildingsByInputCard = new Map<number, string[]>();
-  private buildingsByOutputCard = new Map<number, string[]>();
-  private indicesBuilt = false;
+export class Repo {
+  private cardById = new Map<string, Card>();
+  private buildingById = new Map<string, BuildingNode>();
+  private buildingsByInputCard = new Map<string, string[]>();
+  private buildingsByOutputCard = new Map<string, string[]>();
 
-  constructor(private db: Database.Database) {}
+  static async load(): Promise<Repo> {
+    const repo = new Repo();
+    const [cartes, batiments, effets, substitutes] = await Promise.all([
+      getCartes(),
+      getBatiments(),
+      getEffets(),
+      getCardSubstitutes(),
+    ]);
+
+    const carteByNormalizedName = buildCarteNameIndex(cartes);
+
+    for (const c of cartes) {
+      repo.cardById.set(c.id, {
+        id: c.id,
+        title: c.nameFr,
+        category: c.famille,
+        statut: c.statut,
+        substitutes: substitutes.get(c.id) ?? [],
+      });
+    }
+
+    for (const b of batiments) {
+      const node: BuildingNode = {
+        id: b.id,
+        name: b.nameFr,
+        sphere: b.sphere ?? "Autre",
+        statut: b.statut,
+        inputs: deriveInputs(b, carteByNormalizedName),
+        outputs: deriveOutputs(b, effets, carteByNormalizedName),
+      };
+      repo.buildingById.set(b.id, node);
+      for (const input of node.inputs) {
+        appendList(repo.buildingsByInputCard, input.card_id, b.id);
+      }
+      for (const output of node.outputs) {
+        appendList(repo.buildingsByOutputCard, output.card_id, b.id);
+      }
+    }
+
+    return repo;
+  }
 
   /** All cards (for the dropdown). Sorted by category then title. */
   listCards(): Card[] {
-    this.ensureCardsLoaded();
     return [...this.cardById.values()].sort((a, b) => {
-      const ca = a.category.padStart(2, "0");
-      const cb = b.category.padStart(2, "0");
-      if (ca !== cb) return ca.localeCompare(cb);
+      if (a.category !== b.category) return a.category.localeCompare(b.category, "fr");
       return a.title.localeCompare(b.title, "fr");
     });
   }
 
-  getCard(id: number): Card | null {
-    this.ensureCardsLoaded();
+  getCard(id: string): Card | null {
     return this.cardById.get(id) ?? null;
   }
 
-  /** Buildings whose `inputs` include cardId. */
-  buildingsConsuming(cardId: number, includeSubstitutes: boolean): BuildingNode[] {
-    this.ensureIndices();
-    const targetCardIds = new Set<number>([cardId]);
+  getBuilding(id: string): BuildingNode | null {
+    return this.buildingById.get(id) ?? null;
+  }
+
+  /** Buildings whose `inputs` include cardId (or any of its substitutes if requested). */
+  buildingsConsuming(cardId: string, includeSubstitutes: boolean): BuildingNode[] {
+    const targetCardIds = new Set<string>([cardId]);
     if (includeSubstitutes) {
       const card = this.cardById.get(cardId);
       if (card) for (const s of card.substitutes) targetCardIds.add(s);
     }
-    const slugs = new Set<string>();
+    const ids = new Set<string>();
     for (const id of targetCardIds) {
       const fromIdx = this.buildingsByInputCard.get(id);
-      if (fromIdx) for (const slug of fromIdx) slugs.add(slug);
+      if (fromIdx) for (const buildingId of fromIdx) ids.add(buildingId);
     }
-    const out: BuildingNode[] = [];
-    for (const slug of slugs) {
-      const b = this.buildingBySlug.get(slug);
-      if (b) out.push(b);
-    }
-    out.sort((a, b) => a.name.localeCompare(b.name, "fr"));
-    return out;
+    return [...ids]
+      .map((id) => this.buildingById.get(id))
+      .filter((b): b is BuildingNode => b !== undefined)
+      .sort((a, b) => a.name.localeCompare(b.name, "fr"));
   }
 
   /** Buildings whose `outputs` include cardId. */
-  buildingsProducing(cardId: number): BuildingNode[] {
-    this.ensureIndices();
-    const slugs = this.buildingsByOutputCard.get(cardId) ?? [];
-    const out: BuildingNode[] = [];
-    for (const slug of slugs) {
-      const b = this.buildingBySlug.get(slug);
-      if (b) out.push(b);
-    }
-    out.sort((a, b) => a.name.localeCompare(b.name, "fr"));
-    return out;
+  buildingsProducing(cardId: string): BuildingNode[] {
+    const ids = this.buildingsByOutputCard.get(cardId) ?? [];
+    return ids
+      .map((id) => this.buildingById.get(id))
+      .filter((b): b is BuildingNode => b !== undefined)
+      .sort((a, b) => a.name.localeCompare(b.name, "fr"));
   }
+}
 
-  // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Derivation: Postgres rows → MekDyude calculator shape
+// ---------------------------------------------------------------------------
 
-  private ensureCardsLoaded() {
-    if (this.allCardsLoaded) return;
+/**
+ * Per-word plural-tolerant normalization. "Fiches de population" and
+ * "fiche de population" both map to "fiche de population".
+ */
+function normalizeWords(value: string): string {
+  return normalizeName(value)
+    .replace(/\(s\)/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .split(" ")
+    .map((w) => (w.length > 1 && w.endsWith("s") ? w.slice(0, -1) : w))
+    .join(" ");
+}
 
-    const cardRows = this.db
-      .prepare("SELECT id, title, category FROM cards")
-      .all() as Array<{ id: number; title: string; category: string }>;
-    for (const r of cardRows) {
-      this.cardById.set(r.id, { id: r.id, title: r.title, category: r.category, substitutes: [] });
-    }
+/**
+ * Workbook ↔ MekDyude semantic aliases. The workbook uses abstract worker
+ * terms ("Mains-d'œuvre") where MekDyude's calculator expects the canonical
+ * worker card (Paysan, with substitutes expanding to Forestier/Marin/etc.).
+ * Keyed by `normalizeWords(nameFr)` — match after the same normalization.
+ */
+const SEMANTIC_ALIASES: Record<string, string> = {
+  "main d'oeuvre": "Paysan",
+  "main d oeuvre": "Paysan",
+};
 
-    const subRows = this.db
-      .prepare("SELECT card_id, substitute_card_id FROM card_substitutes")
-      .all() as Array<{ card_id: number; substitute_card_id: number }>;
-    for (const r of subRows) {
-      const card = this.cardById.get(r.card_id);
-      if (card) card.substitutes.push(r.substitute_card_id);
-    }
-
-    this.allCardsLoaded = true;
+function buildCarteNameIndex(cartes: Carte[]): Map<string, Carte> {
+  const index = new Map<string, Carte>();
+  for (const c of cartes) {
+    const key = normalizeWords(c.nameFr);
+    if (!index.has(key)) index.set(key, c);
   }
+  for (const [alias, target] of Object.entries(SEMANTIC_ALIASES)) {
+    const targetCarte = [...index.values()].find(
+      (c) => normalizeWords(c.nameFr) === normalizeWords(target)
+    );
+    if (targetCarte && !index.has(alias)) index.set(alias, targetCarte);
+  }
+  return index;
+}
 
-  private ensureIndices() {
-    if (this.indicesBuilt) return;
-    this.ensureCardsLoaded();
+function lookupCarte(name: string, index: Map<string, Carte>): Carte | null {
+  return index.get(normalizeWords(name)) ?? null;
+}
 
-    // Buildings — single query, denormalized via grouped joins.
-    const buildingRows = this.db
-      .prepare(
-        `SELECT id, name, sphere, bicolline_id FROM building_templates ORDER BY name`
-      )
-      .all() as Array<{ id: string; name: string; sphere: string; bicolline_id: number | null }>;
-    for (const r of buildingRows) {
-      this.buildingBySlug.set(r.id, {
-        id: r.id,
-        name: r.name,
-        sphere: r.sphere,
-        bicolline_id: r.bicolline_id,
-        inputs: [],
-        outputs: [],
+function deriveInputs(b: Batiment, carteByName: Map<string, Carte>): BuildingInput[] {
+  if (!b.capaciteType || b.capaciteQuantite === null) return [];
+  const carte = lookupCarte(b.capaciteType, carteByName);
+  if (!carte) {
+    if (process.env.NODE_ENV !== "production") {
+      console.warn(
+        `[engine] ${b.id}: capaciteType "${b.capaciteType}" doesn't resolve to a Carte; building has no inputs`
+      );
+    }
+    return [];
+  }
+  return [
+    {
+      card_id: carte.id,
+      card_title: carte.nameFr,
+      max_quantity: b.capaciteQuantite,
+    },
+  ];
+}
+
+function deriveOutputs(
+  b: Batiment,
+  allEffets: Effet[],
+  carteByName: Map<string, Carte>
+): BuildingOutput[] {
+  const productionEffets = allEffets.filter(
+    (e) =>
+      e.sourceType === "Bâtiment" &&
+      e.sourceId === b.id &&
+      (e.typeEffet === "Production / capacité" || e.typeEffet === null)
+  );
+
+  const outputs: BuildingOutput[] = [];
+  let order = 0;
+
+  for (const effet of productionEffets) {
+    const parsed = parseProductionText(effet.texte);
+    if (parsed.length === 0) {
+      if (process.env.NODE_ENV !== "production") {
+        console.warn(
+          `[engine] ${b.id}: couldn't parse Effet.texte "${effet.texte}" — workbook fidelity gap`
+        );
+      }
+      continue;
+    }
+    for (const row of parsed) {
+      const carte = lookupCarte(row.outputName, carteByName);
+      if (!carte) {
+        if (process.env.NODE_ENV !== "production") {
+          console.warn(
+            `[engine] ${b.id}: output name "${row.outputName}" doesn't resolve to a Carte`
+          );
+        }
+        continue;
+      }
+      outputs.push({
+        card_id: carte.id,
+        card_title: carte.nameFr,
+        quantity_per_input: row.quantity,
+        input_divisor: row.divisor,
+        full_capacity_bonus: row.fullCapacityBonus,
+        use_domain_mineral: false,
+        display_order: order++,
+        constraints: [],
       });
     }
-
-    const inputRows = this.db
-      .prepare("SELECT building_id, input_card_id, max_quantity FROM building_inputs")
-      .all() as Array<{ building_id: string; input_card_id: number; max_quantity: number }>;
-    for (const r of inputRows) {
-      const b = this.buildingBySlug.get(r.building_id);
-      if (!b) continue;
-      const card = this.cardById.get(r.input_card_id);
-      const entry: BuildingInput = {
-        card_id: r.input_card_id,
-        card_title: card?.title ?? `Card #${r.input_card_id}`,
-        max_quantity: r.max_quantity,
-      };
-      b.inputs.push(entry);
-      const idx = this.buildingsByInputCard.get(r.input_card_id) ?? [];
-      idx.push(r.building_id);
-      this.buildingsByInputCard.set(r.input_card_id, idx);
-    }
-
-    const outputRows = this.db
-      .prepare(
-        `SELECT building_id, output_card_id, quantity_per_input, input_divisor,
-                full_capacity_bonus, use_domain_mineral, display_order
-         FROM building_outputs ORDER BY building_id, display_order`
-      )
-      .all() as Array<{
-      building_id: string;
-      output_card_id: number;
-      quantity_per_input: number;
-      input_divisor: number;
-      full_capacity_bonus: number;
-      use_domain_mineral: number;
-      display_order: number;
-    }>;
-    for (const r of outputRows) {
-      const b = this.buildingBySlug.get(r.building_id);
-      if (!b) continue;
-      const card = this.cardById.get(r.output_card_id);
-      const out: BuildingOutput = {
-        card_id: r.output_card_id,
-        card_title: card?.title ?? `Card #${r.output_card_id}`,
-        quantity_per_input: r.quantity_per_input,
-        input_divisor: r.input_divisor,
-        full_capacity_bonus: r.full_capacity_bonus,
-        use_domain_mineral: !!r.use_domain_mineral,
-        display_order: r.display_order,
-        constraints: [],
-      };
-      b.outputs.push(out);
-      const idx = this.buildingsByOutputCard.get(r.output_card_id) ?? [];
-      idx.push(r.building_id);
-      this.buildingsByOutputCard.set(r.output_card_id, idx);
-    }
-
-    const constraintRows = this.db
-      .prepare(
-        `SELECT building_id, output_card_id, constraining_card_id, scope, numerator, denominator
-         FROM building_output_constraints`
-      )
-      .all() as Array<{
-      building_id: string;
-      output_card_id: number;
-      constraining_card_id: number;
-      scope: "domain" | "fief" | "province" | "region";
-      numerator: number;
-      denominator: number;
-    }>;
-    for (const r of constraintRows) {
-      const b = this.buildingBySlug.get(r.building_id);
-      if (!b) continue;
-      const out = b.outputs.find((o) => o.card_id === r.output_card_id);
-      if (!out) continue;
-      const card = this.cardById.get(r.constraining_card_id);
-      const c: OutputConstraint = {
-        constraining_card_id: r.constraining_card_id,
-        constraining_card_title: card?.title ?? `Card #${r.constraining_card_id}`,
-        scope: r.scope,
-        numerator: r.numerator,
-        denominator: r.denominator,
-      };
-      out.constraints.push(c);
-    }
-
-    this.indicesBuilt = true;
   }
+
+  return outputs;
+}
+
+function appendList<K, V>(map: Map<K, V[]>, key: K, value: V) {
+  const existing = map.get(key);
+  if (existing) existing.push(value);
+  else map.set(key, [value]);
 }
 
 // =============================================================================
 // Forward walk
 // =============================================================================
 
-export function expandForward(
-  db: Database.Database,
-  rootCardId: number,
+export async function expandForward(
+  rootCardId: string,
   options: TreeOptions = {}
-): CardNode | null {
-  const repo = new Repo(db);
+): Promise<CardNode | null> {
+  const repo = await Repo.load();
   const root = repo.getCard(rootCardId);
   if (!root) return null;
   const opts = {
@@ -250,11 +286,10 @@ export function expandForward(
 function walkForward(
   repo: Repo,
   card: Card,
-  ancestry: Set<number>,
+  ancestry: Set<string>,
   depth: number,
   opts: { maxDepth: number; includeSubstitutes: boolean }
 ): CardNode {
-  // Cycle / depth guards
   if (ancestry.has(card.id) || depth > opts.maxDepth) {
     return { kind: "card", card, buildings: [], alreadyShown: true };
   }
@@ -268,7 +303,18 @@ function walkForward(
       const childCard = repo.getCard(o.card_id);
       const child: CardNode = childCard
         ? walkForward(repo, childCard, nextAncestry, depth + 1, opts)
-        : { kind: "card", card: { id: o.card_id, title: o.card_title, category: "?", substitutes: [] }, buildings: [], alreadyShown: false };
+        : {
+            kind: "card",
+            card: {
+              id: o.card_id,
+              title: o.card_title,
+              category: "?",
+              substitutes: [],
+              statut: "Extrait",
+            },
+            buildings: [],
+            alreadyShown: false,
+          };
       return { output: o, child };
     });
     return { building: b, matchedInputCardId: card.id, outputs };
@@ -278,16 +324,15 @@ function walkForward(
 }
 
 // =============================================================================
-// Reverse walk (Phase 3 — implemented now, surfaced later)
+// Reverse walk
 // =============================================================================
 
-export function expandReverse(
-  db: Database.Database,
-  targetCardId: number,
+export async function expandReverse(
+  targetCardId: string,
   neededQty: number,
   options: TreeOptions = {}
-): ReverseNode | null {
-  const repo = new Repo(db);
+): Promise<ReverseNode | null> {
+  const repo = await Repo.load();
   const root = repo.getCard(targetCardId);
   if (!root) return null;
   const opts = {
@@ -301,7 +346,7 @@ function walkReverse(
   repo: Repo,
   card: Card,
   neededQty: number,
-  ancestry: Set<number>,
+  ancestry: Set<string>,
   depth: number,
   opts: { maxDepth: number; includeSubstitutes: boolean }
 ): ReverseNode {
@@ -315,11 +360,8 @@ function walkReverse(
   const producerEntries: ReverseProducerEntry[] = producers.flatMap((b) => {
     const matchingOutputs = b.outputs.filter((o) => o.card_id === card.id);
     return matchingOutputs.map<ReverseProducerEntry>((output) => {
-      // qty per input = quantity_per_input / input_divisor
-      // need = neededQty → required_input_units = ceil(neededQty * input_divisor / quantity_per_input)
       const perInput = output.quantity_per_input / Math.max(1, output.input_divisor);
-      const requiredInputUnits =
-        perInput > 0 ? Math.ceil(neededQty / perInput) : 0;
+      const requiredInputUnits = perInput > 0 ? Math.ceil(neededQty / perInput) : 0;
 
       const inputs: ReverseInputEntry[] = b.inputs.map((i) => {
         const inCard = repo.getCard(i.card_id);
@@ -328,7 +370,13 @@ function walkReverse(
             input: i,
             child: {
               kind: "reverse",
-              card: { id: i.card_id, title: i.card_title, category: "?", substitutes: [] },
+              card: {
+                id: i.card_id,
+                title: i.card_title,
+                category: "?",
+                substitutes: [],
+                statut: "Extrait",
+              },
               needed_qty: requiredInputUnits,
               producers: [],
               alreadyShown: false,
@@ -349,13 +397,24 @@ function walkReverse(
 }
 
 // =============================================================================
-// Convenience helpers for API routes
+// Convenience helpers for API routes / pages
 // =============================================================================
 
-export function listAllCards(db: Database.Database): Card[] {
-  return new Repo(db).listCards();
+export async function listAllCards(): Promise<Card[]> {
+  const repo = await Repo.load();
+  return repo.listCards();
 }
 
-export function getCardById(db: Database.Database, id: number): Card | null {
-  return new Repo(db).getCard(id);
+export async function getCardById(id: string): Promise<Card | null> {
+  const repo = await Repo.load();
+  return repo.getCard(id);
+}
+
+export async function getBuildingById(id: string): Promise<BuildingNode | null> {
+  const repo = await Repo.load();
+  return repo.getBuilding(id);
+}
+
+export async function loadRepo(): Promise<Repo> {
+  return Repo.load();
 }

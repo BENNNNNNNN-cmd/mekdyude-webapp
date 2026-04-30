@@ -1,4 +1,5 @@
 import { getDb } from "@/db";
+import { getCoutsForStade, normalizeName } from "@/lib/reference-postgres";
 
 export interface MaintenanceLine {
   resource: string;
@@ -7,51 +8,39 @@ export interface MaintenanceLine {
   status: "ok" | "warning";
 }
 
-export function computeMaintenance(): MaintenanceLine[] {
+export async function computeMaintenance(guildId = "mek_dyude"): Promise<MaintenanceLine[]> {
   const db = getDb();
 
-  // Get total maintenance across all Mek Dyude domains
-  const maintenanceRows = db.prepare(`
-    SELECT mt.resource_type, SUM(mt.annual_cost) as total_cost
-    FROM domains d
-    JOIN maintenance_templates mt ON mt.stage_id = d.stage_id
-    WHERE d.guild_id = 'mek_dyude'
-    GROUP BY mt.resource_type
-  `).all() as Array<{ resource_type: string; total_cost: number }>;
+  const stages = db
+    .prepare("SELECT stage_id, COUNT(*) AS n FROM domains WHERE guild_id = ? GROUP BY stage_id")
+    .all(guildId) as Array<{ stage_id: string; n: number }>;
 
-  // Get production from inventory
-  const inventoryRows = db.prepare(`
-    SELECT item_name, qty_production
-    FROM inventory
-    WHERE guild_id = 'mek_dyude'
-  `).all() as Array<{ item_name: string; qty_production: number }>;
-
-  const productionMap: Record<string, number> = {};
-  for (const row of inventoryRows) {
-    productionMap[row.item_name.toLowerCase()] = row.qty_production;
+  const totals = new Map<string, number>();
+  for (const { stage_id, n } of stages) {
+    const couts = await getCoutsForStade(stage_id, "Entretien");
+    for (const c of couts) {
+      if (!c.composant || c.quantite === null) continue;
+      totals.set(c.composant, (totals.get(c.composant) ?? 0) + c.quantite * n);
+    }
   }
 
-  // Map maintenance resource types to inventory item names
-  const resourceDisplayMap: Record<string, string> = {
-    cereales: "Céréales",
-    betails: "Bétail",
-    ressources: "Ressources",
-    equipements: "Équipements",
-    macons: "Maçon",
-    intendants: "Intendant",
-    charpentiers: "Charpentier",
-    forgerons: "Forgeron",
-    ingenieurs: "Ingénieur",
-  };
+  const inventoryRows = db
+    .prepare("SELECT item_name, qty_production FROM inventory WHERE guild_id = ?")
+    .all(guildId) as Array<{ item_name: string; qty_production: number }>;
+  const productionMap = new Map<string, number>();
+  for (const row of inventoryRows) {
+    productionMap.set(normalizeName(row.item_name), row.qty_production);
+  }
 
-  return maintenanceRows.map((row) => {
-    const displayName = resourceDisplayMap[row.resource_type] || row.resource_type;
-    const produced = productionMap[displayName.toLowerCase()] ?? 0;
-    return {
-      resource: displayName,
-      required: row.total_cost,
-      produced,
-      status: produced >= row.total_cost ? "ok" : "warning",
-    };
-  });
+  return [...totals.entries()]
+    .map(([resource, required]) => {
+      const produced = productionMap.get(normalizeName(resource)) ?? 0;
+      return {
+        resource,
+        required,
+        produced,
+        status: produced >= required ? "ok" : "warning",
+      } as MaintenanceLine;
+    })
+    .sort((a, b) => a.resource.localeCompare(b.resource, "fr"));
 }

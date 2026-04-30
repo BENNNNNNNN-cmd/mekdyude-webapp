@@ -1,18 +1,20 @@
 /**
  * Smoke test for the production-tree engine.
- * Runs the engine directly against the DB and prints sample trees so you can
- * eyeball the math before launching the dev server.
+ * Runs the engine directly against shared Postgres reference data and prints
+ * sample trees so you can eyeball the math before launching the dev server.
  *
  * Run:  npm run smoke:tree
  */
 
-import path from "path";
-import Database from "better-sqlite3";
-import { listAllCards, expandForward, expandReverse, getCardById } from "../lib/production-tree/engine";
+import "dotenv/config";
+import {
+  expandForward,
+  expandReverse,
+  getCardById,
+  listAllCards,
+} from "../lib/production-tree/engine";
 import { annotateForward } from "../lib/production-tree/overlay";
 import type { CardNode, BuildingTreeEntry, ReverseNode } from "../lib/production-tree/types";
-
-const DB_PATH = path.join(process.cwd(), "bicolline.db");
 
 function indent(depth: number) {
   return "  ".repeat(depth);
@@ -31,16 +33,17 @@ function renderBuildingEntry(b: BuildingTreeEntry, depth: number, max: number) {
   const inputCard = b.building.inputs.find((i) => i.card_id === b.matchedInputCardId);
   const cap = inputCard ? ` (cap ${inputCard.max_quantity})` : "";
   const overlay = b.overlay
-    ? `  [${b.overlay.status === "built" ? "✓" : b.overlay.status === "buildable" ? "⚠" : "✗"} ${b.overlay.summary}]`
+    ? `  [${
+        b.overlay.status === "built" ? "✓" : b.overlay.status === "buildable" ? "⚠" : "✗"
+      } ${b.overlay.summary}]`
     : "";
-  console.log(`${indent(depth)}🏛  ${b.building.name}${cap}${overlay}`);
+  const statut = b.building.statut !== "Confirmé" ? ` ⓘ ${b.building.statut}` : "";
+  console.log(`${indent(depth)}🏛  ${b.building.name}${cap}${statut}${overlay}`);
   for (const o of b.outputs) {
     const ratio = `${o.output.input_divisor}→${o.output.quantity_per_input}`;
-    const bonus = o.output.full_capacity_bonus > 0 ? ` +${o.output.full_capacity_bonus} pleine cap.` : "";
-    const constraints = o.output.constraints
-      .map((c) => ` ⚠ ≤${c.numerator}/${c.denominator} ${c.constraining_card_title}/${c.scope}`)
-      .join("");
-    console.log(`${indent(depth + 1)}↳ ${o.output.card_title} (${ratio})${bonus}${constraints}`);
+    const bonus =
+      o.output.full_capacity_bonus > 0 ? ` +${o.output.full_capacity_bonus} pleine cap.` : "";
+    console.log(`${indent(depth + 1)}↳ ${o.output.card_title} (${ratio})${bonus}`);
     if (depth + 2 <= max && !o.child.alreadyShown && o.child.buildings.length > 0) {
       renderForward(o.child, depth + 2, max);
     } else if (o.child.alreadyShown) {
@@ -64,68 +67,65 @@ function renderReverse(node: ReverseNode, depth = 0, max = 3) {
   }
 }
 
-function main() {
-  const db = new Database(DB_PATH);
-  db.pragma("foreign_keys = ON");
+async function main() {
+  const cards = await listAllCards();
+  console.log(`=== ${cards.length} cards loaded from Postgres\n`);
 
-  console.log(`=== ${listAllCards(db).length} cards loaded\n`);
-
-  // 1. Forward tree from "Paysan" (id 36)
+  // 1. Forward tree from Paysan
   console.log("─".repeat(60));
   console.log("FORWARD TREE: Paysan (max depth 2)");
   console.log("─".repeat(60));
-  const paysan = expandForward(db, 36, { maxDepth: 2 });
+  const paysan = await expandForward("CARTE_PAYSAN", { maxDepth: 2 });
   if (paysan) renderForward(paysan, 0, 3);
-  else console.log("Paysan not found");
+  else console.log("CARTE_PAYSAN not found");
 
-  // 2. Forward tree from "Croyant" (id 44) — Abbaye special case
+  // 2. Forward tree from Croyant — Abbaye multi-output
   console.log("\n" + "─".repeat(60));
-  console.log("FORWARD TREE: Croyant (must show Abbaye 7V/7É/3A)");
+  console.log("FORWARD TREE: Croyant (must show Abbaye 7V/7É/3A as 3 outputs)");
   console.log("─".repeat(60));
-  const croyant = expandForward(db, 44, { maxDepth: 1 });
+  const croyant = await expandForward("CARTE_CROYANT", { maxDepth: 1 });
   if (croyant) renderForward(croyant, 0, 2);
 
-  // 3. Forward tree from "Intendant" — Château with constraint
+  // 3. Forward tree from Intendant — Château with constraint
   console.log("\n" + "─".repeat(60));
-  console.log("FORWARD TREE: Intendant (must show Château + constraint)");
+  console.log("FORWARD TREE: Intendant (must show Château)");
   console.log("─".repeat(60));
-  const intendant = expandForward(db, 47, { maxDepth: 1 });
+  const intendant = await expandForward("CARTE_INTENDANT", { maxDepth: 1 });
   if (intendant) renderForward(intendant, 0, 2);
 
   // 4. Reverse: 50 Équipement
   console.log("\n" + "─".repeat(60));
-  console.log("REVERSE TREE: 50 Équipement (Phase 3 preview)");
+  console.log("REVERSE TREE: 50 Équipement");
   console.log("─".repeat(60));
-  const equipement = getCardById(db, 54);
+  const equipement = await getCardById("CARTE_EQUIPEMENT");
   if (equipement) {
-    const rev = expandReverse(db, 54, 50, { maxDepth: 2 });
+    const rev = await expandReverse("CARTE_EQUIPEMENT", 50, { maxDepth: 2 });
     if (rev) renderReverse(rev, 0, 4);
+  } else {
+    console.log("CARTE_EQUIPEMENT not found");
   }
 
-  // 5. Loop guard: Faubourg → Paysan → Faubourg
+  // 5. Cycle guard from Fiche de population
   console.log("\n" + "─".repeat(60));
-  console.log("CYCLE GUARD: starting from Fiche pop. (id 5) — Faubourg→Paysan→Faubourg loop should mark 'déjà affiché'");
+  console.log("CYCLE GUARD: Fiche de population (loops should mark 'déjà affiché')");
   console.log("─".repeat(60));
-  const fp = expandForward(db, 5, { maxDepth: 4 });
+  const fp = await expandForward("CARTE_FICHE_DE_POPULATION", { maxDepth: 4 });
   if (fp) renderForward(fp, 0, 5);
 
-  // 6. Phase 2 overlay: Paysan tree annotated with Mek Dyude state.
+  // 6. Overlay: Paysan tree with Mek Dyude state
   console.log("\n" + "─".repeat(60));
-  console.log("PHASE 2 OVERLAY: Paysan tree with Mek Dyude built/buildable/blocked annotations");
+  console.log("OVERLAY: Paysan tree with Mek Dyude built/buildable/blocked");
   console.log("─".repeat(60));
-  const paysanWithOverlay = expandForward(db, 36, { maxDepth: 1 });
+  const paysanWithOverlay = await expandForward("CARTE_PAYSAN", { maxDepth: 1 });
   if (paysanWithOverlay) {
-    annotateForward(db, paysanWithOverlay, "mek_dyude");
+    await annotateForward(paysanWithOverlay, "mek_dyude");
     renderForward(paysanWithOverlay, 0, 2);
   }
 
-  db.close();
   console.log("\n=== ✓ smoke test complete ===");
 }
 
-try {
-  main();
-} catch (e) {
-  console.error("✗ smoke failed:", e);
+main().catch((err) => {
+  console.error("✗ smoke failed:", err);
   process.exit(1);
-}
+});

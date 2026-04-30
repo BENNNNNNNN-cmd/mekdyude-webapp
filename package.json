@@ -8,10 +8,12 @@
     "start": "next start",
     "lint": "eslint",
     "verify:seed": "tsx scripts/verify-bicolline-seed.ts",
-    "smoke:tree": "tsx scripts/smoke-production-tree.ts"
+    "smoke:tree": "tsx scripts/smoke-production-tree.ts",
+    "diff:reference": "tsx scripts/diff-reference-postgres.ts"
   },
   "dependencies": {
     "better-sqlite3": "^12.8.0",
+    "dotenv": "^17.4.2",
     "jose": "^6.2.2",
     "next": "16.2.1",
     "pg": "^8.20.0",
@@ -28,6 +30,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.0",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   },
   "overrides": {

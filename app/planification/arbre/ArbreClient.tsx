@@ -14,9 +14,9 @@ import TreeNode from "@/app/components/planification/TreeNode";
  * cancels the previous one via AbortController.
  */
 export default function ArbreClient({ cards }: { cards: Card[] }) {
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [includeSubs, setIncludeSubs] = useState(false);
-  const [overlay, setOverlay] = useState(true); // default ON — daily-driver mode
+  const [overlay, setOverlay] = useState(true);
   const [tree, setTree] = useState<CardNode | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +24,7 @@ export default function ArbreClient({ cards }: { cards: Card[] }) {
   const inflight = useRef<AbortController | null>(null);
 
   const fetchTree = useCallback(
-    async (cardId: number, withSubs: boolean, withOverlay: boolean) => {
+    async (cardId: string, withSubs: boolean, withOverlay: boolean) => {
       inflight.current?.abort();
       const controller = new AbortController();
       inflight.current = controller;
@@ -33,7 +33,7 @@ export default function ArbreClient({ cards }: { cards: Card[] }) {
       setError(null);
       try {
         const params = new URLSearchParams({
-          card: String(cardId),
+          card: cardId,
           substitutes: withSubs ? "1" : "0",
           overlay: withOverlay ? "1" : "0",
         });
@@ -54,7 +54,7 @@ export default function ArbreClient({ cards }: { cards: Card[] }) {
     []
   );
 
-  function handleCardChange(id: number | null) {
+  function handleCardChange(id: string | null) {
     setSelectedId(id);
     if (id == null) {
       inflight.current?.abort();

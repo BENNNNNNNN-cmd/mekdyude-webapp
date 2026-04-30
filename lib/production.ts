@@ -1,4 +1,5 @@
 import { getDb } from "@/db";
+import { loadRepo } from "@/lib/production-tree/engine";
 
 export interface ProductionLine {
   domainId: string;
@@ -13,7 +14,12 @@ export interface ProductionLine {
   staffingStatus: "full" | "partial" | "unstaffed" | "none";
 }
 
-export interface AbbayeProduction {
+/**
+ * Multi-output buildings (Abbaye, etc.) emit multiple resource lines from a
+ * single staffed-worker pool. Carries the same domain/staff metadata as
+ * ProductionLine, plus a list of resource amounts.
+ */
+export interface MultiOutputProduction {
   domainId: string;
   domainName: string;
   buildingId: string;
@@ -25,72 +31,85 @@ export interface AbbayeProduction {
   staffingStatus: "full" | "partial" | "unstaffed";
 }
 
-export type ProductionEntry = ProductionLine | AbbayeProduction;
+export type ProductionEntry = ProductionLine | MultiOutputProduction;
 
-export function isAbbayeProduction(entry: ProductionEntry): entry is AbbayeProduction {
+export function isMultiOutputProduction(entry: ProductionEntry): entry is MultiOutputProduction {
   return "lines" in entry;
 }
 
-function getStaffingStatus(assigned: number, capacity: number): "full" | "partial" | "unstaffed" | "none" {
+/** @deprecated Use isMultiOutputProduction. Kept for back-compat with callers. */
+export const isAbbayeProduction = isMultiOutputProduction;
+
+function getStaffingStatus(
+  assigned: number,
+  capacity: number
+): "full" | "partial" | "unstaffed" | "none" {
   if (capacity <= 0) return "none";
   if (assigned >= capacity) return "full";
   if (assigned > 0) return "partial";
   return "unstaffed";
 }
 
-export function computeProduction(): ProductionEntry[] {
+export async function computeProduction(guildId = "mek_dyude"): Promise<ProductionEntry[]> {
   const db = getDb();
-  const rows = db.prepare(`
-    SELECT
-      db.id as db_id, db.domain_id, db.building_template_id, db.assigned_count,
-      d.name as domain_name,
-      bt.name as building_name, bt.capacity, bt.assignment_type,
-      bt.resource_produced, bt.ratio_per_unit
-    FROM domain_buildings db
-    JOIN domains d ON d.id = db.domain_id
-    JOIN building_templates bt ON bt.id = db.building_template_id
-    WHERE d.guild_id = 'mek_dyude'
-    ORDER BY d.name, bt.name
-  `).all() as Array<{
-    db_id: string; domain_id: string; building_template_id: string; assigned_count: number;
-    domain_name: string; building_name: string; capacity: number; assignment_type: string;
-    resource_produced: string; ratio_per_unit: number;
+  const repo = await loadRepo();
+
+  const rows = db
+    .prepare(
+      `SELECT db.id AS db_id, db.domain_id, db.building_template_id, db.assigned_count,
+              d.name AS domain_name
+       FROM domain_buildings db
+       JOIN domains d ON d.id = db.domain_id
+       WHERE d.guild_id = ?
+       ORDER BY d.name, db.building_template_id`
+    )
+    .all(guildId) as Array<{
+    db_id: string;
+    domain_id: string;
+    building_template_id: string;
+    assigned_count: number;
+    domain_name: string;
   }>;
 
   const results: ProductionEntry[] = [];
 
   for (const row of rows) {
-    const capacity = row.capacity ?? 0;
+    const building = repo.getBuilding(row.building_template_id);
+    if (!building) continue;
     const assigned = row.assigned_count ?? 0;
+    const capacity = building.inputs[0]?.max_quantity ?? 0;
+    const assignmentType = building.inputs[0]?.card_title ?? "";
 
-    if (row.building_name === "Abbaye") {
+    if (building.outputs.length === 0) continue;
+
+    if (building.outputs.length > 1) {
+      const lines = building.outputs.map((o) => ({
+        resource: o.card_title,
+        amount: computeOutputAmount(assigned, capacity, o),
+      }));
       results.push({
         domainId: row.domain_id,
         domainName: row.domain_name,
         buildingId: row.building_template_id,
-        buildingName: row.building_name,
+        buildingName: building.name,
         assignedCount: assigned,
         capacity,
-        assignmentType: row.assignment_type,
-        lines: [
-          { resource: "Victuailles", amount: assigned * 7 },
-          { resource: "Équipements", amount: assigned * 7 },
-          { resource: "Armements", amount: assigned * 3 },
-        ],
+        assignmentType,
+        lines,
         staffingStatus: getStaffingStatus(assigned, capacity) as "full" | "partial" | "unstaffed",
       });
     } else {
-      const amount = assigned * (row.ratio_per_unit ?? 0);
+      const o = building.outputs[0];
       results.push({
         domainId: row.domain_id,
         domainName: row.domain_name,
         buildingId: row.building_template_id,
-        buildingName: row.building_name,
+        buildingName: building.name,
         assignedCount: assigned,
         capacity,
-        assignmentType: row.assignment_type,
-        resource: row.resource_produced || "",
-        amount,
+        assignmentType,
+        resource: o.card_title,
+        amount: computeOutputAmount(assigned, capacity, o),
         staffingStatus: getStaffingStatus(assigned, capacity),
       });
     }
@@ -99,12 +118,23 @@ export function computeProduction(): ProductionEntry[] {
   return results;
 }
 
-export function getProductionSummary() {
-  const production = computeProduction();
+function computeOutputAmount(
+  assigned: number,
+  capacity: number,
+  output: { quantity_per_input: number; input_divisor: number; full_capacity_bonus: number }
+): number {
+  const per = output.quantity_per_input / Math.max(1, output.input_divisor);
+  const base = assigned * per;
+  const bonus = capacity > 0 && assigned >= capacity ? output.full_capacity_bonus : 0;
+  return base + bonus;
+}
+
+export async function getProductionSummary(guildId = "mek_dyude") {
+  const production = await computeProduction(guildId);
   const totals: Record<string, number> = {};
 
   for (const entry of production) {
-    if (isAbbayeProduction(entry)) {
+    if (isMultiOutputProduction(entry)) {
       for (const line of entry.lines) {
         totals[line.resource] = (totals[line.resource] || 0) + line.amount;
       }

@@ -1,11 +1,11 @@
-import { getDb } from "@/db";
+import { ensureReferenceMigration } from "@/db";
 import ScrollToTopButton from "@/app/components/ScrollToTopButton";
 import { listAllCards } from "@/lib/production-tree/engine";
 import ArbreClient from "./ArbreClient";
 
-// Reads directly from SQLite — Next.js can't track invalidation, so force
-// per-request rendering. Without this, the page is prerendered at build time
-// and the first cold visit serves stale data until Cmd+Shift+R.
+// Reference data is fetched live from Postgres each request (5-min TTL cache
+// in lib/reference-postgres.ts). Force per-request rendering so we don't
+// prerender against stale snapshots at build time.
 export const dynamic = "force-dynamic";
 
 /**
@@ -13,9 +13,9 @@ export const dynamic = "force-dynamic";
  * Server-side: prefetch the card list for the picker.
  * Client: handles selection + tree fetch + rendering.
  */
-export default function ArbrePage() {
-  const db = getDb();
-  const cards = listAllCards(db);
+export default async function ArbrePage() {
+  await ensureReferenceMigration();
+  const cards = await listAllCards();
 
   return (
     <div className="space-y-6">

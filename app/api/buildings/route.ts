@@ -1,40 +1,40 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/db";
+import { ensureReferenceMigration } from "@/db";
+import { getBatiments, getCouts } from "@/lib/reference-postgres";
 
 export async function GET(request: NextRequest) {
+  await ensureReferenceMigration();
   const { searchParams } = new URL(request.url);
   const sphere = searchParams.get("sphere");
 
-  const db = getDb();
+  const [batiments, couts] = await Promise.all([getBatiments(), getCouts()]);
 
-  let query = `
-    SELECT bt.*, GROUP_CONCAT(cc.resource_type || ':' || cc.amount, '|') as costs_raw
-    FROM building_templates bt
-    LEFT JOIN construction_costs cc ON cc.building_id = bt.id
-  `;
-  const params: string[] = [];
-
-  if (sphere) {
-    query += " WHERE bt.sphere = ?";
-    params.push(sphere);
+  const constructionCostsByBatiment = new Map<string, Record<string, number>>();
+  for (const c of couts) {
+    if (c.objetType !== "Bâtiment" || c.typeCout !== "Construction") continue;
+    if (!c.composant || c.quantite === null) continue;
+    const map = constructionCostsByBatiment.get(c.objetId) ?? {};
+    map[c.composant] = (map[c.composant] ?? 0) + c.quantite;
+    constructionCostsByBatiment.set(c.objetId, map);
   }
 
-  query += " GROUP BY bt.id ORDER BY bt.sphere, bt.name";
+  let filtered = batiments;
+  if (sphere) filtered = batiments.filter((b) => b.sphere === sphere);
 
-  const rows = db.prepare(query).all(...params) as Array<Record<string, unknown>>;
-
-  const result = rows.map((row) => {
-    const costsRaw = row.costs_raw as string | null;
-    const costs: Record<string, number> = {};
-    if (costsRaw) {
-      for (const pair of costsRaw.split("|")) {
-        const [resource, amount] = pair.split(":");
-        costs[resource] = parseInt(amount);
-      }
-    }
-    const { costs_raw: _, ...rest } = row;
-    return { ...rest, construction_costs: costs };
-  });
+  const result = filtered
+    .map((b) => ({
+      id: b.id,
+      name: b.nameFr,
+      sphere: b.sphere ?? "Autre",
+      capacity: b.capaciteQuantite ?? 0,
+      assignment_type: b.capaciteType ?? "",
+      domain_limitation: b.limitation,
+      structure_points: b.pointsStructure ?? 0,
+      notes: b.effetTexte,
+      statut: b.statut,
+      construction_costs: constructionCostsByBatiment.get(b.id) ?? {},
+    }))
+    .sort((a, b) => a.sphere.localeCompare(b.sphere, "fr") || a.name.localeCompare(b.name, "fr"));
 
   return NextResponse.json(result);
 }

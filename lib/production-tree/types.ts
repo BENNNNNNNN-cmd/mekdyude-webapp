@@ -1,36 +1,29 @@
 /**
  * Production-tree domain types.
  *
- * Bicolline ID universe:
- *   - card.id           — bicolline numeric id (1, 36, 44, ...)
- *   - building.bicolline_id — bicolline numeric id (1, 22, 30, ...)
- *   - building_templates.id — your local slug ("abbaye", "champs", ...)
+ * Phase 2 ID universe (post-migration to shared Postgres):
+ *   - card.id      — Postgres Carte.id, e.g. CARTE_PAYSAN
+ *   - building.id  — Postgres Batiment.id, e.g. BAT_CHATEAU
  *
- * Card categories (from bicolline taxonomy):
- *   "1"  Population
- *   "2"  Influences (Andore, Empire, etc.)
- *   "3"  Special / Magic / Devices
- *   "4"  Workers (Paysan, Forestier, Marin, ...) — substitutes apply here
- *   "5"  Mentors / Specialists (Charpentier, Croyant, Intendant, ...)
- *   "6"  Resources (Armement, Bétail, Céréales, Équipement, Ressource, ...)
- *   "7"  Military / Combat units
- *   "8"  Archers
- *   "10" Wealth / Cargo / Art
+ * `category` carries the Carte.famille string from Postgres
+ * (Unité, Lot de production, Richesse, Main-d'œuvre, Maître,
+ *  Influence, Énergie, Bâtiment, Navire, Amélioration, Objet
+ *  magique, Sort, Consommable, ...). Display-side mapping lives
+ * with the consumer.
  */
 
-export type CardCategory =
-  | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "10";
-
 export interface Card {
-  id: number;
+  id: string;
   title: string;
-  category: CardCategory | string;
+  category: string;
   /** ids of substitute cards (e.g. Paysan ↔ Forestier ↔ Marin ↔ ...) */
-  substitutes: number[];
+  substitutes: string[];
+  /** Phase 1 statut: Confirmé | Extrait | À valider | Historique */
+  statut: string;
 }
 
 export interface OutputConstraint {
-  constraining_card_id: number;
+  constraining_card_id: string;
   constraining_card_title: string;
   scope: "domain" | "fief" | "province" | "region";
   numerator: number;
@@ -38,7 +31,7 @@ export interface OutputConstraint {
 }
 
 export interface BuildingOutput {
-  card_id: number;
+  card_id: string;
   card_title: string;
   quantity_per_input: number;
   input_divisor: number;
@@ -49,20 +42,21 @@ export interface BuildingOutput {
 }
 
 export interface BuildingInput {
-  card_id: number;
+  card_id: string;
   card_title: string;
   max_quantity: number;
 }
 
 /** Building denormalized for graph traversal. */
 export interface BuildingNode {
-  /** local slug — primary key in building_templates */
+  /** Postgres Batiment.id (BAT_*) */
   id: string;
   name: string;
   sphere: string;
-  bicolline_id: number | null;
   inputs: BuildingInput[];
   outputs: BuildingOutput[];
+  /** Phase 1 statut: Confirmé | Extrait | À valider | Historique */
+  statut: string;
 }
 
 /** A node in the forward production tree (card → buildings → outputs → recurse). */
@@ -86,7 +80,7 @@ export interface BuildingTreeEntry {
    * The single input card that triggered this entry being shown
    * (the parent CardNode's card.id).
    */
-  matchedInputCardId: number;
+  matchedInputCardId: string;
   /** Recursive expansion: each output becomes a CardNode child. */
   outputs: OutputTreeEntry[];
   /**

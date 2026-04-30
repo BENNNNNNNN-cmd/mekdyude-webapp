@@ -1,31 +1,23 @@
-import { getDb } from "@/db";
-import { listAllCards } from "@/lib/production-tree/engine";
+import { ensureReferenceMigration } from "@/db";
+import { loadRepo } from "@/lib/production-tree/engine";
 import InverseClient from "./InverseClient";
 
-// Reads directly from SQLite — Next.js can't track invalidation, so force
-// per-request rendering. Without this, the page is prerendered at build time
-// and the first cold visit serves stale data until Cmd+Shift+R.
 export const dynamic = "force-dynamic";
 
 /**
  * Reverse planner page (Phase 3).
  * Server-side: prefetch the card list (filtered to "produceable" cards — those
- * for which at least one building has an output row).
+ * that some building's outputs include).
  * Client: target picker + qty input + ranked option list.
  */
-export default function InversePage() {
-  const db = getDb();
-
-  // Restrict the dropdown to cards that are actually produced by some building.
-  // Otherwise we'd offer impossible targets like "Influence Andore" that no
-  // building can output.
-  const producibleIds = new Set(
-    (db
-      .prepare("SELECT DISTINCT output_card_id FROM building_outputs")
-      .all() as Array<{ output_card_id: number }>).map((r) => r.output_card_id)
-  );
-
-  const allCards = listAllCards(db);
+export default async function InversePage() {
+  await ensureReferenceMigration();
+  const repo = await loadRepo();
+  const allCards = repo.listCards();
+  const producibleIds = new Set<string>();
+  for (const card of allCards) {
+    if (repo.buildingsProducing(card.id).length > 0) producibleIds.add(card.id);
+  }
   const cards = allCards.filter((c) => producibleIds.has(c.id));
 
   return (

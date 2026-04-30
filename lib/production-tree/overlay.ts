@@ -9,8 +9,9 @@
  * domain) pair — that's our single source of truth for the rules.
  */
 
-import type Database from "better-sqlite3";
+import { getDb } from "@/db";
 import { checkConstructionFeasibility } from "@/lib/construction";
+import { getBatimentById } from "@/lib/reference-postgres";
 import type {
   BuildingOverlay,
   BuiltInstance,
@@ -28,79 +29,65 @@ interface DomainRow {
  * Annotate every building entry in a forward tree with overlay info,
  * scoped to the given guild's domains. Mutates `tree` in place.
  */
-export function annotateForward(
-  db: Database.Database,
-  tree: CardNode,
-  guildId: string
-): CardNode {
+export async function annotateForward(tree: CardNode, guildId: string): Promise<CardNode> {
+  const db = getDb();
   const domains = db
     .prepare("SELECT id, name, guild_id FROM domains WHERE guild_id = ? ORDER BY name")
     .all(guildId) as DomainRow[];
 
-  if (domains.length === 0) return tree; // nothing to annotate against
+  if (domains.length === 0) return tree;
 
   const cache = new Map<string, BuildingOverlay>();
   const visited = new WeakSet<CardNode>();
-  walk(tree);
+  await walk(tree);
   return tree;
 
-  function walk(node: CardNode) {
-    if (visited.has(node)) return; // safety against shared subtrees
+  async function walk(node: CardNode): Promise<void> {
+    if (visited.has(node)) return;
     visited.add(node);
     if (node.alreadyShown) return;
     for (const b of node.buildings) {
       let overlay = cache.get(b.building.id);
       if (!overlay) {
-        overlay = computeOverlay(db, b.building.id, b.building.name, domains);
+        overlay = await computeOverlay(b.building.id, b.building.name, domains);
         cache.set(b.building.id, overlay);
       }
       b.overlay = overlay;
-      for (const o of b.outputs) walk(o.child);
+      for (const o of b.outputs) await walk(o.child);
     }
   }
 }
 
-function computeOverlay(
-  db: Database.Database,
+async function computeOverlay(
   buildingId: string,
   buildingName: string,
   domains: DomainRow[]
-): BuildingOverlay {
-  // Check construction feasibility per domain. Note: feasibility logic flags
-  // "Déjà construit sur ce domaine" as a reason — for the overlay we want to
-  // pull that out as a SEPARATE classification (built), not treat it as blocked.
+): Promise<BuildingOverlay> {
+  const db = getDb();
   const builtOn: BuiltInstance[] = [];
   const buildableOn: DomainCandidate[] = [];
   const blockedOn: DomainCandidate[] = [];
 
-  // For each domain, determine if the building exists already (separate query
-  // — feasibility check returns it as a reason but we want it classified).
   const existsStmt = db.prepare(
     "SELECT assigned_count FROM domain_buildings WHERE domain_id = ? AND building_template_id = ?"
   );
-  const buildingStmt = db.prepare(
-    "SELECT capacity FROM building_templates WHERE id = ?"
-  );
+  const batiment = await getBatimentById(buildingId);
+  const capacity = batiment?.capaciteQuantite ?? 0;
 
   for (const d of domains) {
     const existing = existsStmt.get(d.id, buildingId) as { assigned_count: number } | undefined;
     if (existing) {
-      const cap = (buildingStmt.get(buildingId) as { capacity: number } | undefined)?.capacity ?? 0;
       builtOn.push({
         domain_id: d.id,
         domain_name: d.name,
         assigned_count: existing.assigned_count,
-        capacity: cap,
+        capacity,
       });
       continue;
     }
 
-    const result = checkConstructionFeasibility(buildingId, d.id);
-    // Drop the "already built" reason if it slipped through (shouldn't, since
-    // we just confirmed no existing row). Keep the rest.
-    const reasons = result.reasons.filter(
-      (r) => !r.startsWith("Déjà construit")
-    );
+    const result = await checkConstructionFeasibility(buildingId, d.id);
+    const reasons = result.reasons.filter((r) => !r.startsWith("Déjà construit"));
 
     if (reasons.length === 0) {
       buildableOn.push({ domain_id: d.id, domain_name: d.name, reasons: [] });

@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { getDb } from "@/db";
 import { listAllCards } from "@/lib/production-tree/engine";
 
 /**
@@ -8,7 +7,6 @@ import { listAllCards } from "@/lib/production-tree/engine";
  * Used by the production-tree CardPicker dropdown.
  */
 export async function GET() {
-  const db = getDb();
-  const cards = listAllCards(db);
+  const cards = await listAllCards();
   return NextResponse.json(cards);
 }

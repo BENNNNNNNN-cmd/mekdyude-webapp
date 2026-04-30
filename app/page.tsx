@@ -1,11 +1,17 @@
-import { getDb } from "@/db";
-import { getProductionSummary, isAbbayeProduction } from "@/lib/production";
+import { getDb, ensureReferenceMigration } from "@/db";
+import {
+  getProductionSummary,
+  isMultiOutputProduction,
+  type ProductionEntry,
+} from "@/lib/production";
 import { computeMaintenance } from "@/lib/maintenance";
-import { checkConstructionFeasibility } from "@/lib/construction";
+import {
+  checkConstructionFeasibility,
+  type FeasibilityResult,
+} from "@/lib/construction";
 
-// Reads directly from SQLite — Next.js can't track invalidation, so force
-// per-request rendering. Without this, the page is prerendered at build time
-// and the first cold visit serves stale data until Cmd+Shift+R.
+// Mixes SQLite operational tables and Postgres reference data; force per-request
+// rendering to avoid prerendering against stale snapshots.
 export const dynamic = "force-dynamic";
 
 function StatusBadge({ status }: { status: string }) {
@@ -15,12 +21,16 @@ function StatusBadge({ status }: { status: string }) {
   return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-800/40 text-gray-500 dark:text-gray-400">—</span>;
 }
 
-export default function Dashboard() {
+export default async function Dashboard() {
+  await ensureReferenceMigration();
   const db = getDb();
-  const { production, totals } = getProductionSummary();
-  const maintenance = computeMaintenance();
+  const [{ production, totals }, maintenance, academie, collegeOcculte] = await Promise.all([
+    getProductionSummary(),
+    computeMaintenance(),
+    checkConstructionFeasibility("BAT_ACADEMIE", "kintyre"),
+    checkConstructionFeasibility("BAT_COLLEGE_OCCULTE", "kintyre"),
+  ]);
 
-  // KPI data
   const solarRow = db.prepare(
     "SELECT qty_coffre + qty_en_mains as total FROM inventory WHERE guild_id = 'mek_dyude' AND item_name = 'solar'"
   ).get() as { total: number } | undefined;
@@ -32,18 +42,15 @@ export default function Dashboard() {
     "SELECT SUM(buildings_used) as used, SUM(buildings_max) as max FROM domains WHERE guild_id = 'mek_dyude'"
   ).get() as { used: number; max: number };
 
-  const alertCount = production.filter((p) => p.staffingStatus === "unstaffed" || p.staffingStatus === "partial").length;
+  const alertCount = production.filter(
+    (p: ProductionEntry) => p.staffingStatus === "unstaffed" || p.staffingStatus === "partial"
+  ).length;
 
-  // Group production by domain
-  const byDomain: Record<string, typeof production> = {};
+  const byDomain: Record<string, ProductionEntry[]> = {};
   for (const p of production) {
     if (!byDomain[p.domainId]) byDomain[p.domainId] = [];
     byDomain[p.domainId].push(p);
   }
-
-  // Construction projects
-  const academie = checkConstructionFeasibility("academie", "kintyre");
-  const collegeOcculte = checkConstructionFeasibility("college_occulte", "kintyre");
 
   return (
     <div className="max-w-7xl mx-auto space-y-8">
@@ -86,9 +93,9 @@ export default function Dashboard() {
                           {entry.capacity > 0 ? `${entry.assignedCount}/${entry.capacity}` : "—"}
                         </td>
                         <td className="px-5 py-2">
-                          {isAbbayeProduction(entry) ? (
+                          {isMultiOutputProduction(entry) ? (
                             <span className="font-mono text-sm">
-                              V{entry.lines[0].amount} / É{entry.lines[1].amount} / A{entry.lines[2].amount}
+                              {entry.lines.map((l) => `${l.amount} ${l.resource}`).join(" / ")}
                             </span>
                           ) : (
                             entry.amount > 0 ? (
@@ -187,7 +194,7 @@ function KPICard({ title, value, icon, color }: { title: string; value: string; 
   );
 }
 
-function ConstructionCard({ result }: { result: ReturnType<typeof checkConstructionFeasibility> }) {
+function ConstructionCard({ result }: { result: FeasibilityResult }) {
   return (
     <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
       <div className="px-5 py-3 bg-parchment-dark/50 border-b border-border flex items-center justify-between">
