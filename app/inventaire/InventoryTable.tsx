@@ -328,7 +328,7 @@ export default function InventoryTable({ initialItems }: { initialItems: Invento
     async (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
       if (hasDirtyChanges) {
-        setError("Sauvegardez ou annulez vos modifications avant d'ajouter des solars.");
+        setError("Sauvegardez ou annulez vos modifications avant d'ajouter du Solar.");
         return;
       }
 
@@ -350,7 +350,7 @@ export default function InventoryTable({ initialItems }: { initialItems: Invento
         setShowAddPanel(false);
         router.refresh();
       } catch {
-        setError("Erreur lors de l'ajout des solars. Veuillez réessayer.");
+        setError("Erreur lors de l'ajout du Solar. Veuillez réessayer.");
       } finally {
         setAdding(false);
       }
@@ -429,7 +429,7 @@ export default function InventoryTable({ initialItems }: { initialItems: Invento
                     : "text-foreground/70 hover:bg-parchment-dark"
                 }`}
               >
-                Solars
+                Solar
               </button>
             </div>
           </div>
@@ -577,7 +577,7 @@ export default function InventoryTable({ initialItems }: { initialItems: Invento
                   disabled={adding || saving || hasDirtyChanges}
                   className="rounded-lg bg-brand-amber px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-amber-500 disabled:opacity-50"
                 >
-                  {adding ? "Ajout en cours…" : "Ajouter les solars"}
+                  {adding ? "Ajout en cours…" : "Ajouter du Solar"}
                 </button>
               </div>
             </form>

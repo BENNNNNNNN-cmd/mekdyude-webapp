@@ -32,7 +32,7 @@ export default async function Dashboard() {
   ]);
 
   const solarRow = db.prepare(
-    "SELECT qty_coffre + qty_en_mains as total FROM inventory WHERE guild_id = 'mek_dyude' AND item_name = 'solar'"
+    "SELECT qty_coffre + qty_en_mains as total FROM inventory WHERE guild_id = 'mek_dyude' AND lower(item_name) = 'solar'"
   ).get() as { total: number } | undefined;
   const solar = solarRow?.total ?? 0;
 
@@ -58,7 +58,7 @@ export default async function Dashboard() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPICard title="solar" value={solar.toLocaleString("fr-CA") + " $"} icon="$" color="amber" />
+        <KPICard title="Solar" value={solar.toLocaleString("fr-CA") + " $"} icon="$" color="amber" />
         <KPICard title="Production totale" value={`${distinctResources} ressources`} icon="⚙" color="blue" />
         <KPICard title="Bâtiments" value={`${domainsData.used}/${domainsData.max}`} icon="🏠" color="green" />
         <KPICard title="Alertes" value={alertCount.toString()} icon="⚠" color={alertCount > 0 ? "red" : "green"} />

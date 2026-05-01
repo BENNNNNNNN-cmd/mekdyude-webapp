@@ -147,13 +147,13 @@ export async function createInventoryItem(
 }
 
 export async function addSolars(input: AddSolarsInput): Promise<InventoryActionResult> {
-  const authError = await assertAdmin("ajouter des solars");
+  const authError = await assertAdmin("ajouter du Solar");
   if (authError) return { ok: false, message: authError };
 
   const amount = parseWholeQuantity(input.amount, "Montant");
   if (!amount.ok) return { ok: false, message: amount.message };
   if (amount.value === 0) {
-    return { ok: false, message: "Le montant de solars doit être plus grand que 0." };
+    return { ok: false, message: "Le montant de Solar doit être plus grand que 0." };
   }
 
   const target = input.target === "qty_en_mains" ? "qty_en_mains" : "qty_coffre";
@@ -176,7 +176,7 @@ export async function addSolars(input: AddSolarsInput): Promise<InventoryActionR
         VALUES (?, ?, ?, ?, ?, ?, ?)
       `).run(
         GUILD_ID,
-        "solar",
+        "Solar",
         "ressource",
         target === "qty_coffre" ? amount.value : 0,
         target === "qty_en_mains" ? amount.value : 0,
@@ -184,19 +184,19 @@ export async function addSolars(input: AddSolarsInput): Promise<InventoryActionR
         null
       );
 
-      return "solar";
+      return "Solar";
     });
 
     const itemName = saveSolars();
     const item = selectInventoryItem(itemName);
     if (!item) {
-      return { ok: false, message: "Impossible de relire les solars ajoutés." };
+      return { ok: false, message: "Impossible de relire le Solar ajouté." };
     }
 
     revalidatePath("/");
     revalidatePath("/inventaire");
     return { ok: true, item };
   } catch {
-    return { ok: false, message: "Impossible d'ajouter les solars." };
+    return { ok: false, message: "Impossible d'ajouter le Solar." };
   }
 }
