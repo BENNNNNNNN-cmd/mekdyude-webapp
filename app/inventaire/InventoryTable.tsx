@@ -21,6 +21,10 @@ function buildMarketSearchHref(itemName: string) {
   return `https://marchecelte.ca/prices?search=${encodeURIComponent(itemName)}`;
 }
 
+function formatInventoryItemName(itemName: string) {
+  return itemName.toLocaleLowerCase("fr-CA") === "solaris" ? "Solar" : itemName;
+}
+
 function formatQtyPerLot(qtyPerLot: number) {
   return qtyPerLot > 1 ? ` x${qtyPerLot}` : "";
 }
@@ -47,7 +51,10 @@ function sortInventoryItems(a: InventoryItem, b: InventoryItem) {
   const categoryOrder = a.category.localeCompare(b.category, "fr-CA");
   if (categoryOrder !== 0) return categoryOrder;
 
-  return a.item_name.localeCompare(b.item_name, "fr-CA");
+  return formatInventoryItemName(a.item_name).localeCompare(
+    formatInventoryItemName(b.item_name),
+    "fr-CA"
+  );
 }
 
 function mergeInventoryItem(
@@ -363,9 +370,10 @@ export default function InventoryTable({ initialItems }: { initialItems: Invento
 
     return items.filter((item) => {
       const matchesCategory = selectedCategory === "all" || item.category === selectedCategory;
+      const displayItemName = formatInventoryItemName(item.item_name);
       const matchesSearch =
         normalizedSearch.length === 0 ||
-        item.item_name.toLocaleLowerCase("fr-CA").includes(normalizedSearch);
+        displayItemName.toLocaleLowerCase("fr-CA").includes(normalizedSearch);
 
       return matchesCategory && matchesSearch;
     });
@@ -661,10 +669,11 @@ export default function InventoryTable({ initialItems }: { initialItems: Invento
                 {categoryItems.map((item, i) => {
                   const total = item.qty_coffre + item.qty_en_mains + item.qty_production;
                   const itemDirty = dirty[item.item_name];
-                  const marketHref = buildMarketSearchHref(item.market_price?.marketItemName ?? item.item_name);
+                  const displayItemName = formatInventoryItemName(item.item_name);
+                  const marketHref = buildMarketSearchHref(item.market_price?.marketItemName ?? displayItemName);
                   return (
                     <tr key={item.item_name} className={i % 2 === 0 ? "bg-card" : "bg-parchment/30"}>
-                      <td className="px-5 py-1.5 font-medium">{item.item_name}</td>
+                      <td className="px-5 py-1.5 font-medium">{displayItemName}</td>
                       <td className="px-5 py-1.5 text-right">
                         <EditableCell
                           value={item.qty_coffre}

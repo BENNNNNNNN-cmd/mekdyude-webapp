@@ -3,6 +3,10 @@ import { revalidatePath } from "next/cache";
 import { getDb } from "@/db";
 import { getSession } from "@/lib/session";
 
+function normalizeInventoryItemName(itemName: string) {
+  return itemName.toLocaleLowerCase("fr-CA") === "solaris" ? "Solar" : itemName;
+}
+
 export async function GET() {
   const session = await getSession();
   if (!session) {
@@ -12,8 +16,12 @@ export async function GET() {
   const db = getDb();
   const items = db.prepare(`
     SELECT * FROM inventory WHERE guild_id = 'mek_dyude' ORDER BY category, item_name
-  `).all();
-  return NextResponse.json(items);
+  `).all() as Array<{ item_name: string }>;
+  const normalizedItems = items.map((item) => ({
+    ...item,
+    item_name: normalizeInventoryItemName(item.item_name),
+  }));
+  return NextResponse.json(normalizedItems);
 }
 
 export async function PATCH(request: NextRequest) {
@@ -32,6 +40,7 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: "item_name required" }, { status: 400 });
   }
 
+  const itemName = normalizeInventoryItemName(item_name);
   const db = getDb();
   const updates: string[] = [];
   const values: (string | number)[] = [];
@@ -53,14 +62,14 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: "No fields to update" }, { status: 400 });
   }
 
-  values.push("mek_dyude", item_name);
+  values.push("mek_dyude", itemName);
   db.prepare(
     `UPDATE inventory SET ${updates.join(", ")} WHERE guild_id = ? AND item_name = ?`
   ).run(...values);
 
   const updated = db.prepare(
     "SELECT * FROM inventory WHERE guild_id = 'mek_dyude' AND item_name = ?"
-  ).get(item_name);
+  ).get(itemName);
 
   revalidatePath("/inventaire");
 

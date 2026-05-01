@@ -66,6 +66,7 @@ export function getDb(): Database.Database {
 
   if (isNew) seedDatabase(db);
 
+  normalizeLegacyInventoryNames(db);
   ensureClanMembers(db);
   return db;
 }
@@ -399,6 +400,58 @@ function ensureClanMembers(db: Database.Database) {
   });
 
   insertMembers();
+}
+
+function normalizeLegacyInventoryNames(db: Database.Database) {
+  const legacyRows = db
+    .prepare("SELECT * FROM inventory WHERE guild_id = ? AND lower(item_name) = 'solaris'")
+    .all("mek_dyude") as Array<{
+      item_name: string;
+      qty_coffre: number;
+      qty_en_mains: number;
+      qty_production: number;
+      notes: string | null;
+    }>;
+
+  if (legacyRows.length === 0) return;
+
+  const renameLegacyRows = db.transaction(() => {
+    const solar = db
+      .prepare("SELECT item_name FROM inventory WHERE guild_id = ? AND lower(item_name) = 'solar'")
+      .get("mek_dyude") as { item_name: string } | undefined;
+
+    if (solar) {
+      const merge = db.prepare(`
+        UPDATE inventory
+        SET qty_coffre = qty_coffre + ?,
+            qty_en_mains = qty_en_mains + ?,
+            qty_production = qty_production + ?,
+            notes = COALESCE(notes, ?)
+        WHERE guild_id = ? AND item_name = ?
+      `);
+      const removeLegacy = db.prepare(
+        "DELETE FROM inventory WHERE guild_id = ? AND item_name = ?"
+      );
+
+      for (const row of legacyRows) {
+        merge.run(
+          row.qty_coffre,
+          row.qty_en_mains,
+          row.qty_production,
+          row.notes,
+          "mek_dyude",
+          solar.item_name
+        );
+        removeLegacy.run("mek_dyude", row.item_name);
+      }
+      return;
+    }
+
+    db.prepare("UPDATE inventory SET item_name = 'Solar' WHERE guild_id = ? AND lower(item_name) = 'solaris'")
+      .run("mek_dyude");
+  });
+
+  renameLegacyRows();
 }
 
 export function hashPassword(password: string): string {

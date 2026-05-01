@@ -19,17 +19,25 @@ export interface InventoryItem {
   market_price?: MarketPriceSummary | null;
 }
 
+function normalizeInventoryItemName(itemName: string) {
+  return itemName.toLocaleLowerCase("fr-CA") === "solaris" ? "Solar" : itemName;
+}
+
 export default async function InventairePage() {
   await connection();
 
   const db = getDb();
   const inventoryItems = db.prepare(`
     SELECT * FROM inventory WHERE guild_id = 'mek_dyude' ORDER BY category, item_name
-  `).all() as InventoryItem[];
+  `).all() as Array<Omit<InventoryItem, "market_price">>;
+  const normalizedInventoryItems = inventoryItems.map((item) => ({
+    ...item,
+    item_name: normalizeInventoryItemName(item.item_name),
+  }));
   const marketPrices = await getMarketPriceSummaries(
-    inventoryItems.map((item) => item.item_name)
+    normalizedInventoryItems.map((item) => item.item_name)
   );
-  const items = inventoryItems.map((item) => ({
+  const items = normalizedInventoryItems.map((item) => ({
     ...item,
     market_price: marketPrices.get(item.item_name) ?? null,
   }));
