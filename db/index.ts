@@ -92,64 +92,130 @@ export async function ensureReferenceMigration(): Promise<void> {
 async function runReferenceMigration(): Promise<void> {
   const conn = getDb();
 
-  for (const table of LEGACY_REFERENCE_TABLES) {
-    conn.exec(`DROP TABLE IF EXISTS ${table}`);
-  }
+  conn.pragma("foreign_keys = OFF");
+  try {
+    rebuildOperationalTablesIfNeeded(conn);
 
-  const buildingRows = conn
-    .prepare("SELECT DISTINCT building_template_id FROM domain_buildings")
-    .all() as Array<{ building_template_id: string }>;
-  const stageRows = conn
-    .prepare("SELECT DISTINCT stage_id FROM domains")
-    .all() as Array<{ stage_id: string }>;
-
-  const needsBuildingMigration = buildingRows.some(
-    (r) => !r.building_template_id.startsWith("BAT_")
-  );
-  const needsStageMigration = stageRows.some((r) => !r.stage_id.startsWith("STADE_"));
-
-  if (needsBuildingMigration) {
-    const slugMap = await getBatimentSlugMapping();
-    const buildingEntries: Array<{ from: string; to: string }> = [];
-    for (const row of buildingRows) {
-      if (row.building_template_id.startsWith("BAT_")) continue;
-      const target = slugMap.get(row.building_template_id);
-      if (!target) {
-        console.warn(
-          `[migration] domain_buildings.building_template_id="${row.building_template_id}" doesn't map to any BAT_*; row left as-is`
-        );
-        continue;
-      }
-      buildingEntries.push({ from: row.building_template_id, to: target });
+    for (const table of LEGACY_REFERENCE_TABLES) {
+      conn.exec(`DROP TABLE IF EXISTS ${table}`);
     }
-    const updateBuilding = conn.prepare(
-      "UPDATE domain_buildings SET building_template_id = ? WHERE building_template_id = ?"
+
+    const buildingRows = conn
+      .prepare("SELECT DISTINCT building_template_id FROM domain_buildings")
+      .all() as Array<{ building_template_id: string }>;
+    const stageRows = conn
+      .prepare("SELECT DISTINCT stage_id FROM domains")
+      .all() as Array<{ stage_id: string }>;
+
+    const needsBuildingMigration = buildingRows.some(
+      (r) => !r.building_template_id.startsWith("BAT_")
     );
-    const buildingTx = conn.transaction(() => {
-      for (const { from, to } of buildingEntries) updateBuilding.run(to, from);
-    });
-    buildingTx();
-  }
+    const needsStageMigration = stageRows.some((r) => !r.stage_id.startsWith("STADE_"));
 
-  if (needsStageMigration) {
-    const stageEntries: Array<{ from: string; to: string }> = [];
-    for (const row of stageRows) {
-      if (row.stage_id.startsWith("STADE_")) continue;
-      const target = await getStadeIdFromLegacySlug(row.stage_id);
-      if (!target) {
-        console.warn(
-          `[migration] domains.stage_id="${row.stage_id}" doesn't map to any STADE_*; row left as-is`
-        );
-        continue;
+    if (needsBuildingMigration) {
+      const slugMap = await getBatimentSlugMapping();
+      const buildingEntries: Array<{ from: string; to: string }> = [];
+      for (const row of buildingRows) {
+        if (row.building_template_id.startsWith("BAT_")) continue;
+        const target = slugMap.get(row.building_template_id);
+        if (!target) {
+          console.warn(
+            `[migration] domain_buildings.building_template_id="${row.building_template_id}" doesn't map to any BAT_*; row left as-is`
+          );
+          continue;
+        }
+        buildingEntries.push({ from: row.building_template_id, to: target });
       }
-      stageEntries.push({ from: row.stage_id, to: target });
+      const updateBuilding = conn.prepare(
+        "UPDATE domain_buildings SET building_template_id = ? WHERE building_template_id = ?"
+      );
+      const buildingTx = conn.transaction(() => {
+        for (const { from, to } of buildingEntries) updateBuilding.run(to, from);
+      });
+      buildingTx();
     }
-    const updateStage = conn.prepare("UPDATE domains SET stage_id = ? WHERE stage_id = ?");
-    const stageTx = conn.transaction(() => {
-      for (const { from, to } of stageEntries) updateStage.run(to, from);
-    });
-    stageTx();
+
+    if (needsStageMigration) {
+      const stageEntries: Array<{ from: string; to: string }> = [];
+      for (const row of stageRows) {
+        if (row.stage_id.startsWith("STADE_")) continue;
+        const target = await getStadeIdFromLegacySlug(row.stage_id);
+        if (!target) {
+          console.warn(
+            `[migration] domains.stage_id="${row.stage_id}" doesn't map to any STADE_*; row left as-is`
+          );
+          continue;
+        }
+        stageEntries.push({ from: row.stage_id, to: target });
+      }
+      const updateStage = conn.prepare("UPDATE domains SET stage_id = ? WHERE stage_id = ?");
+      const stageTx = conn.transaction(() => {
+        for (const { from, to } of stageEntries) updateStage.run(to, from);
+      });
+      stageTx();
+    }
+  } finally {
+    conn.pragma("foreign_keys = ON");
   }
+}
+
+// Pre-Phase-2 DBs declared FKs from domains.stage_id → stage_templates(id) and
+// domain_buildings.building_template_id → building_templates(id). Phase 2 drops
+// those parent tables, which would leave dangling FKs and break any future
+// UPDATE on those columns. Rebuild the two tables to match the new schema.
+function rebuildOperationalTablesIfNeeded(conn: Database.Database): void {
+  const domainsSql =
+    (
+      conn
+        .prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'domains'")
+        .get() as { sql: string } | undefined
+    )?.sql ?? "";
+
+  const needsRebuild =
+    domainsSql.includes("REFERENCES stage_templates") ||
+    domainsSql.includes("REFERENCES building_templates");
+
+  if (!needsRebuild) return;
+
+  conn.exec(`
+    BEGIN;
+
+    CREATE TABLE domains_new (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      guild_id TEXT NOT NULL REFERENCES guilds(id),
+      stage_id TEXT NOT NULL,
+      province_id TEXT NOT NULL REFERENCES provinces(id),
+      fief_id TEXT REFERENCES fiefs(id),
+      production_type TEXT NOT NULL,
+      syta_quadrant TEXT,
+      deposit_type TEXT,
+      deposit_size TEXT,
+      coord_x INTEGER,
+      coord_y INTEGER,
+      is_coastal BOOLEAN DEFAULT FALSE,
+      buildings_used INTEGER DEFAULT 0,
+      buildings_max INTEGER DEFAULT 0
+    );
+    INSERT INTO domains_new SELECT * FROM domains;
+
+    CREATE TABLE domain_buildings_new (
+      id TEXT PRIMARY KEY,
+      domain_id TEXT NOT NULL REFERENCES domains_new(id),
+      building_template_id TEXT NOT NULL,
+      assigned_count INTEGER DEFAULT 0,
+      UNIQUE(domain_id, building_template_id)
+    );
+    INSERT INTO domain_buildings_new SELECT * FROM domain_buildings;
+
+    DROP TABLE domain_buildings;
+    DROP TABLE domains;
+
+    ALTER TABLE domains_new RENAME TO domains;
+    ALTER TABLE domain_buildings_new RENAME TO domain_buildings;
+
+    COMMIT;
+  `);
 }
 
 function seedDatabase(db: Database.Database) {
