@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import type { InventoryItem } from "./page";
+import { addSolars, createInventoryItem } from "./actions";
 
 const categoryLabels: Record<string, string> = {
   ressource: "Ressources",
@@ -40,6 +41,34 @@ function formatCheapestMarket(item: InventoryItem) {
   if (!summary) return "—";
 
   return `${summary.cheapestMarketCode} (${formatCurrency(summary.cheapestPrice)}${formatQtyPerLot(summary.cheapestQtyPerLot)})`;
+}
+
+function sortInventoryItems(a: InventoryItem, b: InventoryItem) {
+  const categoryOrder = a.category.localeCompare(b.category, "fr-CA");
+  if (categoryOrder !== 0) return categoryOrder;
+
+  return a.item_name.localeCompare(b.item_name, "fr-CA");
+}
+
+function mergeInventoryItem(
+  items: InventoryItem[],
+  nextItem: Omit<InventoryItem, "market_price">
+) {
+  const nextKey = nextItem.item_name.toLocaleLowerCase("fr-CA");
+  let replaced = false;
+
+  const merged = items.map((item) => {
+    if (item.item_name.toLocaleLowerCase("fr-CA") !== nextKey) return item;
+
+    replaced = true;
+    return { ...nextItem, market_price: item.market_price ?? null };
+  });
+
+  if (!replaced) {
+    merged.push({ ...nextItem, market_price: null });
+  }
+
+  return merged.sort(sortInventoryItems);
 }
 
 function EditableCell({
@@ -161,9 +190,20 @@ export default function InventoryTable({ initialItems }: { initialItems: Invento
   const [items, setItems] = useState(initialItems);
   const [dirty, setDirty] = useState<DirtyChanges>({});
   const [saving, setSaving] = useState(false);
+  const [adding, setAdding] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [showAddPanel, setShowAddPanel] = useState(false);
+  const [addMode, setAddMode] = useState<"item" | "solar">("item");
+  const [newItemName, setNewItemName] = useState("");
+  const [newItemCategory, setNewItemCategory] = useState("ressource");
+  const [newQtyCoffre, setNewQtyCoffre] = useState("0");
+  const [newQtyEnMains, setNewQtyEnMains] = useState("0");
+  const [newQtyProduction, setNewQtyProduction] = useState("0");
+  const [newItemNotes, setNewItemNotes] = useState("");
+  const [solarAmount, setSolarAmount] = useState("");
+  const [solarTarget, setSolarTarget] = useState<"qty_coffre" | "qty_en_mains">("qty_coffre");
 
   const hasDirtyChanges = Object.keys(dirty).length > 0;
   const hasActiveFilters = selectedCategory !== "all" || searchTerm.trim().length > 0;
@@ -224,6 +264,100 @@ export default function InventoryTable({ initialItems }: { initialItems: Invento
     }
   }, [dirty, router]);
 
+  const resetNewItemForm = useCallback(() => {
+    setNewItemName("");
+    setNewItemCategory("ressource");
+    setNewQtyCoffre("0");
+    setNewQtyEnMains("0");
+    setNewQtyProduction("0");
+    setNewItemNotes("");
+  }, []);
+
+  const addInventoryItem = useCallback(
+    async (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      if (hasDirtyChanges) {
+        setError("Sauvegardez ou annulez vos modifications avant d'ajouter un item.");
+        return;
+      }
+
+      setAdding(true);
+      setError(null);
+
+      try {
+        const result = await createInventoryItem({
+          item_name: newItemName,
+          category: newItemCategory,
+          qty_coffre: newQtyCoffre,
+          qty_en_mains: newQtyEnMains,
+          qty_production: newQtyProduction,
+          notes: newItemNotes,
+        });
+
+        if (!result.ok) {
+          setError(result.message);
+          return;
+        }
+
+        setItems((prev) => mergeInventoryItem(prev, result.item));
+        setSelectedCategory(result.item.category);
+        setSearchTerm("");
+        resetNewItemForm();
+        setShowAddPanel(false);
+        router.refresh();
+      } catch {
+        setError("Erreur lors de l'ajout. Veuillez réessayer.");
+      } finally {
+        setAdding(false);
+      }
+    },
+    [
+      hasDirtyChanges,
+      newItemCategory,
+      newItemName,
+      newItemNotes,
+      newQtyCoffre,
+      newQtyEnMains,
+      newQtyProduction,
+      resetNewItemForm,
+      router,
+    ]
+  );
+
+  const addSolarAmount = useCallback(
+    async (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      if (hasDirtyChanges) {
+        setError("Sauvegardez ou annulez vos modifications avant d'ajouter des solars.");
+        return;
+      }
+
+      setAdding(true);
+      setError(null);
+
+      try {
+        const result = await addSolars({ amount: solarAmount, target: solarTarget });
+
+        if (!result.ok) {
+          setError(result.message);
+          return;
+        }
+
+        setItems((prev) => mergeInventoryItem(prev, result.item));
+        setSelectedCategory(result.item.category);
+        setSearchTerm("");
+        setSolarAmount("");
+        setShowAddPanel(false);
+        router.refresh();
+      } catch {
+        setError("Erreur lors de l'ajout des solars. Veuillez réessayer.");
+      } finally {
+        setAdding(false);
+      }
+    },
+    [hasDirtyChanges, router, solarAmount, solarTarget]
+  );
+
   const filteredItems = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLocaleLowerCase("fr-CA");
 
@@ -250,6 +384,204 @@ export default function InventoryTable({ initialItems }: { initialItems: Invento
       {error && (
         <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/40 rounded-lg text-sm text-red-700 dark:text-red-400">
           {error}
+        </div>
+      )}
+
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={() => {
+            setError(null);
+            setShowAddPanel((current) => !current);
+          }}
+          disabled={adding || saving}
+          className="inline-flex items-center gap-2 rounded-lg bg-sidebar px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-sidebar/90 disabled:opacity-50"
+        >
+          <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+          Ajouter
+        </button>
+      </div>
+
+      {showAddPanel && (
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h2 className="font-serif text-lg font-bold text-foreground">Ajouter à l&apos;inventaire</h2>
+            <div className="inline-flex rounded-lg border border-border bg-background p-1">
+              <button
+                type="button"
+                onClick={() => setAddMode("item")}
+                className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                  addMode === "item"
+                    ? "bg-brand-amber text-white shadow-sm"
+                    : "text-foreground/70 hover:bg-parchment-dark"
+                }`}
+              >
+                Carte / item
+              </button>
+              <button
+                type="button"
+                onClick={() => setAddMode("solar")}
+                className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                  addMode === "solar"
+                    ? "bg-brand-amber text-white shadow-sm"
+                    : "text-foreground/70 hover:bg-parchment-dark"
+                }`}
+              >
+                Solars
+              </button>
+            </div>
+          </div>
+
+          {hasDirtyChanges && (
+            <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
+              Sauvegardez ou annulez les modifications en cours avant d&apos;ajouter une ligne.
+            </p>
+          )}
+
+          {addMode === "item" ? (
+            <form onSubmit={addInventoryItem} className="mt-4 grid gap-3 md:grid-cols-6">
+              <label className="flex flex-col gap-1 text-sm font-medium text-foreground md:col-span-2">
+                Nom
+                <input
+                  type="text"
+                  className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-normal text-foreground placeholder:text-foreground/40 focus:outline-none focus:ring-2 focus:ring-amber-300"
+                  value={newItemName}
+                  onChange={(event) => setNewItemName(event.target.value)}
+                  required
+                />
+              </label>
+
+              <label className="flex flex-col gap-1 text-sm font-medium text-foreground">
+                Section
+                <select
+                  className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-normal text-foreground focus:outline-none focus:ring-2 focus:ring-amber-300"
+                  value={newItemCategory}
+                  onChange={(event) => setNewItemCategory(event.target.value)}
+                >
+                  {Object.entries(categoryLabels).map(([category, label]) => (
+                    <option key={category} value={category}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="flex flex-col gap-1 text-sm font-medium text-foreground">
+                Coffre
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-normal text-foreground focus:outline-none focus:ring-2 focus:ring-amber-300"
+                  value={newQtyCoffre}
+                  onChange={(event) => setNewQtyCoffre(event.target.value)}
+                />
+              </label>
+
+              <label className="flex flex-col gap-1 text-sm font-medium text-foreground">
+                En mains
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-normal text-foreground focus:outline-none focus:ring-2 focus:ring-amber-300"
+                  value={newQtyEnMains}
+                  onChange={(event) => setNewQtyEnMains(event.target.value)}
+                />
+              </label>
+
+              <label className="flex flex-col gap-1 text-sm font-medium text-foreground">
+                Production
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-normal text-foreground focus:outline-none focus:ring-2 focus:ring-amber-300"
+                  value={newQtyProduction}
+                  onChange={(event) => setNewQtyProduction(event.target.value)}
+                />
+              </label>
+
+              <label className="flex flex-col gap-1 text-sm font-medium text-foreground md:col-span-4">
+                Notes
+                <input
+                  type="text"
+                  className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-normal text-foreground placeholder:text-foreground/40 focus:outline-none focus:ring-2 focus:ring-amber-300"
+                  value={newItemNotes}
+                  onChange={(event) => setNewItemNotes(event.target.value)}
+                />
+              </label>
+
+              <div className="flex items-end gap-2 md:col-span-2">
+                <button
+                  type="button"
+                  className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-parchment-dark"
+                  onClick={() => {
+                    resetNewItemForm();
+                    setShowAddPanel(false);
+                  }}
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  disabled={adding || saving || hasDirtyChanges}
+                  className="rounded-lg bg-brand-amber px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-amber-500 disabled:opacity-50"
+                >
+                  {adding ? "Ajout en cours…" : "Ajouter l'item"}
+                </button>
+              </div>
+            </form>
+          ) : (
+            <form onSubmit={addSolarAmount} className="mt-4 grid gap-3 sm:grid-cols-3">
+              <label className="flex flex-col gap-1 text-sm font-medium text-foreground">
+                Montant
+                <input
+                  type="number"
+                  min="1"
+                  step="1"
+                  className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-normal text-foreground focus:outline-none focus:ring-2 focus:ring-amber-300"
+                  value={solarAmount}
+                  onChange={(event) => setSolarAmount(event.target.value)}
+                  required
+                />
+              </label>
+
+              <label className="flex flex-col gap-1 text-sm font-medium text-foreground">
+                Ajouter à
+                <select
+                  className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-normal text-foreground focus:outline-none focus:ring-2 focus:ring-amber-300"
+                  value={solarTarget}
+                  onChange={(event) => setSolarTarget(event.target.value as "qty_coffre" | "qty_en_mains")}
+                >
+                  <option value="qty_coffre">Coffre</option>
+                  <option value="qty_en_mains">En mains</option>
+                </select>
+              </label>
+
+              <div className="flex items-end gap-2">
+                <button
+                  type="button"
+                  className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-parchment-dark"
+                  onClick={() => {
+                    setSolarAmount("");
+                    setShowAddPanel(false);
+                  }}
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  disabled={adding || saving || hasDirtyChanges}
+                  className="rounded-lg bg-brand-amber px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-amber-500 disabled:opacity-50"
+                >
+                  {adding ? "Ajout en cours…" : "Ajouter les solars"}
+                </button>
+              </div>
+            </form>
+          )}
         </div>
       )}
 
