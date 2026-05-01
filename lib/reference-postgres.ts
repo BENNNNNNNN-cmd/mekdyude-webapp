@@ -419,5 +419,14 @@ export async function getStadeIdFromLegacySlug(slug: string): Promise<string | n
   const stades = await getStades();
   const target = slugify(slug);
 
-  return stades.find((s) => slugify(s.nameFr) === target)?.id ?? null;
+  // Phase 1 stages are prefixed with a sequence number: id="STADE_3_BOURGADE",
+  // nameFr="3. Bourgade". Strip "N. " from name and "STADE_N_" from id before
+  // matching against the legacy slug.
+  for (const s of stades) {
+    const nameStripped = s.nameFr.replace(/^\d+\.\s*/, "");
+    if (slugify(nameStripped) === target) return s.id;
+    const idSuffix = s.id.replace(/^STADE_\d+_/, "").toLowerCase();
+    if (idSuffix === target) return s.id;
+  }
+  return null;
 }
