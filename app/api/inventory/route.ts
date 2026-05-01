@@ -75,3 +75,34 @@ export async function PATCH(request: NextRequest) {
 
   return NextResponse.json(updated);
 }
+
+export async function DELETE(request: NextRequest) {
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (session.role !== "admin") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const body = await request.json();
+  const { item_name } = body;
+
+  if (!item_name) {
+    return NextResponse.json({ error: "item_name required" }, { status: 400 });
+  }
+
+  const itemName = normalizeInventoryItemName(item_name);
+  const db = getDb();
+  const result = db
+    .prepare("DELETE FROM inventory WHERE guild_id = ? AND item_name = ?")
+    .run("mek_dyude", itemName);
+
+  if (result.changes === 0) {
+    return NextResponse.json({ error: "Item not found" }, { status: 404 });
+  }
+
+  revalidatePath("/inventaire");
+
+  return NextResponse.json({ ok: true });
+}

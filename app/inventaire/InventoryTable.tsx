@@ -198,6 +198,7 @@ export default function InventoryTable({ initialItems }: { initialItems: Invento
   const [dirty, setDirty] = useState<DirtyChanges>({});
   const [saving, setSaving] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [deletingItem, setDeletingItem] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
@@ -363,6 +364,44 @@ export default function InventoryTable({ initialItems }: { initialItems: Invento
       }
     },
     [hasDirtyChanges, router, solarAmount, solarTarget]
+  );
+
+  const deleteItem = useCallback(
+    async (itemName: string) => {
+      if (hasDirtyChanges) {
+        setError("Sauvegardez ou annulez vos modifications avant de supprimer un item.");
+        return;
+      }
+
+      const displayItemName = formatInventoryItemName(itemName);
+      if (!window.confirm(`Supprimer ${displayItemName} de l'inventaire?`)) {
+        return;
+      }
+
+      setDeletingItem(itemName);
+      setError(null);
+
+      try {
+        const response = await fetch("/api/inventory", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ item_name: itemName }),
+        });
+
+        if (!response.ok) {
+          setError("Impossible de supprimer cet item. Veuillez réessayer.");
+          return;
+        }
+
+        setItems((prev) => prev.filter((item) => item.item_name !== itemName));
+        router.refresh();
+      } catch {
+        setError("Erreur lors de la suppression. Veuillez réessayer.");
+      } finally {
+        setDeletingItem(null);
+      }
+    },
+    [hasDirtyChanges, router]
   );
 
   const filteredItems = useMemo(() => {
@@ -663,6 +702,7 @@ export default function InventoryTable({ initialItems }: { initialItems: Invento
                   <th className="px-5 py-2.5 text-left text-xs uppercase tracking-wider text-foreground/60">Notes</th>
                   <th className="px-5 py-2.5 text-left text-xs uppercase tracking-wider text-foreground/60">Prix du marche</th>
                   <th className="px-5 py-2.5 text-left text-xs uppercase tracking-wider text-foreground/60">Marche le moins cher</th>
+                  <th className="px-5 py-2.5 text-right text-xs uppercase tracking-wider text-foreground/60">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -713,6 +753,16 @@ export default function InventoryTable({ initialItems }: { initialItems: Invento
                         >
                           {formatCheapestMarket(item)}
                         </Link>
+                      </td>
+                      <td className="px-5 py-1.5 text-right align-top">
+                        <button
+                          type="button"
+                          onClick={() => deleteItem(item.item_name)}
+                          disabled={saving || adding || deletingItem === item.item_name}
+                          className="rounded-md border border-red-200 px-2.5 py-1 text-xs font-medium text-red-700 transition-colors hover:bg-red-50 disabled:opacity-50 dark:border-red-900/50 dark:text-red-300 dark:hover:bg-red-950/30"
+                        >
+                          {deletingItem === item.item_name ? "Suppression…" : "Supprimer"}
+                        </button>
                       </td>
                     </tr>
                   );
