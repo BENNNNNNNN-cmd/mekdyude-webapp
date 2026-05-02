@@ -14,6 +14,7 @@ interface ClanMemberUpdate {
 
 type UpdateClanMembersResult = { ok: true } | { ok: false; message: string };
 type CreateClanMemberResult = { ok: true; member: ClanMemberUpdate } | { ok: false; message: string };
+type DeleteClanMemberResult = { ok: true } | { ok: false; message: string };
 
 function normalizeRequired(value: string) {
   return value.trim();
@@ -86,6 +87,38 @@ export async function createClanMember(): Promise<CreateClanMemberResult> {
   } catch {
     return { ok: false, message: "Impossible d'ajouter le nouveau membre." };
   }
+}
+
+export async function deleteClanMember(memberId: string): Promise<DeleteClanMemberResult> {
+  const session = await getSession();
+  if (!session) {
+    return { ok: false, message: "Session expirée. Reconnectez-vous avant de supprimer un membre." };
+  }
+  if (session.role !== "admin") {
+    return { ok: false, message: "Seuls les administrateurs peuvent supprimer un membre du clan." };
+  }
+
+  const normalizedMemberId = normalizeRequired(memberId);
+  if (!normalizedMemberId) {
+    return { ok: false, message: "Le membre à supprimer est invalide." };
+  }
+
+  const db = getDb();
+  try {
+    const result = db.prepare(`
+      DELETE FROM clan_members
+      WHERE guild_id = ? AND id = ?
+    `).run("mek_dyude", normalizedMemberId);
+
+    if (result.changes !== 1) {
+      return { ok: false, message: "Ce membre n'existe plus." };
+    }
+  } catch {
+    return { ok: false, message: "Impossible de supprimer ce membre." };
+  }
+
+  revalidatePath("/membres");
+  return { ok: true };
 }
 
 export async function updateClanMembers(updates: ClanMemberUpdate[]): Promise<UpdateClanMembersResult> {
