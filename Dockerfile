@@ -7,12 +7,11 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 
-# Build the app
+# Build the app — SESSION_SECRET is read lazily at runtime in
+# lib/session.ts and proxy.ts, so no build-time secret needed.
 FROM base AS builder
 RUN apk add --no-cache python3 make g++
 WORKDIR /app
-ARG SESSION_SECRET
-ENV SESSION_SECRET=$SESSION_SECRET
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build

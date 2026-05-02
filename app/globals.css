@@ -11,9 +11,9 @@
  */
 @theme {
   /* Backgrounds */
-  --color-background:       #f5efe6;
-  --color-parchment:        #f5efe6;
-  --color-parchment-dark:   #e8dfd2;
+  --color-background:       #170c04;
+  --color-parchment:        #170c04;
+  --color-parchment-dark:   #2a1608;
   --color-card:             #ffffff;
 
   /* Text */
@@ -60,7 +60,11 @@
 }
 
 body {
-  background: var(--color-parchment);
+  background-color: var(--color-parchment);
+  background-image: url("/images/background_mekdyude_logo.png");
+  background-position: center;
+  background-size: cover;
+  background-attachment: fixed;
   color: var(--color-foreground);
   font-family: var(--font-sans);
 }

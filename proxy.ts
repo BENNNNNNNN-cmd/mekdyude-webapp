@@ -2,9 +2,14 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { SignJWT, jwtVerify } from "jose";
 
-const secretKey = process.env.SESSION_SECRET;
-if (!secretKey) throw new Error("SESSION_SECRET environment variable is required");
-const encodedKey = new TextEncoder().encode(secretKey);
+let cachedKey: Uint8Array | null = null;
+function getEncodedKey(): Uint8Array {
+  if (cachedKey) return cachedKey;
+  const secret = process.env.SESSION_SECRET;
+  if (!secret) throw new Error("SESSION_SECRET environment variable is required");
+  cachedKey = new TextEncoder().encode(secret);
+  return cachedKey;
+}
 
 const IDLE_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
 const PUBLIC_PATHS = ["/login"];
@@ -29,7 +34,7 @@ export async function proxy(request: NextRequest) {
   }
 
   try {
-    const { payload } = await jwtVerify(sessionToken, encodedKey, { algorithms: ["HS256"] });
+    const { payload } = await jwtVerify(sessionToken, getEncodedKey(), { algorithms: ["HS256"] });
 
     // Check idle timeout — if lastActivity exists and is too old, force logout
     const lastActivity = payload.lastActivity as number | undefined;
@@ -44,7 +49,7 @@ export async function proxy(request: NextRequest) {
       .setProtectedHeader({ alg: "HS256" })
       .setIssuedAt()
       .setExpirationTime("7d")
-      .sign(encodedKey);
+      .sign(getEncodedKey());
 
     const response = NextResponse.next();
     response.cookies.set("session", refreshed, {
