@@ -5,6 +5,75 @@ import type { Card, CardNode } from "@/lib/production-tree/types";
 import CardPicker from "@/app/components/planification/CardPicker";
 import TreeNode from "@/app/components/planification/TreeNode";
 
+const FETCH_TIMEOUT_MS = 15000;
+
+interface TreeFetchResult {
+  tree: CardNode;
+  overlayStatus: string | null;
+}
+
+interface ApiErrorPayload {
+  error?: string;
+  correlationId?: string;
+}
+
+function isApiErrorPayload(value: unknown): value is ApiErrorPayload {
+  return typeof value === "object" && value !== null && "error" in value;
+}
+
+function isAbortError(error: unknown) {
+  return error instanceof DOMException && error.name === "AbortError";
+}
+
+async function fetchTreeOnce(
+  cardId: string,
+  withSubs: boolean,
+  withOverlay: boolean,
+  signal: AbortSignal
+): Promise<TreeFetchResult> {
+  const params = new URLSearchParams({
+    card: cardId,
+    substitutes: withSubs ? "1" : "0",
+    overlay: withOverlay ? "1" : "0",
+  });
+
+  const res = await fetch(`/api/production-tree?${params}`, {
+    credentials: "same-origin",
+    headers: { Accept: "application/json" },
+    signal,
+  });
+
+  const contentType = res.headers.get("content-type") ?? "";
+  if (!contentType.includes("application/json")) {
+    throw new Error(
+      res.status === 401
+        ? "Session expirée. Reconnectez-vous, puis réessayez."
+        : `Réponse inattendue du serveur (${res.status}).`
+    );
+  }
+
+  let payload: unknown;
+  try {
+    payload = await res.json();
+  } catch {
+    throw new Error("Réponse JSON invalide du serveur.");
+  }
+
+  if (!res.ok) {
+    const message = isApiErrorPayload(payload) && payload.error ? payload.error : `HTTP ${res.status}`;
+    const suffix =
+      isApiErrorPayload(payload) && payload.correlationId
+        ? ` (${payload.correlationId})`
+        : "";
+    throw new Error(`${message}${suffix}`);
+  }
+
+  return {
+    tree: payload as CardNode,
+    overlayStatus: res.headers.get("x-production-tree-overlay"),
+  };
+}
+
 /**
  * Client surface for the Arbre de production page.
  * Owns: selected card, "include substitutes" toggle, fetched tree.
@@ -20,8 +89,11 @@ export default function ArbreClient({ cards }: { cards: Card[] }) {
   const [tree, setTree] = useState<CardNode | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [warning, setWarning] = useState<string | null>(null);
 
   const inflight = useRef<AbortController | null>(null);
+  const showTree = tree !== null && !loading && selectedId !== null;
+  const selectedTreeIsEmpty = showTree && tree.buildings.length === 0;
 
   const fetchTree = useCallback(
     async (cardId: string, withSubs: boolean, withOverlay: boolean) => {
@@ -31,23 +103,40 @@ export default function ArbreClient({ cards }: { cards: Card[] }) {
 
       setLoading(true);
       setError(null);
+      setWarning(null);
+      let timedOut = false;
+      const timeoutId = window.setTimeout(() => {
+        timedOut = true;
+        controller.abort();
+      }, FETCH_TIMEOUT_MS);
+
       try {
-        const params = new URLSearchParams({
-          card: cardId,
-          substitutes: withSubs ? "1" : "0",
-          overlay: withOverlay ? "1" : "0",
-        });
-        const res = await fetch(`/api/production-tree?${params}`, {
-          signal: controller.signal,
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data: CardNode = await res.json();
+        let result: TreeFetchResult;
+        try {
+          result = await fetchTreeOnce(cardId, withSubs, withOverlay, controller.signal);
+        } catch (firstError) {
+          if (!withOverlay || controller.signal.aborted) throw firstError;
+
+          result = await fetchTreeOnce(cardId, withSubs, false, controller.signal);
+          if (!controller.signal.aborted) {
+            setWarning("L'état Mek Dyude est indisponible; arbre générique affiché.");
+          }
+        }
+
         if (controller.signal.aborted) return;
-        setTree(data);
+        setTree(result.tree);
+        if (withOverlay && result.overlayStatus === "fallback") {
+          setWarning("L'état Mek Dyude est indisponible; arbre générique affiché.");
+        }
       } catch (e: unknown) {
-        if (e instanceof DOMException && e.name === "AbortError") return;
+        if (isAbortError(e)) {
+          if (timedOut) setError("Délai d'attente dépassé. Réessayez dans un instant.");
+          return;
+        }
+        setTree(null);
         setError(e instanceof Error ? e.message : String(e));
       } finally {
+        window.clearTimeout(timeoutId);
         if (!controller.signal.aborted) setLoading(false);
       }
     },
@@ -60,6 +149,7 @@ export default function ArbreClient({ cards }: { cards: Card[] }) {
       inflight.current?.abort();
       setTree(null);
       setError(null);
+      setWarning(null);
       setLoading(false);
       return;
     }
@@ -132,7 +222,19 @@ export default function ArbreClient({ cards }: { cards: Card[] }) {
         </p>
       )}
 
-      {tree && !loading && selectedId != null && <TreeNode node={tree} />}
+      {warning && !error && (
+        <p className="rounded-lg border border-accent-amber/50 bg-accent-amber/10 p-4 text-sm text-accent-amber">
+          {warning}
+        </p>
+      )}
+
+      {selectedTreeIsEmpty && tree && (
+        <p className="rounded-lg border border-dashed border-border/60 bg-card/40 p-6 text-center text-sm italic text-foreground/50">
+          Aucun bâtiment ne consomme {tree.card.title}.
+        </p>
+      )}
+
+      {showTree && !selectedTreeIsEmpty && tree && <TreeNode node={tree} />}
     </div>
   );
 }

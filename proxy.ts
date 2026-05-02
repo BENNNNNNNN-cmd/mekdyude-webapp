@@ -14,6 +14,14 @@ function getEncodedKey(): Uint8Array {
 const IDLE_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
 const PUBLIC_PATHS = ["/login"];
 
+function isApiPath(pathname: string) {
+  return pathname.startsWith("/api/");
+}
+
+function apiUnauthorizedResponse(message: string) {
+  return NextResponse.json({ error: message }, { status: 401 });
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -30,6 +38,9 @@ export async function proxy(request: NextRequest) {
   const sessionToken = request.cookies.get("session")?.value;
 
   if (!sessionToken) {
+    if (isApiPath(pathname)) {
+      return apiUnauthorizedResponse("Session expirée. Veuillez vous reconnecter.");
+    }
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
@@ -39,7 +50,9 @@ export async function proxy(request: NextRequest) {
     // Check idle timeout — if lastActivity exists and is too old, force logout
     const lastActivity = payload.lastActivity as number | undefined;
     if (lastActivity && Date.now() - lastActivity > IDLE_TIMEOUT_MS) {
-      const response = NextResponse.redirect(new URL("/login", request.url));
+      const response = isApiPath(pathname)
+        ? apiUnauthorizedResponse("Session expirée. Veuillez vous reconnecter.")
+        : NextResponse.redirect(new URL("/login", request.url));
       response.cookies.delete("session");
       return response;
     }
@@ -62,7 +75,9 @@ export async function proxy(request: NextRequest) {
 
     return response;
   } catch {
-    const response = NextResponse.redirect(new URL("/login", request.url));
+    const response = isApiPath(pathname)
+      ? apiUnauthorizedResponse("Session invalide. Veuillez vous reconnecter.")
+      : NextResponse.redirect(new URL("/login", request.url));
     response.cookies.delete("session");
     return response;
   }

@@ -64,6 +64,12 @@ function CardRow({ node, depth, isRoot = false }: { node: CardNode; depth: numbe
         )}
       </div>
 
+      {!node.alreadyShown && node.buildings.length === 0 && isRoot && (
+        <p className="mt-3 rounded-lg border border-dashed border-border/60 bg-card/40 p-4 text-sm italic text-foreground/55">
+          Aucun bâtiment ne consomme cette carte.
+        </p>
+      )}
+
       {node.buildings.length > 0 && (
         <div className="mt-3 space-y-2 border-l-2 border-border/60 pl-4">
           {node.buildings.map((b) => (
@@ -199,20 +205,24 @@ function OutputRow({ entry, depth }: { entry: OutputTreeEntry; depth: number }) 
 
   return (
     <div>
-      <div className="flex items-center gap-2 text-sm">
-        <button
-          type="button"
-          aria-label={expanded ? "Réduire" : "Étendre"}
-          disabled={!canExpand}
-          onClick={() => setExpanded(!expanded)}
-          className={`flex h-5 w-5 items-center justify-center rounded text-xs transition ${
-            canExpand
-              ? "text-foreground/70 hover:bg-brand-amber/20 hover:text-brand-amber"
-              : "text-foreground/20"
+      <button
+        type="button"
+        aria-label={canExpand ? (expanded ? "Réduire" : "Étendre") : undefined}
+        disabled={!canExpand}
+        onClick={() => setExpanded(!expanded)}
+        className={`flex w-full items-center gap-2 rounded px-1 py-0.5 text-left text-sm transition ${
+          canExpand
+            ? "cursor-pointer hover:bg-brand-amber/10"
+            : "cursor-default disabled:opacity-100"
+        }`}
+      >
+        <span
+          className={`flex h-5 w-5 items-center justify-center rounded text-xs ${
+            canExpand ? "text-foreground/70" : "text-foreground/20"
           }`}
         >
           {canExpand ? (expanded ? "▾" : "▸") : "·"}
-        </button>
+        </span>
         <ArrowIcon />
         <span className="font-medium text-accent-green">{entry.output.card_title}</span>
         <RatioBadge output={entry.output} />
@@ -234,7 +244,7 @@ function OutputRow({ entry, depth }: { entry: OutputTreeEntry; depth: number }) 
             déjà affiché
           </span>
         )}
-      </div>
+      </button>
 
       {expanded && canExpand && (
         <div className="ml-6 mt-2 border-l-2 border-border/60 pl-4">
