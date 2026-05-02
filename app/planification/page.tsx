@@ -7,8 +7,8 @@ export default function PlanificationPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-serif text-3xl font-bold text-foreground">Planification</h1>
-        <p className="mt-2 text-sm text-foreground/60">
+        <h1 className="font-serif text-3xl font-bold text-white">Planification</h1>
+        <p className="mt-2 text-sm text-white/80">
           Outils de planification de production basés sur les règles du Duché de Bicolline.
         </p>
       </div>

@@ -23,8 +23,8 @@ export default async function InversePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-serif text-3xl font-bold text-foreground">Planificateur inverse</h1>
-        <p className="mt-2 text-sm text-foreground/60">
+        <h1 className="font-serif text-3xl font-bold text-white">Planificateur inverse</h1>
+        <p className="mt-2 text-sm text-white/80">
           Indiquez ce dont vous avez besoin par année. Le planificateur calcule l&apos;écart vs
           votre production actuelle et propose des options classées : staffer un bâtiment
           existant, ou en construire un nouveau — avec coûts, contraintes, et chaîne amont.

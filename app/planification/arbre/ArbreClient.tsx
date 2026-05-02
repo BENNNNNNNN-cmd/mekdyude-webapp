@@ -205,7 +205,7 @@ export default function ArbreClient({ cards }: { cards: Card[] }) {
       </div>
 
       {selectedId == null && (
-        <p className="rounded-lg border border-dashed border-border/60 bg-card/40 p-6 text-center text-sm italic text-foreground/50">
+        <p className="rounded-lg border border-white/20 bg-black/35 p-6 text-center text-sm italic text-white/80 shadow-sm">
           Choisissez une carte ci-dessus pour afficher sa chaîne de production.
         </p>
       )}
