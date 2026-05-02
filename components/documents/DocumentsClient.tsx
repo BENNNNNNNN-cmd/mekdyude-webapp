@@ -280,8 +280,8 @@ export default function DocumentsClient({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="font-serif text-3xl font-bold text-foreground">Documents</h1>
-          <p className="text-sm text-foreground/60 mt-1">
+          <h1 className="font-serif text-3xl font-bold text-on-body">Documents</h1>
+          <p className="text-sm text-on-body/60 mt-1">
             Archive du clan Mek Dyude
             <span className="mx-2">·</span>
             <span>{stats.total_count} document{stats.total_count !== 1 ? "s" : ""} · {formatSize(stats.total_size_bytes)}</span>
@@ -289,8 +289,7 @@ export default function DocumentsClient({
         </div>
         <button
           onClick={() => openUploadDialog()}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-sm"
-          style={{ backgroundColor: "#854F0B", color: "#FAEEDA" }}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold bg-brand-amber text-white shadow-sm transition-colors hover:bg-brand-amber-dark"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -321,10 +320,9 @@ export default function DocumentsClient({
             onClick={() => handleFilterChange("all")}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
               filter === "all"
-                ? "text-white shadow-sm"
+                ? "bg-brand-amber text-white shadow-sm"
                 : "bg-parchment-dark text-foreground/70 hover:bg-parchment-dark/80"
             }`}
-            style={filter === "all" ? { backgroundColor: "#854F0B", color: "#FAEEDA" } : undefined}
           >
             Tous
           </button>
@@ -334,10 +332,9 @@ export default function DocumentsClient({
               onClick={() => handleFilterChange(cat)}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                 filter === cat
-                  ? "text-white shadow-sm"
+                  ? "bg-brand-amber text-white shadow-sm"
                   : "bg-parchment-dark text-foreground/70 hover:bg-parchment-dark/80"
               }`}
-              style={filter === cat ? { backgroundColor: "#854F0B", color: "#FAEEDA" } : undefined}
             >
               {getCategoryLabel(cat)}
             </button>
@@ -790,8 +787,7 @@ function PreviewPanel({
         <div className="px-4 pb-4 flex gap-2">
           <a
             href={`/api/documents/${doc.id}/download`}
-            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors"
-            style={{ backgroundColor: "#854F0B", color: "#FAEEDA" }}
+            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-brand-amber text-white shadow-sm transition-colors hover:bg-brand-amber-dark"
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
@@ -909,8 +905,7 @@ function UploadDialog({
           <button
             onClick={onUpload}
             disabled={uploading || !file}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-            style={{ backgroundColor: "#854F0B", color: "#FAEEDA" }}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-brand-amber text-white shadow-sm transition-colors hover:bg-brand-amber-dark disabled:opacity-50"
           >
             {uploading ? (
               <>

@@ -27,8 +27,8 @@ export default function MembresPage() {
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       <div>
-        <h1 className="font-serif text-3xl font-bold text-foreground">Membres du clan</h1>
-        <p className="mt-2 text-sm text-foreground/60">
+        <h1 className="font-serif text-3xl font-bold text-on-body">Membres du clan</h1>
+        <p className="mt-2 text-sm text-on-body/60">
           Registre interne des personnages et coordonnées associées.
         </p>
       </div>

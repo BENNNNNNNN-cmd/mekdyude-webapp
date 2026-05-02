@@ -442,7 +442,7 @@ export default function InventoryTable({ initialItems }: { initialItems: Invento
             setShowAddPanel((current) => !current);
           }}
           disabled={adding || saving}
-          className="inline-flex items-center gap-2 rounded-lg bg-sidebar px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-sidebar/90 disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-lg bg-brand-amber px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-amber-dark disabled:opacity-50"
         >
           <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />

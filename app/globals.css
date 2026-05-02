@@ -3,60 +3,53 @@
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500&display=swap');
 @import "tailwindcss";
 
-@custom-variant dark (&:is(.dark *));
-
 /*
- * Theme-switchable colors: use @theme (NOT inline) so Tailwind generates
- * var(--color-*) references that respond to .dark overrides.
+ * Single unified theme: parchment surfaces on a dark image background.
+ * Body shows /images/background_mekdyude_logo.png (dark brown w/ amber sun emblem).
+ * Cards/inputs are light parchment; text on cards is dark brown.
+ * Text directly on body uses a cream (`--color-on-body`) to read against the image.
  */
 @theme {
-  /* Backgrounds */
-  --color-background:       #170c04;
-  --color-parchment:        #170c04;
-  --color-parchment-dark:   #2a1608;
-  --color-card:             #ffffff;
+  /* Surfaces */
+  --color-background:        #faf2dd;  /* light parchment, input fills (bg-background) */
+  --color-parchment:         #1a0f06;  /* body fallback color (under the image) */
+  --color-parchment-dark:    #ebd9a9;  /* darker parchment for hover/secondary surfaces */
+  --color-card:              #f4ead2;  /* parchemin clair — cards / panels */
+  --color-input:             #faf2dd;  /* alias of bg-background, semantic name */
 
   /* Text */
-  --color-foreground:       #3d2b1f;
+  --color-foreground:        #3d2b1f;  /* text on parchment cards */
+  --color-on-body:           #f4ead2;  /* text on body (over the image) */
 
   /* Borders */
-  --color-border:           rgba(160, 120, 60, 0.25);
+  --color-border:            rgba(139, 90, 30, 0.30);
 }
 
-/* Static colors that don't change between themes */
+/* Static colors that don't change across surfaces */
 @theme inline {
-  /* Sidebar (stays dark in both themes) */
-  --color-sidebar:          #150e06;
-  --color-sidebar-hover:    rgba(180, 90, 20, 0.12);
-  --color-sidebar-active:   #c07820;
+  /* Sidebar (stays dark — persistent navigation) */
+  --color-sidebar:          #1d1108;
+  --color-sidebar-hover:    rgba(200, 116, 32, 0.15);
+  --color-sidebar-active:   #c87420;
 
   /* Brand */
-  --color-brand-amber:      #d4851a;
-  --color-brand-brown:      #8b3a0f;
+  --color-brand-amber:      #c87420;
+  --color-brand-amber-dark: #a85410;
+  --color-brand-brown:      #6b2b08;
 
-  /* Status */
-  --color-accent-green:     #4a9e58;
-  --color-accent-amber:     #c07820;
-  --color-accent-red:       #c04040;
+  /* Status (desaturated to sit well on parchment) */
+  --color-accent-green:     #3d7a45;
+  --color-accent-amber:     #b8651c;
+  --color-accent-red:       #a83020;
 
   /* Tartan */
   --color-tartan-red:       #8b2020;
-  --color-tartan-black:     #150e06;
-  --color-tartan-gold:      #c07820;
+  --color-tartan-black:     #1d1108;
+  --color-tartan-gold:      #c87420;
 
   /* Fonts */
   --font-serif:  'Cinzel', serif;
   --font-sans:   'DM Sans', sans-serif;
-}
-
-/* ── Dark theme overrides ── */
-.dark {
-  --color-background:       #21160a;
-  --color-parchment:        #21160a;
-  --color-parchment-dark:   #1c1208;
-  --color-card:             #2a1a0a;
-  --color-foreground:       rgba(210, 170, 90, 0.85);
-  --color-border:           rgba(180, 90, 20, 0.25);
 }
 
 body {
@@ -65,13 +58,21 @@ body {
   background-position: center;
   background-size: cover;
   background-attachment: fixed;
-  color: var(--color-foreground);
+  color: var(--color-on-body);
   font-family: var(--font-sans);
 }
 
-/* Scrollbar */
+/* Default text color inside parchment surfaces (cards/inputs override body cream) */
+.bg-card,
+.bg-input,
+.bg-background,
+.bg-parchment-dark {
+  color: var(--color-foreground);
+}
+
+/* Scrollbar (dark, to sit on the body image) */
 ::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: var(--color-parchment-dark); }
+::-webkit-scrollbar-track { background: rgba(20, 12, 6, 0.4); }
 ::-webkit-scrollbar-thumb { background: rgba(180, 90, 20, 0.4); border-radius: 3px; }
 
 /* Tables */

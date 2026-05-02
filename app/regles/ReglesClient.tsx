@@ -55,7 +55,7 @@ export default function ReglesClient({
         <button
           onClick={() => setFilter("all")}
           className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-            filter === "all" ? "bg-sidebar text-white" : "bg-parchment-dark text-foreground/70 hover:bg-parchment-dark/80"
+            filter === "all" ? "bg-brand-amber text-white shadow-sm" : "bg-parchment-dark text-foreground/70 hover:bg-parchment-dark/80"
           }`}
         >
           Toutes ({buildings.length})
@@ -65,7 +65,7 @@ export default function ReglesClient({
             key={s}
             onClick={() => setFilter(s)}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-              filter === s ? "bg-sidebar text-white" : `${sphereColors[s] || "bg-gray-100 text-gray-800"} hover:opacity-80`
+              filter === s ? "bg-brand-amber text-white shadow-sm" : `${sphereColors[s] || "bg-gray-100 text-gray-800"} hover:opacity-80`
             }`}
           >
             {s} ({buildings.filter((b) => b.sphere === s).length})

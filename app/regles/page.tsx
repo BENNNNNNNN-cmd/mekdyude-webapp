@@ -55,8 +55,8 @@ export default async function ReglesPage() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      <h1 className="font-serif text-3xl font-bold text-foreground">Règles — Bâtiments</h1>
-      <p className="text-sm text-foreground/60">
+      <h1 className="font-serif text-3xl font-bold text-on-body">Règles — Bâtiments</h1>
+      <p className="text-sm text-on-body/60">
         Référence des {buildings.length} bâtiments. Cliquez sur une ligne pour voir les coûts de construction.
       </p>
       <ReglesClient buildings={buildings} spheres={spheres} />

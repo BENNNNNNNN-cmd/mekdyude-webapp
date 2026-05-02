@@ -117,7 +117,7 @@ export default async function DomainesPage() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-8">
-      <h1 className="font-serif text-3xl font-bold text-foreground">Domaines</h1>
+      <h1 className="font-serif text-3xl font-bold text-on-body">Domaines</h1>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {domains.map((domain) => {

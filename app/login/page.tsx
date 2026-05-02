@@ -79,7 +79,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={pending}
-              className="w-full rounded-lg border border-amber-300/40 bg-sidebar/80 py-2.5 text-sm font-medium text-white transition-colors hover:bg-sidebar/90 disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full rounded-lg bg-brand-amber py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-amber-dark disabled:cursor-not-allowed disabled:opacity-50"
             >
               {pending ? "Connexion..." : "Se connecter"}
             </button>

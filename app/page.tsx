@@ -54,7 +54,7 @@ export default async function Dashboard() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-8">
-      <h1 className="font-serif text-3xl font-bold text-foreground">Tableau de bord</h1>
+      <h1 className="font-serif text-3xl font-bold text-on-body">Tableau de bord</h1>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
