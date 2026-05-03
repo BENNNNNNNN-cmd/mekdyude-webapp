@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getDb } from "@/db";
 import { getSession } from "@/lib/session";
+import { getCarteById, ReferenceDataError } from "@/lib/reference-postgres";
 
 const GUILD_ID = "mek_dyude";
 const INVENTORY_CATEGORIES = ["ressource", "unite", "objet", "influence"] as const;
@@ -31,6 +32,7 @@ interface CreateInventoryItemInput {
   qty_en_mains: string | number;
   qty_production: string | number;
   notes: string | null;
+  reference_carte_id?: string;
 }
 
 interface AddSolarsInput {
@@ -89,7 +91,19 @@ export async function createInventoryItem(
   const authError = await assertAdmin("ajouter un item à l'inventaire");
   if (authError) return { ok: false, message: authError };
 
-  const itemName = normalizeRequiredText(input.item_name);
+  let resolvedName = input.item_name;
+  if (input.reference_carte_id) {
+    try {
+      const carte = await getCarteById(input.reference_carte_id);
+      if (carte) {
+        resolvedName = carte.nameFr;
+      }
+    } catch (err) {
+      if (!(err instanceof ReferenceDataError)) throw err;
+    }
+  }
+
+  const itemName = normalizeRequiredText(resolvedName);
   const category = normalizeCategory(input.category);
   const notes = normalizeOptionalText(input.notes);
 

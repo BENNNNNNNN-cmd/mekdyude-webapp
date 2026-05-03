@@ -1,6 +1,7 @@
 import { connection } from "next/server";
 import { getDb } from "@/db";
 import { getMarketPriceSummaries, type MarketPriceSummary } from "@/lib/market-prices";
+import { getCartes, ReferenceDataError } from "@/lib/reference-postgres";
 import InventoryTable from "./InventoryTable";
 
 // Reads directly from SQLite — Next.js can't track invalidation, so force
@@ -17,6 +18,14 @@ export interface InventoryItem {
   qty_production: number;
   notes: string | null;
   market_price?: MarketPriceSummary | null;
+}
+
+export interface InventoryReferenceCarte {
+  id: string;
+  nameFr: string;
+  famille: string;
+  sousFamille: string | null;
+  sphere: string | null;
 }
 
 function normalizeInventoryItemName(itemName: string) {
@@ -42,13 +51,43 @@ export default async function InventairePage() {
     market_price: marketPrices.get(item.item_name) ?? null,
   }));
 
+  let referenceCartes: InventoryReferenceCarte[] | null = null;
+  let referenceError: string | null = null;
+  try {
+    const cartes = await getCartes();
+    referenceCartes = cartes
+      .filter((c) => c.statut === "Confirmé")
+      .map((c) => ({
+        id: c.id,
+        nameFr: c.nameFr,
+        famille: c.famille,
+        sousFamille: c.sousFamille,
+        sphere: c.sphere,
+      }));
+  } catch (err) {
+    if (err instanceof ReferenceDataError) {
+      referenceError = "Le référentiel n'est pas disponible pour le moment.";
+    } else {
+      throw err;
+    }
+  }
+
+  const existingItemNamesNormalized = normalizedInventoryItems.map((item) =>
+    item.item_name.toLocaleLowerCase("fr-CA")
+  );
+
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       <h1 className="font-serif text-3xl font-bold text-on-body">Inventaire</h1>
       <p className="text-sm text-on-body/60">
         Cliquez sur les cellules Coffre ou En mains pour modifier les valeurs, puis appuyez sur Sauvegarder.
       </p>
-      <InventoryTable initialItems={items} />
+      <InventoryTable
+        initialItems={items}
+        referenceCartes={referenceCartes}
+        existingItemNamesNormalized={existingItemNamesNormalized}
+        referenceError={referenceError}
+      />
     </div>
   );
 }
