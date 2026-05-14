@@ -1,47 +1,47 @@
 "use client";
 
-const categoryConfig: Record<
-  string,
-  { label: string; bg: string; text: string; darkBg: string; darkText: string }
-> = {
+import { OutlinedBadge } from "@/app/components/v3/Badge";
+
+interface CategoryConfig {
+  label: string;
+  color: string;
+  tartan: string;
+}
+
+const categoryConfig: Record<string, CategoryConfig> = {
   regles: {
-    label: "Regles",
-    bg: "#FCEBEB",
-    text: "#A32D2D",
-    darkBg: "rgba(163, 45, 45, 0.25)",
-    darkText: "#e87c7c",
+    label: "Règles",
+    color: "#8B1A1A",
+    tartan:
+      "repeating-linear-gradient(180deg, #8B1A1A 0 8px, #4a0a0a 8px 12px, #c84040 12px 18px)",
   },
   strategie: {
-    label: "Strategie",
-    bg: "#EEEDFE",
-    text: "#534AB7",
-    darkBg: "rgba(83, 74, 183, 0.25)",
-    darkText: "#a39ef0",
+    label: "Stratégie",
+    color: "#5a3010",
+    tartan:
+      "repeating-linear-gradient(180deg, #5a3010 0 8px, #2a1a08 8px 12px, #8B1A1A 12px 18px)",
   },
   inventaires: {
     label: "Inventaires",
-    bg: "#EAF3DE",
-    text: "#3B6D11",
-    darkBg: "rgba(59, 109, 17, 0.25)",
-    darkText: "#7fbf48",
+    color: "#A0622A",
+    tartan:
+      "repeating-linear-gradient(180deg, #A0622A 0 8px, #5a3010 8px 12px, #c8842a 12px 18px)",
   },
   cartes: {
-    label: "Cartes & Images",
-    bg: "#FAEEDA",
-    text: "#854F0B",
-    darkBg: "rgba(133, 79, 11, 0.25)",
-    darkText: "#d4a054",
+    label: "Cartes",
+    color: "#1a3868",
+    tartan:
+      "repeating-linear-gradient(180deg, #1a3868 0 8px, #0a1a3a 8px 12px, #3a5898 12px 18px)",
   },
   general: {
-    label: "General",
-    bg: "#F1EFE8",
-    text: "#5F5E5A",
-    darkBg: "rgba(95, 94, 90, 0.25)",
-    darkText: "#a8a69f",
+    label: "Général",
+    color: "#3d6e2a",
+    tartan:
+      "repeating-linear-gradient(180deg, #3d6e2a 0 8px, #1a3010 8px 12px, #5a8a3a 12px 18px)",
   },
 };
 
-export function getCategoryConfig(category: string) {
+export function getCategoryConfig(category: string): CategoryConfig {
   return categoryConfig[category] || categoryConfig.general;
 }
 
@@ -51,28 +51,11 @@ export function getCategoryLabel(category: string): string {
   return category.charAt(0).toUpperCase() + category.slice(1);
 }
 
+export function getCategoryTartan(category: string): string {
+  return getCategoryConfig(category).tartan;
+}
+
 export default function CategoryBadge({ category }: { category: string }) {
   const config = getCategoryConfig(category);
-
-  return (
-    <span
-      className="inline-flex px-2 py-0.5 rounded text-xs font-medium"
-      style={
-        {
-          backgroundColor: `var(--cat-bg, ${config.bg})`,
-          color: `var(--cat-text, ${config.text})`,
-          "--cat-bg": config.bg,
-          "--cat-text": config.text,
-        } as React.CSSProperties
-      }
-    >
-      <span className="dark:hidden">{config.label}</span>
-      <span
-        className="hidden dark:inline"
-        style={{ color: config.darkText }}
-      >
-        {config.label}
-      </span>
-    </span>
-  );
+  return <OutlinedBadge color={config.color}>{config.label}</OutlinedBadge>;
 }

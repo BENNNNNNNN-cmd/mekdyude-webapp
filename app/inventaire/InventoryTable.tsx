@@ -5,6 +5,9 @@ import { useState, useCallback, useMemo, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import type { InventoryItem, InventoryReferenceCarte } from "./page";
 import { addSolars, createInventoryItem } from "./actions";
+import { Banner, GhostButton, PrimaryButton } from "@/app/components/v3/Banner";
+import { Folio } from "@/app/components/v3/Folio";
+import { StonePlaque, StonePlaqueGrid } from "@/app/components/v3/StonePlaque";
 
 type InventoryCategory = "ressource" | "unite" | "objet" | "influence";
 
@@ -13,6 +16,13 @@ const categoryLabels: Record<string, string> = {
   unite: "Unités",
   objet: "Objets",
   influence: "Influences",
+};
+
+const categoryOrder: Record<string, number> = {
+  ressource: 0,
+  unite: 1,
+  objet: 2,
+  influence: 3,
 };
 
 const OBJET_FAMILLES = new Set(["Potions & babioles", "Objet magique", "Consommable", "Amélioration"]);
@@ -48,7 +58,7 @@ function formatMarketPrice(item: InventoryItem) {
     return formatCurrency(summary.lowPrice);
   }
 
-  return `Bas ${formatCurrency(summary.lowPrice)} · Moyen ${formatCurrency(summary.averagePrice)} · Haut ${formatCurrency(summary.highPrice)}`;
+  return `${formatCurrency(summary.lowPrice)} · ${formatCurrency(summary.averagePrice)} · ${formatCurrency(summary.highPrice)}`;
 }
 
 function formatCheapestMarket(item: InventoryItem) {
@@ -59,9 +69,9 @@ function formatCheapestMarket(item: InventoryItem) {
 }
 
 function sortInventoryItems(a: InventoryItem, b: InventoryItem) {
-  const categoryOrder = a.category.localeCompare(b.category, "fr-CA");
-  if (categoryOrder !== 0) return categoryOrder;
-
+  const orderA = categoryOrder[a.category] ?? 99;
+  const orderB = categoryOrder[b.category] ?? 99;
+  if (orderA !== orderB) return orderA - orderB;
   return formatInventoryItemName(a.item_name).localeCompare(
     formatInventoryItemName(b.item_name),
     "fr-CA"
@@ -92,10 +102,12 @@ function mergeInventoryItem(
 function EditableCell({
   value,
   isDirty,
+  bold,
   onSave,
 }: {
   value: number;
   isDirty: boolean;
+  bold?: boolean;
   onSave: (newValue: number) => void;
 }) {
   const [editing, setEditing] = useState(false);
@@ -115,7 +127,14 @@ function EditableCell({
     return (
       <input
         type="number"
-        className="w-20 px-2 py-1 text-sm text-right border border-amber-400 rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-amber-300"
+        className="w-20 px-2.5 py-1 text-right font-serif tabular-nums focus:outline-none"
+        style={{
+          fontSize: bold ? 16 : 14,
+          fontWeight: bold ? 700 : 500,
+          color: "#1a1008",
+          background: "rgba(200,132,42,0.18)",
+          border: "1px solid #c8842a",
+        }}
         value={draft}
         autoFocus
         onChange={(e) => setDraft(e.target.value)}
@@ -133,7 +152,16 @@ function EditableCell({
 
   return (
     <button
-      className={`w-20 px-2 py-1 text-sm text-right rounded hover:bg-parchment-dark hover:ring-1 hover:ring-amber-200 cursor-pointer transition-colors ${isDirty ? "bg-amber-100 ring-1 ring-amber-300 font-semibold" : ""}`}
+      type="button"
+      title="Cliquer pour modifier"
+      className="inline-block min-w-14 px-2.5 py-1 font-serif tabular-nums cursor-pointer transition-colors hover:brightness-105"
+      style={{
+        fontSize: bold ? 16 : 14,
+        fontWeight: bold ? 700 : 500,
+        color: isDirty ? "#6e1414" : "#1a1008",
+        background: isDirty ? "rgba(200,132,42,0.18)" : "transparent",
+        border: isDirty ? "1px dashed #c8842a" : "1px solid transparent",
+      }}
       onClick={() => {
         setDraft(value.toString());
         setEditing(true);
@@ -170,7 +198,12 @@ function EditableNotesCell({
   if (editing) {
     return (
       <textarea
-        className="min-h-20 w-full min-w-48 rounded border border-amber-400 bg-card px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-amber-300"
+        className="min-h-16 w-full min-w-44 px-2 py-1 font-serif-body text-xs focus:outline-none"
+        style={{
+          color: "#1a1008",
+          background: "rgba(200,132,42,0.18)",
+          border: "1px dashed #c8842a",
+        }}
         value={draft}
         autoFocus
         onChange={(e) => setDraft(e.target.value)}
@@ -190,7 +223,13 @@ function EditableNotesCell({
 
   return (
     <button
-      className={`block min-h-8 w-full rounded px-2 py-1 text-left text-xs transition-colors hover:bg-parchment-dark hover:ring-1 hover:ring-amber-200 ${isDirty ? "bg-amber-100 ring-1 ring-amber-300 font-semibold text-foreground" : "text-foreground/50"}`}
+      type="button"
+      className="block min-h-7 w-full px-2 py-1 text-left text-xs font-serif-body italic transition-colors hover:brightness-105 cursor-pointer"
+      style={{
+        color: isDirty ? "#6e1414" : value ? "#4a2810" : "#7a5028",
+        background: isDirty ? "rgba(200,132,42,0.18)" : "transparent",
+        border: isDirty ? "1px dashed #c8842a" : "1px solid transparent",
+      }}
       onClick={() => {
         setDraft(value ?? "");
         setEditing(true);
@@ -272,17 +311,35 @@ export default function InventoryTable({
   );
 
   const hasDirtyChanges = Object.keys(dirty).length > 0;
-  const hasActiveFilters = selectedCategory !== "all" || searchTerm.trim().length > 0;
+  const dirtyCount = Object.keys(dirty).length;
 
   const categoryOptions = useMemo(() => {
     const seen = new Set<string>();
-    return items.reduce<string[]>((options, item) => {
-      if (!seen.has(item.category)) {
-        seen.add(item.category);
-        options.push(item.category);
-      }
-      return options;
-    }, []);
+    return items
+      .reduce<string[]>((options, item) => {
+        if (!seen.has(item.category)) {
+          seen.add(item.category);
+          options.push(item.category);
+        }
+        return options;
+      }, [])
+      .sort((a, b) => (categoryOrder[a] ?? 99) - (categoryOrder[b] ?? 99));
+  }, [items]);
+
+  // Stat-plaque computed values
+  const stats = useMemo(() => {
+    const solarItem = items.find(
+      (it) => it.item_name.toLocaleLowerCase("fr-CA") === "solar"
+    );
+    const solarCoffre = solarItem?.qty_coffre ?? 0;
+    const solarEnMains = solarItem?.qty_en_mains ?? 0;
+    const distinctCount = items.length;
+    const totalProduction = items.reduce((sum, it) => sum + it.qty_production, 0);
+    const marketValue = items.reduce((sum, it) => {
+      const price = it.market_price?.averagePrice ?? 0;
+      return sum + (it.qty_coffre + it.qty_en_mains) * price;
+    }, 0);
+    return { solarCoffre, solarEnMains, distinctCount, totalProduction, marketValue };
   }, [items]);
 
   const updateItem = useCallback(
@@ -352,16 +409,13 @@ export default function InventoryTable({
     setError(null);
   }, []);
 
-  const switchAddMode = useCallback(
-    (mode: AddMode) => {
-      setAddMode(mode);
-      setError(null);
-      setSelectedCarteId(null);
-      setCartePickerSearch("");
-      setCartePickerFamille("all");
-    },
-    []
-  );
+  const switchAddMode = useCallback((mode: AddMode) => {
+    setAddMode(mode);
+    setError(null);
+    setSelectedCarteId(null);
+    setCartePickerSearch("");
+    setCartePickerFamille("all");
+  }, []);
 
   const addInventoryItem = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
@@ -554,602 +608,1039 @@ export default function InventoryTable({
   }, [items, searchTerm, selectedCategory]);
 
   const grouped = useMemo(() => {
-    return filteredItems.reduce<Record<string, InventoryItem[]>>((groups, item) => {
-      if (!groups[item.category]) groups[item.category] = [];
-      groups[item.category].push(item);
-      return groups;
-    }, {});
+    const groups: Record<string, InventoryItem[]> = {};
+    for (const item of filteredItems) {
+      (groups[item.category] ??= []).push(item);
+    }
+    return Object.entries(groups).sort(
+      ([a], [b]) => (categoryOrder[a] ?? 99) - (categoryOrder[b] ?? 99)
+    );
   }, [filteredItems]);
 
   return (
-    <div className="space-y-6">
+    <>
+      <Banner
+        title="Inventaire"
+        sub="Coffre du clan · stock en mains · production saisonnière"
+        actions={
+          <>
+            <GhostButton type="button">↓ Exporter</GhostButton>
+            <PrimaryButton
+              type="button"
+              onClick={() => {
+                setError(null);
+                setShowAddPanel((cur) => !cur);
+              }}
+            >
+              † Ajouter un item
+            </PrimaryButton>
+          </>
+        }
+      />
+
+      <StonePlaqueGrid cols={4}>
+        <StonePlaque
+          label="Solar — Coffre"
+          value={stats.solarCoffre.toLocaleString("fr-CA")}
+          sub={`+ ${stats.solarEnMains.toLocaleString("fr-CA")} en mains`}
+          valueColor="#c8842a"
+        />
+        <StonePlaque
+          label="Items distincts"
+          value={stats.distinctCount}
+          sub={`en ${categoryOptions.length} section${categoryOptions.length !== 1 ? "s" : ""}`}
+        />
+        <StonePlaque
+          label="Production / saison"
+          value={stats.totalProduction}
+          sub="unités diverses"
+          valueColor="#7fb15c"
+        />
+        <StonePlaque
+          label="Valeur marché"
+          value={Math.round(stats.marketValue).toLocaleString("fr-CA")}
+          sub="Solar estimés"
+          valueColor="#f4ead2"
+        />
+      </StonePlaqueGrid>
+
       {error && (
-        <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/40 rounded-lg text-sm text-red-700 dark:text-red-400">
-          {error}
+        <div
+          className="mb-3 px-4 py-3 text-sm font-serif-body italic"
+          style={{
+            background: "rgba(139,32,32,0.15)",
+            border: "1px solid #8B1A1A",
+            color: "#f4ead2",
+          }}
+        >
+          ⚠ {error}
         </div>
       )}
 
-      <div className="flex justify-end">
-        <button
-          type="button"
-          onClick={() => {
-            setError(null);
-            setShowAddPanel((current) => !current);
-          }}
-          disabled={adding || saving}
-          className="inline-flex items-center gap-2 rounded-lg bg-brand-amber px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-amber-dark disabled:opacity-50"
-        >
-          <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-          </svg>
-          Ajouter
-        </button>
+      {/* Toolbar */}
+      <div
+        className="flex items-center gap-2.5 px-4 py-3"
+        style={{
+          background: "linear-gradient(180deg, #2a1a08, #1a0e05)",
+          border: "2px solid #4a2810",
+          borderBottom: "none",
+        }}
+      >
+        <div className="relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-on-body-soft pointer-events-none">⌕</span>
+          <input
+            type="search"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Rechercher un item…"
+            className="font-serif-body text-sm outline-none"
+            style={{
+              width: 280,
+              padding: "8px 12px 8px 32px",
+              background: "#0c0703",
+              border: "1px solid rgba(160,98,42,0.4)",
+              color: "#f4ead2",
+            }}
+          />
+        </div>
+        <Chip active={selectedCategory === "all"} onClick={() => setSelectedCategory("all")}>
+          Tous
+        </Chip>
+        {categoryOptions.map((cat) => (
+          <Chip
+            key={cat}
+            active={selectedCategory === cat}
+            onClick={() => setSelectedCategory(cat)}
+          >
+            {categoryLabels[cat] ?? cat}
+          </Chip>
+        ))}
+        <div className="ml-auto flex items-center gap-3">
+          {hasDirtyChanges && (
+            <>
+              <span className="text-xs italic text-on-body-soft">
+                {dirtyCount} modification{dirtyCount > 1 ? "s" : ""} en attente
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setDirty({});
+                  setItems(initialItems);
+                }}
+                disabled={saving}
+                className="font-serif text-[11px] font-semibold uppercase px-3 py-1.5 cursor-pointer transition-colors disabled:opacity-50"
+                style={{
+                  background: "transparent",
+                  color: "rgba(244,234,210,0.7)",
+                  border: "1px solid rgba(160,98,42,0.5)",
+                  letterSpacing: "0.16em",
+                }}
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={saveAll}
+                disabled={saving}
+                className="font-serif text-[11px] font-extrabold uppercase text-on-body px-3.5 py-1.5 cursor-pointer transition-[filter] hover:brightness-110 disabled:opacity-50"
+                style={{
+                  background: "linear-gradient(180deg, #3d6e2a, #1a3010)",
+                  border: "2px solid #1a3010",
+                  letterSpacing: "0.2em",
+                  boxShadow:
+                    "inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.3), 0 3px 8px rgba(0,0,0,0.5)",
+                }}
+              >
+                {saving ? "Sauvegarde…" : "✓ Sauvegarder"}
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {showAddPanel && (
-        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <h2 className="font-serif text-lg font-bold text-foreground">Ajouter à l&apos;inventaire</h2>
-            <div className="inline-flex flex-wrap rounded-lg border border-border bg-background p-1">
-              <button
-                type="button"
-                onClick={() => switchAddMode("reference")}
-                className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                  addMode === "reference"
-                    ? "bg-brand-amber text-white shadow-sm"
-                    : "text-foreground/70 hover:bg-parchment-dark"
-                }`}
-              >
-                Du référentiel
-              </button>
-              <button
-                type="button"
-                onClick={() => switchAddMode("custom")}
-                className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                  addMode === "custom"
-                    ? "bg-brand-amber text-white shadow-sm"
-                    : "text-foreground/70 hover:bg-parchment-dark"
-                }`}
-              >
-                Carte personnalisée
-              </button>
-              <button
-                type="button"
-                onClick={() => switchAddMode("solar")}
-                className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                  addMode === "solar"
-                    ? "bg-brand-amber text-white shadow-sm"
-                    : "text-foreground/70 hover:bg-parchment-dark"
-                }`}
-              >
-                Solar
-              </button>
-            </div>
+        <Folio className="mb-3">
+          <AddPanel
+            addMode={addMode}
+            switchAddMode={switchAddMode}
+            referenceCartes={referenceCartes}
+            referenceError={referenceError}
+            hasDirtyChanges={hasDirtyChanges}
+            adding={adding}
+            saving={saving}
+            cartePickerSearch={cartePickerSearch}
+            setCartePickerSearch={setCartePickerSearch}
+            cartePickerFamille={cartePickerFamille}
+            setCartePickerFamille={setCartePickerFamille}
+            familleOptions={familleOptions}
+            filteredCartes={filteredCartes}
+            existingNameSet={existingNameSet}
+            selectedCarte={selectedCarte}
+            selectedCarteId={selectedCarteId}
+            selectCarte={selectCarte}
+            newItemName={newItemName}
+            setNewItemName={setNewItemName}
+            newItemCategory={newItemCategory}
+            setNewItemCategory={setNewItemCategory}
+            newQtyCoffre={newQtyCoffre}
+            setNewQtyCoffre={setNewQtyCoffre}
+            newQtyEnMains={newQtyEnMains}
+            setNewQtyEnMains={setNewQtyEnMains}
+            newQtyProduction={newQtyProduction}
+            setNewQtyProduction={setNewQtyProduction}
+            newItemNotes={newItemNotes}
+            setNewItemNotes={setNewItemNotes}
+            solarAmount={solarAmount}
+            setSolarAmount={setSolarAmount}
+            solarTarget={solarTarget}
+            setSolarTarget={setSolarTarget}
+            addInventoryItem={addInventoryItem}
+            addReferenceCarte={addReferenceCarte}
+            addSolarAmount={addSolarAmount}
+            resetNewItemForm={resetNewItemForm}
+            setShowAddPanel={setShowAddPanel}
+          />
+        </Folio>
+      )}
+
+      <Folio>
+        {filteredItems.length === 0 ? (
+          <div className="px-6 py-12 text-center font-serif-body italic text-parch-muted">
+            <div className="text-3xl text-gold/40 mb-2">⌂</div>
+            Aucun item ne correspond aux filtres.
           </div>
-
-          {hasDirtyChanges && (
-            <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
-              Sauvegardez ou annulez les modifications en cours avant d&apos;ajouter une ligne.
-            </p>
-          )}
-
-          {addMode === "reference" && (
-            <div className="mt-4 space-y-3">
-              {!referenceCartes ? (
-                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-                  <p>{referenceError ?? "Le référentiel n'est pas disponible pour le moment."}</p>
-                  <button
-                    type="button"
-                    onClick={() => switchAddMode("custom")}
-                    className="mt-2 text-sm font-medium underline underline-offset-2 hover:text-amber-900"
-                  >
-                    Passer en mode personnalisé
-                  </button>
-                </div>
-              ) : referenceCartes.length === 0 ? (
-                <div className="rounded-lg border border-border bg-parchment-dark/30 p-3 text-sm text-foreground/70">
-                  <p>Aucune carte n&apos;est disponible dans le référentiel.</p>
-                  <button
-                    type="button"
-                    onClick={() => switchAddMode("custom")}
-                    className="mt-2 text-sm font-medium underline underline-offset-2 text-brand-amber hover:text-brand-amber-dark"
-                  >
-                    Passer en mode personnalisé
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <label className="flex flex-col gap-1 text-sm font-medium text-foreground">
-                      Recherche
-                      <input
-                        type="search"
-                        value={cartePickerSearch}
-                        onChange={(event) => setCartePickerSearch(event.target.value)}
-                        placeholder="Rechercher une carte…"
-                        className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-normal text-foreground placeholder:text-foreground/40 focus:outline-none focus:ring-2 focus:ring-amber-300"
-                      />
-                    </label>
-                    <label className="flex flex-col gap-1 text-sm font-medium text-foreground">
-                      Famille
-                      <select
-                        value={cartePickerFamille}
-                        onChange={(event) => setCartePickerFamille(event.target.value)}
-                        className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-normal text-foreground focus:outline-none focus:ring-2 focus:ring-amber-300"
-                      >
-                        <option value="all">Toutes les familles</option>
-                        {familleOptions.map((famille) => (
-                          <option key={famille} value={famille}>
-                            {famille}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  </div>
-
-                  <div className="rounded-lg border border-border bg-background">
-                    <p className="border-b border-border px-3 py-2 text-xs text-foreground/60">
-                      {filteredCartes.length} carte{filteredCartes.length > 1 ? "s" : ""}
-                    </p>
-                    <ul className="max-h-72 divide-y divide-border overflow-y-auto">
-                      {filteredCartes.length === 0 ? (
-                        <li className="px-3 py-4 text-sm text-foreground/60">
-                          Aucune carte ne correspond.
-                        </li>
-                      ) : (
-                        filteredCartes.map((carte) => {
-                          const isSelected = carte.id === selectedCarteId;
-                          const isAlreadyAdded = existingNameSet.has(
-                            carte.nameFr.toLocaleLowerCase("fr-CA")
-                          );
-                          return (
-                            <li key={carte.id}>
-                              <button
-                                type="button"
-                                disabled={isAlreadyAdded}
-                                onClick={() => selectCarte(carte)}
-                                className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm transition-colors ${
-                                  isAlreadyAdded
-                                    ? "cursor-not-allowed opacity-50"
-                                    : isSelected
-                                      ? "bg-brand-amber/10"
-                                      : "hover:bg-parchment-dark"
-                                }`}
-                              >
-                                <div className="min-w-0 flex-1">
-                                  <span className="font-medium text-foreground">{carte.nameFr}</span>
-                                  <span className="ml-2 text-xs text-foreground/60">
-                                    {carte.famille}
-                                    {carte.sphere ? ` · ${carte.sphere}` : ""}
-                                  </span>
-                                </div>
-                                {isAlreadyAdded ? (
-                                  <span className="shrink-0 rounded-full bg-parchment-dark px-2 py-0.5 text-[11px] font-medium text-foreground/70">
-                                    Déjà dans l&apos;inventaire
-                                  </span>
-                                ) : isSelected ? (
-                                  <span className="shrink-0 rounded-full bg-brand-amber px-2 py-0.5 text-[11px] font-medium text-white">
-                                    Sélectionnée
-                                  </span>
-                                ) : null}
-                              </button>
-                            </li>
-                          );
-                        })
-                      )}
-                    </ul>
-                  </div>
-
-                  {selectedCarte && (
-                    <form
-                      onSubmit={addReferenceCarte}
-                      className="grid gap-3 rounded-lg border border-border bg-parchment-dark/30 p-3 md:grid-cols-6"
-                    >
-                      <div className="flex flex-col gap-1 md:col-span-2">
-                        <span className="text-sm font-medium text-foreground">Nom</span>
-                        <p className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground">
-                          {selectedCarte.nameFr}
-                        </p>
-                      </div>
-
-                      <label className="flex flex-col gap-1 text-sm font-medium text-foreground">
-                        Section
-                        <select
-                          className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-normal text-foreground focus:outline-none focus:ring-2 focus:ring-amber-300"
-                          value={newItemCategory}
-                          onChange={(event) => setNewItemCategory(event.target.value)}
-                        >
-                          {Object.entries(categoryLabels).map(([category, label]) => (
-                            <option key={category} value={category}>
-                              {label}
-                            </option>
-                          ))}
-                        </select>
-                        <span className="text-xs font-normal text-foreground/60">
-                          Section devinée — ajustez au besoin.
-                        </span>
-                      </label>
-
-                      <label className="flex flex-col gap-1 text-sm font-medium text-foreground">
-                        Coffre
-                        <input
-                          type="number"
-                          min="0"
-                          step="1"
-                          className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-normal text-foreground focus:outline-none focus:ring-2 focus:ring-amber-300"
-                          value={newQtyCoffre}
-                          onChange={(event) => setNewQtyCoffre(event.target.value)}
-                        />
-                      </label>
-
-                      <label className="flex flex-col gap-1 text-sm font-medium text-foreground">
-                        En mains
-                        <input
-                          type="number"
-                          min="0"
-                          step="1"
-                          className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-normal text-foreground focus:outline-none focus:ring-2 focus:ring-amber-300"
-                          value={newQtyEnMains}
-                          onChange={(event) => setNewQtyEnMains(event.target.value)}
-                        />
-                      </label>
-
-                      <label className="flex flex-col gap-1 text-sm font-medium text-foreground">
-                        Production
-                        <input
-                          type="number"
-                          min="0"
-                          step="1"
-                          className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-normal text-foreground focus:outline-none focus:ring-2 focus:ring-amber-300"
-                          value={newQtyProduction}
-                          onChange={(event) => setNewQtyProduction(event.target.value)}
-                        />
-                      </label>
-
-                      <label className="flex flex-col gap-1 text-sm font-medium text-foreground md:col-span-4">
-                        Notes
-                        <input
-                          type="text"
-                          className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-normal text-foreground placeholder:text-foreground/40 focus:outline-none focus:ring-2 focus:ring-amber-300"
-                          value={newItemNotes}
-                          onChange={(event) => setNewItemNotes(event.target.value)}
-                        />
-                      </label>
-
-                      <div className="flex items-end gap-2 md:col-span-2">
-                        <button
-                          type="button"
-                          className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-parchment-dark"
-                          onClick={() => {
-                            resetNewItemForm();
-                            setShowAddPanel(false);
-                          }}
-                        >
-                          Annuler
-                        </button>
-                        <button
-                          type="submit"
-                          disabled={adding || saving || hasDirtyChanges}
-                          className="rounded-lg bg-brand-amber px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-amber-500 disabled:opacity-50"
-                        >
-                          {adding ? "Ajout en cours…" : "Ajouter à l'inventaire"}
-                        </button>
-                      </div>
-                    </form>
-                  )}
-                </>
-              )}
+        ) : (
+          grouped.map(([category, categoryItems], sectionIndex) => (
+            <div key={category}>
+              <SectionHead
+                title={categoryLabels[category] ?? category}
+                count={categoryItems.length}
+                isFirst={sectionIndex === 0}
+              />
+              <InventorySectionTable
+                items={categoryItems}
+                dirty={dirty}
+                deletingItem={deletingItem}
+                saving={saving}
+                adding={adding}
+                onCellSave={updateItem}
+                onDelete={deleteItem}
+              />
             </div>
-          )}
+          ))
+        )}
+      </Folio>
+    </>
+  );
+}
 
-          {addMode === "custom" && (
-            <form onSubmit={addInventoryItem} className="mt-4 grid gap-3 md:grid-cols-6">
-              <label className="flex flex-col gap-1 text-sm font-medium text-foreground md:col-span-2">
-                Nom
-                <input
-                  type="text"
-                  className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-normal text-foreground placeholder:text-foreground/40 focus:outline-none focus:ring-2 focus:ring-amber-300"
-                  value={newItemName}
-                  onChange={(event) => setNewItemName(event.target.value)}
-                  required
+function Chip({
+  active,
+  children,
+  onClick,
+}: {
+  active: boolean;
+  children: React.ReactNode;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="font-serif text-[11px] font-bold uppercase px-3 py-1.5 cursor-pointer transition-colors"
+      style={{
+        letterSpacing: "0.14em",
+        border: active ? "1px solid #c8842a" : "1px solid rgba(160,98,42,0.3)",
+        background: active
+          ? "linear-gradient(180deg, #A0622A, #6e3e10)"
+          : "transparent",
+        color: active ? "#f4ead2" : "rgba(244,234,210,0.5)",
+        boxShadow: active ? "inset 0 1px 0 rgba(255,255,255,0.15)" : "none",
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+function SectionHead({
+  title,
+  count,
+  isFirst,
+}: {
+  title: string;
+  count: number;
+  isFirst: boolean;
+}) {
+  return (
+    <div
+      className="flex items-center gap-3.5 px-5 py-3"
+      style={{
+        background:
+          "linear-gradient(180deg, rgba(160,98,42,0.22), rgba(160,98,42,0.10))",
+        borderTop: isFirst ? "none" : "2px solid #8B1A1A",
+        borderBottom: "2px solid #8B1A1A",
+      }}
+    >
+      <span
+        className="font-serif text-sm font-extrabold uppercase text-parch-ink-soft"
+        style={{ letterSpacing: "0.24em" }}
+      >
+        ❦ {title} ❦
+      </span>
+      <div
+        className="flex-1 h-0.5"
+        style={{
+          background:
+            "repeating-linear-gradient(90deg, #8B1A1A 0 6px, transparent 6px 10px)",
+        }}
+      />
+      <span
+        className="font-serif text-xs font-semibold text-parch-ink-soft"
+        style={{ letterSpacing: "0.1em" }}
+      >
+        {count} item{count !== 1 ? "s" : ""}
+      </span>
+    </div>
+  );
+}
+
+function InventorySectionTable({
+  items,
+  dirty,
+  deletingItem,
+  saving,
+  adding,
+  onCellSave,
+  onDelete,
+}: {
+  items: InventoryItem[];
+  dirty: DirtyChanges;
+  deletingItem: string | null;
+  saving: boolean;
+  adding: boolean;
+  onCellSave: (
+    itemName: string,
+    field: "qty_coffre" | "qty_en_mains" | "notes",
+    newValue: number | string | null
+  ) => void;
+  onDelete: (itemName: string) => void;
+}) {
+  return (
+    <table className="w-full">
+      <thead>
+        <tr>
+          <Th>Item</Th>
+          <Th align="right" highlight>
+            ☐ Coffre
+          </Th>
+          <Th align="right">En mains</Th>
+          <Th align="right">Production</Th>
+          <Th align="right">Total</Th>
+          <Th align="left">Notes</Th>
+          <Th align="left">Prix marché</Th>
+          <Th align="right">Actions</Th>
+        </tr>
+      </thead>
+      <tbody>
+        {items.map((item, i) => {
+          const total = item.qty_coffre + item.qty_en_mains + item.qty_production;
+          const itemDirty = dirty[item.item_name];
+          const displayItemName = formatInventoryItemName(item.item_name);
+          const marketHref = buildMarketSearchHref(
+            item.market_price?.marketItemName ?? displayItemName
+          );
+          const hasMarket = !!item.market_price;
+          return (
+            <tr
+              key={item.item_name}
+              style={i % 2 === 1 ? { background: "rgba(160,98,42,0.05)" } : undefined}
+            >
+              <Td>
+                <span className="font-serif font-semibold text-[15px]">{displayItemName}</span>
+              </Td>
+              <Td align="right" highlight>
+                <EditableCell
+                  value={item.qty_coffre}
+                  isDirty={itemDirty?.qty_coffre !== undefined}
+                  bold
+                  onSave={(v) => onCellSave(item.item_name, "qty_coffre", v)}
                 />
-              </label>
-
-              <label className="flex flex-col gap-1 text-sm font-medium text-foreground">
-                Section
-                <select
-                  className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-normal text-foreground focus:outline-none focus:ring-2 focus:ring-amber-300"
-                  value={newItemCategory}
-                  onChange={(event) => setNewItemCategory(event.target.value)}
+              </Td>
+              <Td align="right">
+                <EditableCell
+                  value={item.qty_en_mains}
+                  isDirty={itemDirty?.qty_en_mains !== undefined}
+                  onSave={(v) => onCellSave(item.item_name, "qty_en_mains", v)}
+                />
+              </Td>
+              <Td align="right">
+                <span className="font-serif italic tabular-nums text-parch-muted">
+                  {item.qty_production}
+                </span>
+              </Td>
+              <Td align="right">
+                <span
+                  className="font-serif tabular-nums"
+                  style={{ fontWeight: 800, fontSize: 16, color: "#1a1008" }}
                 >
-                  {Object.entries(categoryLabels).map(([category, label]) => (
-                    <option key={category} value={category}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="flex flex-col gap-1 text-sm font-medium text-foreground">
-                Coffre
-                <input
-                  type="number"
-                  min="0"
-                  step="1"
-                  className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-normal text-foreground focus:outline-none focus:ring-2 focus:ring-amber-300"
-                  value={newQtyCoffre}
-                  onChange={(event) => setNewQtyCoffre(event.target.value)}
+                  {total}
+                </span>
+              </Td>
+              <Td align="left">
+                <EditableNotesCell
+                  value={item.notes}
+                  isDirty={itemDirty?.notes !== undefined}
+                  onSave={(v) => onCellSave(item.item_name, "notes", v)}
                 />
-              </label>
-
-              <label className="flex flex-col gap-1 text-sm font-medium text-foreground">
-                En mains
-                <input
-                  type="number"
-                  min="0"
-                  step="1"
-                  className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-normal text-foreground focus:outline-none focus:ring-2 focus:ring-amber-300"
-                  value={newQtyEnMains}
-                  onChange={(event) => setNewQtyEnMains(event.target.value)}
-                />
-              </label>
-
-              <label className="flex flex-col gap-1 text-sm font-medium text-foreground">
-                Production
-                <input
-                  type="number"
-                  min="0"
-                  step="1"
-                  className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-normal text-foreground focus:outline-none focus:ring-2 focus:ring-amber-300"
-                  value={newQtyProduction}
-                  onChange={(event) => setNewQtyProduction(event.target.value)}
-                />
-              </label>
-
-              <label className="flex flex-col gap-1 text-sm font-medium text-foreground md:col-span-4">
-                Notes
-                <input
-                  type="text"
-                  className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-normal text-foreground placeholder:text-foreground/40 focus:outline-none focus:ring-2 focus:ring-amber-300"
-                  value={newItemNotes}
-                  onChange={(event) => setNewItemNotes(event.target.value)}
-                />
-              </label>
-
-              <div className="flex items-end gap-2 md:col-span-2">
+              </Td>
+              <Td align="left">
+                {hasMarket ? (
+                  <Link
+                    href={marketHref}
+                    className="font-serif text-xs underline underline-offset-2"
+                    style={{ color: "#3d6e2a" }}
+                    title={`${formatCheapestMarket(item)}`}
+                  >
+                    {formatMarketPrice(item)}
+                  </Link>
+                ) : (
+                  <span className="font-serif-body text-xs italic text-parch-muted">—</span>
+                )}
+              </Td>
+              <Td align="right">
                 <button
                   type="button"
-                  className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-parchment-dark"
-                  onClick={() => {
-                    resetNewItemForm();
-                    setShowAddPanel(false);
+                  onClick={() => onDelete(item.item_name)}
+                  disabled={saving || adding || deletingItem === item.item_name}
+                  title="Supprimer cet item"
+                  className="inline-flex items-center justify-center rounded-full cursor-pointer transition-[filter] hover:brightness-110 active:scale-95 disabled:opacity-50"
+                  style={{
+                    width: 30,
+                    height: 30,
+                    background: "radial-gradient(circle at 35% 35%, #8B1A1Add, #8B1A1A88)",
+                    border: "2px solid #8B1A1A",
+                    color: "#f4ead2",
+                    fontFamily: "var(--font-serif)",
+                    fontWeight: 700,
+                    fontSize: 13,
+                    boxShadow:
+                      "inset -2px -2px 4px rgba(0,0,0,0.4), inset 2px 2px 4px rgba(255,255,255,0.15), 0 2px 4px rgba(0,0,0,0.3)",
                   }}
                 >
-                  Annuler
+                  {deletingItem === item.item_name ? "…" : "✕"}
                 </button>
-                <button
-                  type="submit"
-                  disabled={adding || saving || hasDirtyChanges}
-                  className="rounded-lg bg-brand-amber px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-amber-500 disabled:opacity-50"
-                >
-                  {adding ? "Ajout en cours…" : "Ajouter l'item"}
-                </button>
-              </div>
-            </form>
-          )}
+              </Td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+}
 
-          {addMode === "solar" && (
-            <form onSubmit={addSolarAmount} className="mt-4 grid gap-3 sm:grid-cols-3">
-              <label className="flex flex-col gap-1 text-sm font-medium text-foreground">
-                Montant
-                <input
-                  type="number"
-                  min="1"
-                  step="1"
-                  className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-normal text-foreground focus:outline-none focus:ring-2 focus:ring-amber-300"
-                  value={solarAmount}
-                  onChange={(event) => setSolarAmount(event.target.value)}
-                  required
-                />
-              </label>
+function Th({
+  children,
+  align = "left",
+  highlight = false,
+}: {
+  children: React.ReactNode;
+  align?: "left" | "right" | "center";
+  highlight?: boolean;
+}) {
+  return (
+    <th
+      className="font-serif font-bold uppercase text-[10px] px-4 py-3"
+      style={{
+        letterSpacing: "0.18em",
+        textAlign: align,
+        borderBottom: "2px solid rgba(139,32,32,0.3)",
+        background: highlight ? "rgba(160,98,42,0.18)" : "rgba(160,98,42,0.08)",
+        color: highlight ? "#6e3e10" : "#7a5028",
+      }}
+    >
+      {children}
+    </th>
+  );
+}
 
-              <label className="flex flex-col gap-1 text-sm font-medium text-foreground">
-                Ajouter à
-                <select
-                  className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-normal text-foreground focus:outline-none focus:ring-2 focus:ring-amber-300"
-                  value={solarTarget}
-                  onChange={(event) => setSolarTarget(event.target.value as "qty_coffre" | "qty_en_mains")}
-                >
-                  <option value="qty_coffre">Coffre</option>
-                  <option value="qty_en_mains">En mains</option>
-                </select>
-              </label>
+function Td({
+  children,
+  align = "left",
+  highlight = false,
+}: {
+  children: React.ReactNode;
+  align?: "left" | "right" | "center";
+  highlight?: boolean;
+}) {
+  return (
+    <td
+      className="px-4 py-2 text-parch-ink align-middle"
+      style={{
+        textAlign: align,
+        borderBottom: "1px solid rgba(139,32,32,0.14)",
+        background: highlight ? "rgba(160,98,42,0.06)" : undefined,
+      }}
+    >
+      {children}
+    </td>
+  );
+}
 
-              <div className="flex items-end gap-2">
-                <button
-                  type="button"
-                  className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-parchment-dark"
-                  onClick={() => {
-                    setSolarAmount("");
-                    setShowAddPanel(false);
-                  }}
-                >
-                  Annuler
-                </button>
-                <button
-                  type="submit"
-                  disabled={adding || saving || hasDirtyChanges}
-                  className="rounded-lg bg-brand-amber px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-amber-500 disabled:opacity-50"
-                >
-                  {adding ? "Ajout en cours…" : "Ajouter du Solar"}
-                </button>
-              </div>
-            </form>
-          )}
+/* ---------- Add panel ---------- */
+
+interface AddPanelProps {
+  addMode: AddMode;
+  switchAddMode: (m: AddMode) => void;
+  referenceCartes: InventoryReferenceCarte[] | null;
+  referenceError: string | null;
+  hasDirtyChanges: boolean;
+  adding: boolean;
+  saving: boolean;
+  cartePickerSearch: string;
+  setCartePickerSearch: (s: string) => void;
+  cartePickerFamille: string;
+  setCartePickerFamille: (s: string) => void;
+  familleOptions: string[];
+  filteredCartes: InventoryReferenceCarte[];
+  existingNameSet: Set<string>;
+  selectedCarte: InventoryReferenceCarte | null;
+  selectedCarteId: string | null;
+  selectCarte: (c: InventoryReferenceCarte) => void;
+  newItemName: string;
+  setNewItemName: (s: string) => void;
+  newItemCategory: string;
+  setNewItemCategory: (s: string) => void;
+  newQtyCoffre: string;
+  setNewQtyCoffre: (s: string) => void;
+  newQtyEnMains: string;
+  setNewQtyEnMains: (s: string) => void;
+  newQtyProduction: string;
+  setNewQtyProduction: (s: string) => void;
+  newItemNotes: string;
+  setNewItemNotes: (s: string) => void;
+  solarAmount: string;
+  setSolarAmount: (s: string) => void;
+  solarTarget: "qty_coffre" | "qty_en_mains";
+  setSolarTarget: (s: "qty_coffre" | "qty_en_mains") => void;
+  addInventoryItem: (e: FormEvent<HTMLFormElement>) => void | Promise<void>;
+  addReferenceCarte: (e: FormEvent<HTMLFormElement>) => void | Promise<void>;
+  addSolarAmount: (e: FormEvent<HTMLFormElement>) => void | Promise<void>;
+  resetNewItemForm: () => void;
+  setShowAddPanel: (b: boolean) => void;
+}
+
+function AddPanel(props: AddPanelProps) {
+  const {
+    addMode,
+    switchAddMode,
+    referenceCartes,
+    referenceError,
+    hasDirtyChanges,
+    adding,
+    saving,
+  } = props;
+
+  return (
+    <div className="p-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
+        <h2
+          className="font-serif text-base font-extrabold uppercase text-parch-ink-soft"
+          style={{ letterSpacing: "0.22em" }}
+        >
+          ❦ Ajouter à l&apos;inventaire ❦
+        </h2>
+        <div
+          className="inline-flex"
+          style={{ border: "1px solid #4a2810", background: "rgba(160,98,42,0.08)" }}
+        >
+          <ModeTab active={addMode === "reference"} onClick={() => switchAddMode("reference")}>
+            Du référentiel
+          </ModeTab>
+          <ModeTab active={addMode === "custom"} onClick={() => switchAddMode("custom")}>
+            Personnalisée
+          </ModeTab>
+          <ModeTab active={addMode === "solar"} onClick={() => switchAddMode("solar")}>
+            Solar
+          </ModeTab>
+        </div>
+      </div>
+
+      {hasDirtyChanges && (
+        <div
+          className="mb-3 px-3 py-2 text-sm font-serif-body italic"
+          style={{
+            background: "rgba(200,132,42,0.15)",
+            border: "1px solid #c8842a",
+            color: "#4a2810",
+          }}
+        >
+          Sauvegardez ou annulez les modifications en cours avant d&apos;ajouter une ligne.
         </div>
       )}
 
-      <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 shadow-sm md:flex-row md:items-end">
-        <label className="flex flex-1 flex-col gap-1 text-sm font-medium text-foreground">
-          Section
+      {addMode === "reference" && (
+        <ReferenceMode {...props} referenceCartes={referenceCartes} referenceError={referenceError} />
+      )}
+      {addMode === "custom" && <CustomMode {...props} />}
+      {addMode === "solar" && <SolarMode {...props} />}
+
+      <div className="mt-4 flex justify-end">
+        <button
+          type="button"
+          onClick={() => {
+            props.resetNewItemForm();
+            props.setShowAddPanel(false);
+          }}
+          disabled={adding || saving}
+          className="font-serif text-[11px] font-semibold uppercase px-4 py-2 cursor-pointer"
+          style={{
+            background: "transparent",
+            color: "#4a2810",
+            border: "1px solid #4a2810",
+            letterSpacing: "0.16em",
+          }}
+        >
+          Fermer
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ModeTab({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="font-serif text-[11px] font-bold uppercase px-3 py-1.5 cursor-pointer transition-colors"
+      style={{
+        letterSpacing: "0.14em",
+        background: active ? "linear-gradient(180deg, #A0622A, #6e3e10)" : "transparent",
+        color: active ? "#f4ead2" : "#7a5028",
+        boxShadow: active ? "inset 0 1px 0 rgba(255,255,255,0.15)" : "none",
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+const FORM_INPUT_CLASS =
+  "px-3 py-2 text-sm font-serif-body outline-none focus:ring-1 focus:ring-gold-light";
+const FORM_INPUT_STYLE: React.CSSProperties = {
+  background: "var(--color-input)",
+  border: "1px solid #4a2810",
+  color: "#1a1008",
+};
+const FORM_LABEL_CLASS =
+  "flex flex-col gap-1 font-serif text-[10px] font-bold uppercase tracking-[0.18em] text-parch-muted";
+
+function CustomMode({
+  adding,
+  saving,
+  hasDirtyChanges,
+  newItemName,
+  setNewItemName,
+  newItemCategory,
+  setNewItemCategory,
+  newQtyCoffre,
+  setNewQtyCoffre,
+  newQtyEnMains,
+  setNewQtyEnMains,
+  newQtyProduction,
+  setNewQtyProduction,
+  newItemNotes,
+  setNewItemNotes,
+  addInventoryItem,
+}: AddPanelProps) {
+  return (
+    <form onSubmit={addInventoryItem} className="grid gap-3 md:grid-cols-6">
+      <label className={`${FORM_LABEL_CLASS} md:col-span-2`}>
+        Nom
+        <input
+          type="text"
+          required
+          value={newItemName}
+          onChange={(e) => setNewItemName(e.target.value)}
+          className={FORM_INPUT_CLASS}
+          style={FORM_INPUT_STYLE}
+        />
+      </label>
+      <label className={FORM_LABEL_CLASS}>
+        Section
+        <select
+          value={newItemCategory}
+          onChange={(e) => setNewItemCategory(e.target.value)}
+          className={FORM_INPUT_CLASS}
+          style={FORM_INPUT_STYLE}
+        >
+          {Object.entries(categoryLabels).map(([c, l]) => (
+            <option key={c} value={c}>
+              {l}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className={FORM_LABEL_CLASS}>
+        Coffre
+        <input
+          type="number"
+          min="0"
+          step="1"
+          value={newQtyCoffre}
+          onChange={(e) => setNewQtyCoffre(e.target.value)}
+          className={FORM_INPUT_CLASS}
+          style={FORM_INPUT_STYLE}
+        />
+      </label>
+      <label className={FORM_LABEL_CLASS}>
+        En mains
+        <input
+          type="number"
+          min="0"
+          step="1"
+          value={newQtyEnMains}
+          onChange={(e) => setNewQtyEnMains(e.target.value)}
+          className={FORM_INPUT_CLASS}
+          style={FORM_INPUT_STYLE}
+        />
+      </label>
+      <label className={FORM_LABEL_CLASS}>
+        Production
+        <input
+          type="number"
+          min="0"
+          step="1"
+          value={newQtyProduction}
+          onChange={(e) => setNewQtyProduction(e.target.value)}
+          className={FORM_INPUT_CLASS}
+          style={FORM_INPUT_STYLE}
+        />
+      </label>
+      <label className={`${FORM_LABEL_CLASS} md:col-span-4`}>
+        Note
+        <input
+          type="text"
+          value={newItemNotes}
+          onChange={(e) => setNewItemNotes(e.target.value)}
+          className={FORM_INPUT_CLASS}
+          style={FORM_INPUT_STYLE}
+        />
+      </label>
+      <div className="md:col-span-2 flex items-end justify-end">
+        <PrimaryButton
+          type="submit"
+          disabled={adding || saving || hasDirtyChanges}
+          style={{ opacity: adding || saving || hasDirtyChanges ? 0.5 : 1 }}
+        >
+          {adding ? "† Ajout…" : "† Ajouter"}
+        </PrimaryButton>
+      </div>
+    </form>
+  );
+}
+
+function SolarMode({
+  adding,
+  saving,
+  hasDirtyChanges,
+  solarAmount,
+  setSolarAmount,
+  solarTarget,
+  setSolarTarget,
+  addSolarAmount,
+}: AddPanelProps) {
+  return (
+    <form onSubmit={addSolarAmount} className="grid gap-3 sm:grid-cols-3">
+      <label className={FORM_LABEL_CLASS}>
+        Montant
+        <input
+          type="number"
+          min="1"
+          step="1"
+          required
+          value={solarAmount}
+          onChange={(e) => setSolarAmount(e.target.value)}
+          className={FORM_INPUT_CLASS}
+          style={FORM_INPUT_STYLE}
+        />
+      </label>
+      <label className={FORM_LABEL_CLASS}>
+        Ajouter à
+        <select
+          value={solarTarget}
+          onChange={(e) => setSolarTarget(e.target.value as "qty_coffre" | "qty_en_mains")}
+          className={FORM_INPUT_CLASS}
+          style={FORM_INPUT_STYLE}
+        >
+          <option value="qty_coffre">Coffre</option>
+          <option value="qty_en_mains">En mains</option>
+        </select>
+      </label>
+      <div className="flex items-end justify-end">
+        <PrimaryButton
+          type="submit"
+          disabled={adding || saving || hasDirtyChanges}
+          style={{ opacity: adding || saving || hasDirtyChanges ? 0.5 : 1 }}
+        >
+          {adding ? "† Ajout…" : "† Ajouter du Solar"}
+        </PrimaryButton>
+      </div>
+    </form>
+  );
+}
+
+function ReferenceMode(props: AddPanelProps) {
+  const {
+    referenceCartes,
+    referenceError,
+    switchAddMode,
+    cartePickerSearch,
+    setCartePickerSearch,
+    cartePickerFamille,
+    setCartePickerFamille,
+    familleOptions,
+    filteredCartes,
+    existingNameSet,
+    selectedCarte,
+    selectedCarteId,
+    selectCarte,
+    newItemCategory,
+    setNewItemCategory,
+    newQtyCoffre,
+    setNewQtyCoffre,
+    newQtyEnMains,
+    setNewQtyEnMains,
+    newQtyProduction,
+    setNewQtyProduction,
+    newItemNotes,
+    setNewItemNotes,
+    addReferenceCarte,
+    adding,
+    saving,
+    hasDirtyChanges,
+  } = props;
+
+  if (!referenceCartes) {
+    return (
+      <div
+        className="px-4 py-3 text-sm font-serif-body italic"
+        style={{
+          background: "rgba(200,132,42,0.12)",
+          border: "1px solid #c8842a",
+          color: "#4a2810",
+        }}
+      >
+        {referenceError ?? "Le référentiel n'est pas disponible pour le moment."}
+        <button
+          type="button"
+          onClick={() => switchAddMode("custom")}
+          className="ml-2 underline underline-offset-2"
+        >
+          Passer en mode personnalisé
+        </button>
+      </div>
+    );
+  }
+  if (referenceCartes.length === 0) {
+    return (
+      <div
+        className="px-4 py-3 text-sm font-serif-body italic"
+        style={{ background: "rgba(160,98,42,0.08)", border: "1px solid #4a2810", color: "#4a2810" }}
+      >
+        Aucune carte n&apos;est disponible dans le référentiel.
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label className={FORM_LABEL_CLASS}>
+          Recherche
+          <input
+            type="search"
+            value={cartePickerSearch}
+            onChange={(e) => setCartePickerSearch(e.target.value)}
+            placeholder="Rechercher une carte…"
+            className={FORM_INPUT_CLASS}
+            style={FORM_INPUT_STYLE}
+          />
+        </label>
+        <label className={FORM_LABEL_CLASS}>
+          Famille
           <select
-            className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-normal text-foreground focus:outline-none focus:ring-2 focus:ring-amber-300"
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
+            value={cartePickerFamille}
+            onChange={(e) => setCartePickerFamille(e.target.value)}
+            className={FORM_INPUT_CLASS}
+            style={FORM_INPUT_STYLE}
           >
-            <option value="all">Toutes les sections</option>
-            {categoryOptions.map((category) => (
-              <option key={category} value={category}>
-                {categoryLabels[category] || category}
+            <option value="all">Toutes les familles</option>
+            {familleOptions.map((f) => (
+              <option key={f} value={f}>
+                {f}
               </option>
             ))}
           </select>
         </label>
-
-        <label className="flex flex-[2] flex-col gap-1 text-sm font-medium text-foreground">
-          Recherche
-          <input
-            type="search"
-            className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-normal text-foreground placeholder:text-foreground/40 focus:outline-none focus:ring-2 focus:ring-amber-300"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Rechercher un item"
-          />
-        </label>
-
-        <div className="flex items-center gap-3 md:pb-0.5">
-          <span className="text-sm text-foreground/60">
-            {filteredItems.length} item{filteredItems.length > 1 ? "s" : ""}
-          </span>
-          {hasActiveFilters && (
-            <button
-              type="button"
-              className="rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-parchment-dark"
-              onClick={() => {
-                setSelectedCategory("all");
-                setSearchTerm("");
-              }}
-            >
-              Effacer
-            </button>
-          )}
-        </div>
       </div>
 
-      {filteredItems.length === 0 && (
-        <div className="rounded-xl border border-border bg-card px-5 py-6 text-sm text-foreground/60">
-          Aucun item ne correspond aux filtres.
-        </div>
-      )}
+      <div
+        className="max-h-72 overflow-y-auto"
+        style={{ border: "1px solid #4a2810", background: "rgba(244,234,210,0.4)" }}
+      >
+        <p
+          className="px-3 py-2 font-serif text-[10px] font-bold uppercase border-b"
+          style={{ borderColor: "#4a2810", letterSpacing: "0.18em", color: "#7a5028" }}
+        >
+          {filteredCartes.length} carte{filteredCartes.length > 1 ? "s" : ""}
+        </p>
+        {filteredCartes.length === 0 ? (
+          <p className="px-3 py-4 text-sm font-serif-body italic text-parch-muted">
+            Aucune carte ne correspond.
+          </p>
+        ) : (
+          <ul>
+            {filteredCartes.map((carte) => {
+              const isSelected = carte.id === selectedCarteId;
+              const isAlreadyAdded = existingNameSet.has(
+                carte.nameFr.toLocaleLowerCase("fr-CA")
+              );
+              return (
+                <li key={carte.id} style={{ borderTop: "1px solid rgba(139,32,32,0.12)" }}>
+                  <button
+                    type="button"
+                    disabled={isAlreadyAdded}
+                    onClick={() => selectCarte(carte)}
+                    className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm transition-colors disabled:opacity-50"
+                    style={{
+                      background: isSelected ? "rgba(200,132,42,0.18)" : "transparent",
+                      color: "#1a1008",
+                      cursor: isAlreadyAdded ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    <div className="min-w-0 flex-1">
+                      <span className="font-serif font-semibold">{carte.nameFr}</span>
+                      <span className="ml-2 text-xs italic text-parch-muted">
+                        {carte.famille}
+                        {carte.sphere ? ` · ${carte.sphere}` : ""}
+                      </span>
+                    </div>
+                    {isAlreadyAdded ? (
+                      <span className="font-serif text-[9px] font-extrabold uppercase tracking-[0.16em] text-parch-muted">
+                        Déjà au coffre
+                      </span>
+                    ) : isSelected ? (
+                      <span
+                        className="font-serif text-[9px] font-extrabold uppercase tracking-[0.16em]"
+                        style={{ color: "#c8842a" }}
+                      >
+                        Sélectionnée
+                      </span>
+                    ) : null}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
 
-      {Object.entries(grouped).map(([category, categoryItems]) => (
-        <div key={category} className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
-          <div className="px-5 py-3 bg-parchment-dark/50 border-b border-border">
-            <h2 className="font-serif text-lg font-bold">{categoryLabels[category] || category}</h2>
+      {selectedCarte && (
+        <form
+          onSubmit={addReferenceCarte}
+          className="grid gap-3 p-3 md:grid-cols-6"
+          style={{ background: "rgba(160,98,42,0.08)", border: "1px dashed #4a2810" }}
+        >
+          <div className="md:col-span-2">
+            <div
+              className="font-serif text-[10px] font-bold uppercase mb-1 text-parch-muted"
+              style={{ letterSpacing: "0.18em" }}
+            >
+              Nom
+            </div>
+            <div className="font-serif font-semibold text-parch-ink">{selectedCarte.nameFr}</div>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="px-5 py-2.5 text-left text-xs uppercase tracking-wider text-foreground/60">Item</th>
-                  <th className="px-5 py-2.5 text-right text-xs uppercase tracking-wider text-foreground/60">Coffre</th>
-                  <th className="px-5 py-2.5 text-right text-xs uppercase tracking-wider text-foreground/60">En mains</th>
-                  <th className="px-5 py-2.5 text-right text-xs uppercase tracking-wider text-foreground/60">Production</th>
-                  <th className="px-5 py-2.5 text-right text-xs uppercase tracking-wider text-foreground/60 font-bold">Total</th>
-                  <th className="px-5 py-2.5 text-left text-xs uppercase tracking-wider text-foreground/60">Notes</th>
-                  <th className="px-5 py-2.5 text-left text-xs uppercase tracking-wider text-foreground/60">Prix du marche</th>
-                  <th className="px-5 py-2.5 text-left text-xs uppercase tracking-wider text-foreground/60">Marche le moins cher</th>
-                  <th className="px-5 py-2.5 text-right text-xs uppercase tracking-wider text-foreground/60">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {categoryItems.map((item, i) => {
-                  const total = item.qty_coffre + item.qty_en_mains + item.qty_production;
-                  const itemDirty = dirty[item.item_name];
-                  const displayItemName = formatInventoryItemName(item.item_name);
-                  const marketHref = buildMarketSearchHref(item.market_price?.marketItemName ?? displayItemName);
-                  return (
-                    <tr key={item.item_name} className={i % 2 === 0 ? "bg-card" : "bg-parchment/30"}>
-                      <td className="px-5 py-1.5 font-medium">{displayItemName}</td>
-                      <td className="px-5 py-1.5 text-right">
-                        <EditableCell
-                          value={item.qty_coffre}
-                          isDirty={itemDirty?.qty_coffre !== undefined}
-                          onSave={(v) => updateItem(item.item_name, "qty_coffre", v)}
-                        />
-                      </td>
-                      <td className="px-5 py-1.5 text-right">
-                        <EditableCell
-                          value={item.qty_en_mains}
-                          isDirty={itemDirty?.qty_en_mains !== undefined}
-                          onSave={(v) => updateItem(item.item_name, "qty_en_mains", v)}
-                        />
-                      </td>
-                      <td className="px-5 py-1.5 text-right text-foreground/60">{item.qty_production}</td>
-                      <td className="px-5 py-1.5 text-right font-bold">{total}</td>
-                      <td className="px-5 py-1.5 max-w-64 align-top">
-                        <EditableNotesCell
-                          value={item.notes}
-                          isDirty={itemDirty?.notes !== undefined}
-                          onSave={(v) => updateItem(item.item_name, "notes", v)}
-                        />
-                      </td>
-                      <td className="px-5 py-1.5 text-xs align-top min-w-56">
-                        <Link
-                          href={marketHref}
-                          className="text-brand-amber underline underline-offset-2 hover:text-amber-700"
-                        >
-                          {formatMarketPrice(item)}
-                        </Link>
-                      </td>
-                      <td className="px-5 py-1.5 text-xs align-top min-w-40">
-                        <Link
-                          href={marketHref}
-                          className="text-brand-amber underline underline-offset-2 hover:text-amber-700"
-                          title={item.market_price?.cheapestMarketName}
-                        >
-                          {formatCheapestMarket(item)}
-                        </Link>
-                      </td>
-                      <td className="px-5 py-1.5 text-right align-top">
-                        <button
-                          type="button"
-                          onClick={() => deleteItem(item.item_name)}
-                          disabled={saving || adding || deletingItem === item.item_name}
-                          className="rounded-md border border-red-200 px-2.5 py-1 text-xs font-medium text-red-700 transition-colors hover:bg-red-50 disabled:opacity-50 dark:border-red-900/50 dark:text-red-300 dark:hover:bg-red-950/30"
-                        >
-                          {deletingItem === item.item_name ? "Suppression…" : "Supprimer"}
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          <label className={FORM_LABEL_CLASS}>
+            Section
+            <select
+              value={newItemCategory}
+              onChange={(e) => setNewItemCategory(e.target.value)}
+              className={FORM_INPUT_CLASS}
+              style={FORM_INPUT_STYLE}
+            >
+              {Object.entries(categoryLabels).map(([c, l]) => (
+                <option key={c} value={c}>
+                  {l}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className={FORM_LABEL_CLASS}>
+            Coffre
+            <input
+              type="number"
+              min="0"
+              step="1"
+              value={newQtyCoffre}
+              onChange={(e) => setNewQtyCoffre(e.target.value)}
+              className={FORM_INPUT_CLASS}
+              style={FORM_INPUT_STYLE}
+            />
+          </label>
+          <label className={FORM_LABEL_CLASS}>
+            En mains
+            <input
+              type="number"
+              min="0"
+              step="1"
+              value={newQtyEnMains}
+              onChange={(e) => setNewQtyEnMains(e.target.value)}
+              className={FORM_INPUT_CLASS}
+              style={FORM_INPUT_STYLE}
+            />
+          </label>
+          <label className={FORM_LABEL_CLASS}>
+            Production
+            <input
+              type="number"
+              min="0"
+              step="1"
+              value={newQtyProduction}
+              onChange={(e) => setNewQtyProduction(e.target.value)}
+              className={FORM_INPUT_CLASS}
+              style={FORM_INPUT_STYLE}
+            />
+          </label>
+          <label className={`${FORM_LABEL_CLASS} md:col-span-4`}>
+            Note
+            <input
+              type="text"
+              value={newItemNotes}
+              onChange={(e) => setNewItemNotes(e.target.value)}
+              className={FORM_INPUT_CLASS}
+              style={FORM_INPUT_STYLE}
+            />
+          </label>
+          <div className="md:col-span-2 flex items-end justify-end">
+            <PrimaryButton
+              type="submit"
+              disabled={adding || saving || hasDirtyChanges}
+              style={{ opacity: adding || saving || hasDirtyChanges ? 0.5 : 1 }}
+            >
+              {adding ? "† Ajout…" : "† Ajouter"}
+            </PrimaryButton>
           </div>
-        </div>
-      ))}
-
-      {hasDirtyChanges && (
-        <div className="sticky bottom-6 flex justify-center gap-3">
-          <button
-            onClick={() => {
-              setDirty({});
-              setItems(initialItems);
-            }}
-            disabled={saving}
-            className="px-6 py-3 bg-gray-500 text-white font-semibold rounded-lg shadow-lg hover:bg-gray-600 disabled:opacity-50 transition-colors cursor-pointer"
-          >
-            Annuler
-          </button>
-          <button
-            onClick={saveAll}
-            disabled={saving}
-            className="px-6 py-3 bg-brand-amber text-white font-semibold rounded-lg shadow-lg hover:bg-amber-500 disabled:opacity-50 transition-colors cursor-pointer"
-          >
-            {saving ? "Sauvegarde en cours…" : "Sauvegarder"}
-          </button>
-        </div>
+        </form>
       )}
     </div>
   );

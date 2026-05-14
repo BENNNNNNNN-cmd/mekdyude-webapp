@@ -7,7 +7,7 @@ export default function DocumentsPage() {
   const existingCategories = [...new Set(documents.map((d) => d.category))];
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <div className="max-w-[1400px] mx-auto">
       <DocumentsClient
         initialDocuments={documents}
         initialStats={{

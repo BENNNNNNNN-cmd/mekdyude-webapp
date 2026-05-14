@@ -1,79 +1,147 @@
 /* app/globals.css */
 
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:wght@300;400;500&display=swap');
 @import "tailwindcss";
 
 /*
- * Single unified theme: parchment surfaces on a dark image background.
- * Body shows /images/background_mekdyude_logo.png (dark brown w/ amber sun emblem).
- * Cards/inputs are light parchment; text on cards is dark brown.
- * Text directly on body uses a cream (`--color-on-body`) to read against the image.
+ * V3 — War-camp ledger.
+ * Dark stone body with layered tartan + vignette; parchment surfaces (folios)
+ * hold all data. Single unified theme — no dark/light toggle.
+ *
+ * Token names are additive: legacy tokens (--color-card, --color-foreground,
+ * --color-on-body, --color-brand-amber, etc.) are preserved so pre-V3 pages
+ * keep rendering while screens migrate one by one.
  */
 @theme {
-  /* Surfaces */
-  --color-background:        #faf2dd;  /* light parchment, input fills (bg-background) */
-  --color-parchment:         #1a0f06;  /* body fallback color (under the image) */
-  --color-parchment-dark:    #ebd9a9;  /* darker parchment for hover/secondary surfaces */
-  --color-card:              #f4ead2;  /* parchemin clair — cards / panels */
-  --color-input:             #faf2dd;  /* alias of bg-background, semantic name */
+  /* === Surfaces — V3 === */
+  --color-bg-deep:           #060200;   /* deepest stone (vignette) */
+  --color-bg-stone:          #1a0e05;   /* main body */
+  --color-bg-sidebar:        #060200;   /* sidebar (gradient to bg-stone) */
 
-  /* Text */
-  --color-foreground:        #3d2b1f;  /* text on parchment cards */
-  --color-on-body:           #f4ead2;  /* text on body (over the image) */
+  --color-card:              #f4ead2;   /* parchment for data surfaces (folios) */
+  --color-parchment-dark:    #ebd9a9;   /* darker parchment */
+  --color-input:             #faf2dd;   /* light parchment input fill */
 
-  /* Borders */
+  /* Legacy alias — kept so existing utilities (bg-background, bg-parchment) still resolve */
+  --color-background:        #faf2dd;
+  --color-parchment:         #1a0e05;
+
+  /* === Text on dark stone (body) === */
+  --color-on-body:           #f4ead2;
+  --color-on-body-soft:      rgba(244, 234, 210, 0.55);
+  --color-on-body-muted:     rgba(244, 234, 210, 0.35);
+
+  /* === Text on parchment === */
+  --color-parch-ink:         #1a1008;   /* primary */
+  --color-parch-ink-soft:    #4a2810;   /* secondary */
+  --color-parch-muted:       #7a5028;   /* tertiary / italic */
+
+  /* Legacy alias — was #3d2b1f; switched to crisper V3 ink */
+  --color-foreground:        #1a1008;
+
+  /* === Gold / brand === */
+  --color-gold:              #A0622A;
+  --color-gold-light:        #c8842a;
+  --color-gold-deep:         #6e3e10;
+
+  /* Legacy brand-amber kept for backward compat (close to gold-light) */
+  --color-brand-amber:       #c87420;
+  --color-brand-amber-dark:  #a85410;
+  --color-brand-brown:       #6b2b08;
+
+  /* === Blood / primary CTA === */
+  --color-blood:             #8B1A1A;
+  --color-blood-light:       #c8242a;
+  --color-blood-deep:        #6e1414;
+
+  /* === Status === */
+  --color-status-good:       #3d6e2a;
+  --color-status-good-l:     #7fb15c;
+  --color-status-warn:       #A0622A;
+  --color-status-bad:        #8B1A1A;
+  --color-status-info:       #1a3868;
+
+  /* Legacy accent aliases (used by pre-V3 pages) */
+  --color-accent-green:      #3d7a45;
+  --color-accent-amber:      #b8651c;
+  --color-accent-red:        #a83020;
+
+  /* === Borders === */
+  --color-border-stone:      #4a2810;
+  --color-border-soft:       rgba(139, 90, 30, 0.30);
+  --color-border-strong:     rgba(139, 90, 30, 0.55);
+  /* Legacy alias */
   --color-border:            rgba(139, 90, 30, 0.30);
-}
 
-/* Static colors that don't change across surfaces */
-@theme inline {
-  /* Sidebar (stays dark — persistent navigation) */
-  --color-sidebar:          #1d1108;
-  --color-sidebar-hover:    rgba(200, 116, 32, 0.15);
-  --color-sidebar-active:   #c87420;
+  /* === Tartan (V3 values) === */
+  --color-tartan-red:        #8B1A1A;
+  --color-tartan-black:      #1a1008;
+  --color-tartan-gold:       #A0622A;
 
-  /* Brand */
-  --color-brand-amber:      #c87420;
-  --color-brand-amber-dark: #a85410;
-  --color-brand-brown:      #6b2b08;
+  /* === Sidebar === */
+  --color-sidebar:           #060200;
+  --color-sidebar-hover:     rgba(200, 132, 42, 0.15);
+  --color-sidebar-active:    #A0622A;
 
-  /* Status (desaturated to sit well on parchment) */
-  --color-accent-green:     #3d7a45;
-  --color-accent-amber:     #b8651c;
-  --color-accent-red:       #a83020;
-
-  /* Tartan */
-  --color-tartan-red:       #8b2020;
-  --color-tartan-black:     #1d1108;
-  --color-tartan-gold:      #c87420;
-
-  /* Fonts */
-  --font-serif:  'Cinzel', serif;
-  --font-sans:   'DM Sans', sans-serif;
+  /* === Fonts === */
+  --font-serif:              'Cinzel', serif;             /* headers, plaques, labels */
+  --font-serif-body:         'EB Garamond', Georgia, serif; /* body copy on parchment & dark stone */
+  --font-sans:               'DM Sans', sans-serif;       /* utility text only */
 }
 
 body {
-  background-color: var(--color-parchment);
-  background-image: url("/images/background_mekdyude_logo.png");
-  background-position: center;
-  background-size: cover;
+  background-color: var(--color-bg-stone);
+  /* Layered tartan + radial vignette = "war camp blanket" */
+  background-image:
+    repeating-linear-gradient(45deg, rgba(139, 32, 32, 0.10) 0 2px, transparent 2px 90px),
+    repeating-linear-gradient(-45deg, rgba(160, 98, 42, 0.08) 0 2px, transparent 2px 90px),
+    repeating-linear-gradient(0deg, rgba(139, 32, 32, 0.10) 0 2px, transparent 2px 60px),
+    repeating-linear-gradient(90deg, rgba(160, 98, 42, 0.10) 0 2px, transparent 2px 60px),
+    radial-gradient(ellipse at center, #1a0e05 0%, #060200 100%);
   background-attachment: fixed;
   color: var(--color-on-body);
-  font-family: var(--font-sans);
+  font-family: var(--font-serif-body);
 }
 
-/* Default text color inside parchment surfaces (cards/inputs override body cream) */
+/* Parchment surfaces: dark ink + body serif by default */
 .bg-card,
 .bg-input,
 .bg-background,
 .bg-parchment-dark {
-  color: var(--color-foreground);
+  color: var(--color-parch-ink);
+  font-family: var(--font-serif-body);
 }
 
-/* Scrollbar (dark, to sit on the body image) */
+/* Cinzel utility — applies the display serif + standard V3 tracking */
+.font-cinzel,
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-serif);
+  letter-spacing: 0.06em;
+}
+
+/* Parchment texture for Folio surfaces. Layered radial vignettes + SVG fractal noise. */
+.bg-parchment-texture {
+  background-color: var(--color-card);
+  background-image:
+    radial-gradient(ellipse at 50% 0%, transparent 60%, rgba(139, 90, 30, 0.15) 100%),
+    radial-gradient(ellipse at 0% 50%, transparent 70%, rgba(139, 90, 30, 0.12) 100%),
+    radial-gradient(ellipse at 100% 50%, transparent 70%, rgba(139, 90, 30, 0.12) 100%),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='p'><feTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='2'/><feColorMatrix values='0 0 0 0 0.4 0 0 0 0 0.25 0 0 0 0 0.1 0 0 0 0.06 0'/></filter><rect width='200' height='200' filter='url(%23p)'/></svg>");
+  color: var(--color-parch-ink);
+}
+
+/* Tartan-stripe recipes (vertical 4px-wide accent bands by category) */
+.tartan-credit  { background: repeating-linear-gradient(180deg, #3d6e2a 0 8px, #1a3010 8px 12px, #5a8a3a 12px 18px); }
+.tartan-dette   { background: repeating-linear-gradient(180deg, #8B1A1A 0 8px, #4a0a0a 8px 12px, #c84040 12px 18px); }
+.tartan-loc     { background: repeating-linear-gradient(180deg, #A0622A 0 8px, #5a3010 8px 12px, #c8842a 12px 18px); }
+.tartan-paie    { background: repeating-linear-gradient(180deg, #1a3868 0 8px, #0a1a3a 8px 12px, #3a5898 12px 18px); }
+.tartan-enca    { background: repeating-linear-gradient(180deg, #2d6e3a 0 8px, #103a1a 8px 12px, #4a8a5a 12px 18px); }
+.tartan-neutral { background: repeating-linear-gradient(180deg, #8B1A1A 0 8px, #1a1008 8px 12px, #A0622A 12px 18px); }
+
+/* Scrollbar */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: rgba(20, 12, 6, 0.4); }
-::-webkit-scrollbar-thumb { background: rgba(180, 90, 20, 0.4); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: rgba(160, 98, 42, 0.4); border-radius: 3px; }
 
 /* Tables */
 table { border-collapse: collapse; }

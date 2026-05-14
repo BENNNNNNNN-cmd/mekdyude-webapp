@@ -77,11 +77,7 @@ export default async function InventairePage() {
   );
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
-      <h1 className="font-serif text-3xl font-bold text-on-body">Inventaire</h1>
-      <p className="text-sm text-on-body/60">
-        Cliquez sur les cellules Coffre ou En mains pour modifier les valeurs, puis appuyez sur Sauvegarder.
-      </p>
+    <div className="max-w-[1400px] mx-auto">
       <InventoryTable
         initialItems={items}
         referenceCartes={referenceCartes}

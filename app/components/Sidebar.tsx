@@ -1,181 +1,138 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { logout } from "@/app/actions/auth";
 
-const navItems = [
-  {
-    href: "/",
-    label: "Tableau de bord",
-    // Shield / Bouclier héraldique
-    paths: ["M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"],
-  },
-  {
-    href: "/domaines",
-    label: "Domaines",
-    // Castle / Château avec créneaux
-    paths: [
-      "M3 21h18",
-      "M5 21V11l2-2V6h2V4h2v2h2V4h2v2h2v3l2 2v10",
-      "M10 21v-5h4v5",
-    ],
-  },
-  {
-    href: "/inventaire",
-    label: "Inventaire",
-    // Treasure chest / Coffre au trésor
-    paths: [
-      "M6 7h12l2 5H4l2-5z",
-      "M4 12v7a1 1 0 001 1h14a1 1 0 001-1v-7",
-      "M12 12v2.5",
-      "M10.5 14.5h3",
-    ],
-  },
-  {
-    href: "/membres",
-    label: "Membres du clan",
-    // Clan members / Personnes
-    paths: [
-      "M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493",
-      "M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07",
-      "M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07",
-      "M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0z",
-      "M18 10.5a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z",
-    ],
-  },
-  {
-    href: "/planification",
-    label: "Planification",
-    // Branching tree / Arbre de décision
-    paths: [
-      "M12 4v4",
-      "M12 12v4",
-      "M5 12h14",
-      "M5 12v8",
-      "M19 12v8",
-      "M9 8h6",
-      "M9 8v-2",
-      "M15 8v-2",
-    ],
-  },
-  {
-    href: "/regles",
-    label: "Règles",
-    // Scroll / Parchemin
-    paths: [
-      "M6 4h13v13a4 4 0 01-4 4H6V4z",
-      "M19 4v10",
-      "M9 9h6",
-      "M9 13h4",
-    ],
-  },
-  {
-    href: "/documents",
-    label: "Documents",
-    // Folder / Dossier
-    paths: [
-      "M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z",
-    ],
-  },
+type NavItem = { href: string; label: string; glyph: string };
+
+const navItems: NavItem[] = [
+  { href: "/",              label: "Tableau de bord", glyph: "◇" },
+  { href: "/inventaire",    label: "Inventaire",      glyph: "⊞" },
+  { href: "/registre",      label: "Registre",        glyph: "◫" },
+  { href: "/membres",       label: "Membres du clan", glyph: "⚔" },
+  { href: "/domaines",      label: "Domaines",        glyph: "⌂" },
+  { href: "/documents",     label: "Documents",       glyph: "☷" },
+  { href: "/planification", label: "Planification",   glyph: "⚙" },
+  { href: "/regles",        label: "Règles",          glyph: "⚖" },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const [expanded, setExpanded] = useState(false);
 
   return (
     <aside
-      className={`min-h-screen bg-sidebar text-white flex flex-col shrink-0 transition-all duration-300 ${
-        expanded ? "w-64" : "w-16"
-      }`}
+      className="relative w-[76px] shrink-0 min-h-screen flex flex-col items-center pt-[18px] gap-2"
+      style={{
+        background: "linear-gradient(180deg, #060200 0%, #1a0e05 100%)",
+        borderRight: "2px solid #2a1a08",
+        boxShadow: "inset -3px 0 8px rgba(0,0,0,0.7), 4px 0 12px rgba(0,0,0,0.5)",
+      }}
     >
-      {/* Guild Header */}
-      <div className={`border-b border-white/10 ${expanded ? "p-5" : "p-3 flex justify-center"}`}>
-        <div className={`flex items-center ${expanded ? "gap-3 mb-1" : "justify-center"}`}>
-          <Image
-            src="/images/logo.svg"
-            alt="Mek Dyude"
-            width={expanded ? 48 : 32}
-            height={expanded ? 48 : 32}
-            className="shrink-0 drop-shadow-lg"
-          />
-          {expanded && (
-            <div>
-              <h1 className="font-serif text-xl font-bold tracking-wide text-brand-amber">Mek Dyude</h1>
-              <p className="text-xs text-white/40">Duché de Bicolline</p>
-            </div>
-          )}
-        </div>
-      </div>
+      <HeraldShield />
 
-      {/* Toggle button */}
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className="mx-auto my-2 flex items-center justify-center w-8 h-8 rounded-lg text-white/50 hover:bg-sidebar-hover hover:text-white transition-colors"
-        title={expanded ? "Réduire" : "Étendre"}
-      >
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d={expanded ? "M15.75 19.5L8.25 12l7.5-7.5" : "M8.25 4.5l7.5 7.5-7.5 7.5"}
-          />
-        </svg>
-      </button>
-
-      {/* Navigation */}
-      <nav className={`flex-1 space-y-1 ${expanded ? "p-4" : "px-2 py-4"}`}>
+      <nav className="flex flex-col items-center gap-2 mt-1 grow">
         {navItems.map((item) => {
-          const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+          const isActive =
+            item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
           return (
             <Link
               key={item.href}
               href={item.href}
-              title={!expanded ? item.label : undefined}
-              className={`flex items-center rounded-lg text-sm font-medium transition-colors ${
-                expanded ? "gap-3 px-4 py-2.5" : "justify-center px-2 py-2.5"
-              } ${
-                isActive
-                  ? "bg-brand-amber text-white shadow-md"
-                  : "text-white/70 hover:bg-sidebar-hover hover:text-white"
-              }`}
+              title={item.label}
+              aria-label={item.label}
+              aria-current={isActive ? "page" : undefined}
+              className="flex items-center justify-center w-12 h-12 text-[18px] cursor-pointer transition-colors"
+              style={{
+                color: isActive ? "#f4ead2" : "rgba(244,234,210,0.4)",
+                background: isActive
+                  ? "linear-gradient(180deg, #A0622A, #6e3e10)"
+                  : "transparent",
+                border: isActive
+                  ? "1px solid #c8842a"
+                  : "1px solid transparent",
+                boxShadow: isActive
+                  ? "inset 0 1px 0 rgba(255,255,255,0.15), 0 0 12px rgba(200,132,42,0.5)"
+                  : "none",
+                clipPath: isActive
+                  ? "polygon(0 0, 100% 0, 100% 85%, 50% 100%, 0 85%)"
+                  : undefined,
+                fontFamily: "var(--font-serif)",
+              }}
             >
-              <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                {item.paths.map((d, i) => (
-                  <path key={i} strokeLinecap="round" strokeLinejoin="round" d={d} />
-                ))}
-              </svg>
-              {expanded && item.label}
+              <span aria-hidden>{item.glyph}</span>
             </Link>
           );
         })}
       </nav>
 
-      {/* Tartan accent strip */}
-      <div className="h-2 bg-gradient-to-r from-tartan-red via-tartan-gold to-tartan-red" />
+      <form action={logout} className="mb-3">
+        <button
+          type="submit"
+          title="Déconnexion"
+          aria-label="Déconnexion"
+          className="flex items-center justify-center w-9 h-9 rounded-full cursor-pointer transition-[filter] hover:brightness-110"
+          style={{
+            background:
+              "radial-gradient(circle at 35% 35%, #5a3010dd, #5a301088)",
+            border: "2px solid #5a3010",
+            color: "#f4ead2",
+            fontFamily: "var(--font-serif)",
+            fontWeight: 700,
+            fontSize: 14,
+            boxShadow:
+              "inset -2px -2px 4px rgba(0,0,0,0.4), inset 2px 2px 4px rgba(255,255,255,0.15), 0 2px 4px rgba(0,0,0,0.3)",
+          }}
+        >
+          <span aria-hidden>⎋</span>
+        </button>
+      </form>
 
-      {/* Footer */}
-      <div className={`space-y-2 ${expanded ? "p-4" : "p-2"}`}>
-        <form action={logout}>
-          <button
-            type="submit"
-            title={!expanded ? "Déconnexion" : undefined}
-            className={`flex items-center w-full rounded-lg text-sm text-white/50 hover:bg-sidebar-hover hover:text-white transition-colors ${
-              expanded ? "gap-2 px-4 py-2" : "justify-center px-2 py-2"
-            }`}
-          >
-            {/* Portcullis / Herse */}
-            <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h18v4l-2 2v12M5 9v12M9 9v12M13 9v12M17 9v12M3 7h18M5 12h12M5 16h12" />
-            </svg>
-            {expanded && "Déconnexion"}
-          </button>
-        </form>
-        {expanded && <p className="text-xs text-white/30">Bicolline Manager v0.1</p>}
-      </div>
+      {/* Tartan right edge */}
+      <div
+        aria-hidden
+        className="absolute right-0 top-0 bottom-0 w-[3px]"
+        style={{
+          background:
+            "repeating-linear-gradient(180deg, #8B1A1A 0 18px, #1a1008 18px 22px, #A0622A 22px 30px, #1a1008 30px 34px)",
+        }}
+      />
     </aside>
+  );
+}
+
+function HeraldShield() {
+  return (
+    <div
+      className="mb-3"
+      style={{ filter: "drop-shadow(0 0 8px rgba(160,98,42,0.4))" }}
+    >
+      <svg viewBox="0 0 100 100" width="52" height="52" aria-hidden>
+        <defs>
+          <radialGradient id="mekShieldGold" cx="50%" cy="40%">
+            <stop offset="0%" stopColor="#c8842a" />
+            <stop offset="100%" stopColor="#6e3e10" />
+          </radialGradient>
+        </defs>
+        <path
+          d="M50 6 L92 22 L92 56 Q92 82 50 96 Q8 82 8 56 L8 22 Z"
+          fill="url(#mekShieldGold)"
+          fillOpacity={0.4}
+          stroke="#c8842a"
+          strokeWidth={2}
+        />
+        <text
+          x="50"
+          y="62"
+          textAnchor="middle"
+          fontFamily="Cinzel"
+          fontSize="32"
+          fontWeight="900"
+          fill="#c8842a"
+        >
+          ⚜
+        </text>
+      </svg>
+    </div>
   );
 }

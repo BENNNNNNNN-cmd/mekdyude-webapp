@@ -63,6 +63,7 @@ export function getDb(): Database.Database {
 
   const schema = fs.readFileSync(SCHEMA_PATH, "utf-8");
   db.exec(schema);
+  ensureTransactionLedgerSchema(db);
 
   if (isNew) seedDatabase(db);
 
@@ -217,6 +218,47 @@ function rebuildOperationalTablesIfNeeded(conn: Database.Database): void {
 
     COMMIT;
   `);
+}
+
+function ensureTransactionLedgerSchema(conn: Database.Database): void {
+  conn.exec(`
+    CREATE TABLE IF NOT EXISTS transactions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      guild_id TEXT NOT NULL REFERENCES guilds(id),
+      type TEXT NOT NULL CHECK (type IN ('credit', 'dette', 'loc', 'paie', 'enca', 'correction')),
+      status TEXT NOT NULL DEFAULT 'actif' CHECK (status IN ('actif', 'regle', 'annule', 'litige')),
+      date TEXT NOT NULL,
+      season TEXT NOT NULL,
+      counterparty_type TEXT NOT NULL CHECK (counterparty_type IN ('guild', 'member', 'external')),
+      counterparty_id TEXT,
+      counterparty_name TEXT NOT NULL,
+      resource_name TEXT NOT NULL,
+      resource_qty INTEGER NOT NULL DEFAULT 0 CHECK (resource_qty >= 0),
+      counter_solar INTEGER NOT NULL DEFAULT 0 CHECK (counter_solar >= 0),
+      counter_solar_direction TEXT CHECK (counter_solar_direction IN ('in', 'out') OR counter_solar_direction IS NULL),
+      note TEXT,
+      original_transaction_id INTEGER REFERENCES transactions(id),
+      created_by TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      sealed_at TEXT NOT NULL DEFAULT (datetime('now')),
+      cancelled_at TEXT,
+      cancelled_by TEXT,
+      cancellation_reason TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_tx_guild_date ON transactions(guild_id, date DESC);
+    CREATE INDEX IF NOT EXISTS idx_tx_status ON transactions(guild_id, status);
+    CREATE INDEX IF NOT EXISTS idx_tx_original ON transactions(original_transaction_id);
+  `);
+
+  const columns = conn
+    .prepare("PRAGMA table_info(transactions)")
+    .all() as Array<{ name: string }>;
+  const columnNames = new Set(columns.map((column) => column.name));
+
+  if (!columnNames.has("original_transaction_id")) {
+    conn.exec("ALTER TABLE transactions ADD COLUMN original_transaction_id INTEGER REFERENCES transactions(id)");
+    conn.exec("CREATE INDEX IF NOT EXISTS idx_tx_original ON transactions(original_transaction_id)");
+  }
 }
 
 function seedDatabase(db: Database.Database) {

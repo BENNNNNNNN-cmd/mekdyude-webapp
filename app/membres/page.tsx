@@ -24,15 +24,19 @@ export default function MembresPage() {
     ORDER BY sort_order, id
   `).all() as ClanMemberRow[];
 
+  const buildingsAgg = db
+    .prepare(
+      "SELECT SUM(buildings_used) as used, SUM(buildings_max) as max FROM domains WHERE guild_id = 'mek_dyude'"
+    )
+    .get() as { used: number | null; max: number | null };
+
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
-      <div>
-        <h1 className="font-serif text-3xl font-bold text-on-body">Membres du clan</h1>
-        <p className="mt-2 text-sm text-on-body/60">
-          Registre interne des personnages et coordonnées associées.
-        </p>
-      </div>
-      <MembresClanTable initialMembers={members} />
+    <div className="max-w-[1400px] mx-auto">
+      <MembresClanTable
+        initialMembers={members}
+        buildingsStaffed={buildingsAgg.used ?? 0}
+        buildingsMax={buildingsAgg.max ?? 0}
+      />
     </div>
   );
 }
