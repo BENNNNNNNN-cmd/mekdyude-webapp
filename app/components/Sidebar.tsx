@@ -23,7 +23,7 @@ export default function Sidebar() {
 
   return (
     <aside
-      className="relative w-[76px] shrink-0 min-h-screen flex flex-col items-center pt-[18px] gap-2"
+      className="relative w-[92px] shrink-0 min-h-screen flex flex-col items-center pt-[18px] gap-2"
       style={{
         background: "linear-gradient(180deg, #060200 0%, #1a0e05 100%)",
         borderRight: "2px solid #2a1a08",
@@ -43,7 +43,7 @@ export default function Sidebar() {
               title={item.label}
               aria-label={item.label}
               aria-current={isActive ? "page" : undefined}
-              className="flex size-[58px] items-center justify-center cursor-pointer transition-[filter] hover:brightness-110"
+              className="flex size-[70px] items-center justify-center cursor-pointer transition-[filter] hover:brightness-110"
               style={{
                 filter: isActive
                   ? "brightness(1.12) drop-shadow(0 0 10px rgba(200,132,42,0.7))"
@@ -53,8 +53,8 @@ export default function Sidebar() {
               <Image
                 src={item.banner}
                 alt=""
-                width={58}
-                height={58}
+                width={70}
+                height={70}
                 aria-hidden
                 className="block max-h-full max-w-full object-contain"
               />
