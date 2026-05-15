@@ -109,12 +109,12 @@ function HeraldShield() {
       style={{ filter: "drop-shadow(0 0 8px rgba(160,98,42,0.4))" }}
     >
       <Image
-        src="/images/Badge_Clan_MekDyude_v1.png"
+        src="/images/Banner_MekDyude.png"
         alt=""
-        width={52}
-        height={52}
+        width={46}
+        height={68}
         aria-hidden
-        className="block size-[52px] rounded-full object-contain"
+        className="block h-[68px] w-[46px] object-contain"
       />
     </div>
   );
