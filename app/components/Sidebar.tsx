@@ -43,7 +43,7 @@ export default function Sidebar() {
               title={item.label}
               aria-label={item.label}
               aria-current={isActive ? "page" : undefined}
-              className="flex h-[72px] w-[58px] items-center justify-center cursor-pointer transition-[filter] hover:brightness-110"
+              className="flex size-[58px] items-center justify-center cursor-pointer transition-[filter] hover:brightness-110"
               style={{
                 filter: isActive
                   ? "brightness(1.12) drop-shadow(0 0 10px rgba(200,132,42,0.7))"
@@ -54,9 +54,9 @@ export default function Sidebar() {
                 src={item.banner}
                 alt=""
                 width={58}
-                height={72}
+                height={58}
                 aria-hidden
-                className="block h-full w-full object-contain"
+                className="block max-h-full max-w-full object-contain"
               />
             </Link>
           );
