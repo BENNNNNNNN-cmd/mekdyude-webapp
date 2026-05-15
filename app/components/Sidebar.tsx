@@ -5,17 +5,17 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { logout } from "@/app/actions/auth";
 
-type NavItem = { href: string; label: string; glyph: string };
+type NavItem = { href: string; label: string; banner: string };
 
 const navItems: NavItem[] = [
-  { href: "/",              label: "Tableau de bord", glyph: "◇" },
-  { href: "/inventaire",    label: "Inventaire",      glyph: "⊞" },
-  { href: "/registre",      label: "Registre",        glyph: "◫" },
-  { href: "/membres",       label: "Membres du clan", glyph: "⚔" },
-  { href: "/domaines",      label: "Domaines",        glyph: "⌂" },
-  { href: "/documents",     label: "Documents",       glyph: "☷" },
-  { href: "/planification", label: "Planification",   glyph: "⚙" },
-  { href: "/regles",        label: "Règles",          glyph: "⚖" },
+  { href: "/",              label: "Tableau de bord", banner: "/nav-banners/tab_tableau-de-bord.png" },
+  { href: "/inventaire",    label: "Inventaire",      banner: "/nav-banners/tab_inventaire.png" },
+  { href: "/registre",      label: "Registre",        banner: "/nav-banners/tab_registre.png" },
+  { href: "/membres",       label: "Membres du clan", banner: "/nav-banners/tab_membre-du-clan.png" },
+  { href: "/domaines",      label: "Domaines",        banner: "/nav-banners/tab_domaines.png" },
+  { href: "/documents",     label: "Documents",       banner: "/nav-banners/tab_archives.png" },
+  { href: "/planification", label: "Planification",   banner: "/nav-banners/tab_planification.png" },
+  { href: "/regles",        label: "Règles",          banner: "/nav-banners/tab_regles-batiments.png" },
 ];
 
 export default function Sidebar() {
@@ -36,33 +36,6 @@ export default function Sidebar() {
         {navItems.map((item) => {
           const isActive =
             item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
-          if (item.href === "/inventaire") {
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                title={item.label}
-                aria-label={item.label}
-                aria-current={isActive ? "page" : undefined}
-                className="flex h-[72px] w-[58px] items-center justify-center cursor-pointer transition-[filter] hover:brightness-110"
-                style={{
-                  filter: isActive
-                    ? "brightness(1.12) drop-shadow(0 0 10px rgba(200,132,42,0.7))"
-                    : "brightness(0.82)",
-                }}
-              >
-                <Image
-                  src="/nav-banners/tab_inventaire.png"
-                  alt=""
-                  width={58}
-                  height={72}
-                  aria-hidden
-                  className="block h-full w-full object-contain"
-                />
-              </Link>
-            );
-          }
-
           return (
             <Link
               key={item.href}
@@ -70,25 +43,21 @@ export default function Sidebar() {
               title={item.label}
               aria-label={item.label}
               aria-current={isActive ? "page" : undefined}
-              className="flex items-center justify-center w-12 h-12 text-[18px] cursor-pointer transition-colors"
+              className="flex h-[72px] w-[58px] items-center justify-center cursor-pointer transition-[filter] hover:brightness-110"
               style={{
-                color: isActive ? "#f4ead2" : "rgba(244,234,210,0.4)",
-                background: isActive
-                  ? "linear-gradient(180deg, #A0622A, #6e3e10)"
-                  : "transparent",
-                border: isActive
-                  ? "1px solid #c8842a"
-                  : "1px solid transparent",
-                boxShadow: isActive
-                  ? "inset 0 1px 0 rgba(255,255,255,0.15), 0 0 12px rgba(200,132,42,0.5)"
-                  : "none",
-                clipPath: isActive
-                  ? "polygon(0 0, 100% 0, 100% 85%, 50% 100%, 0 85%)"
-                  : undefined,
-                fontFamily: "var(--font-serif)",
+                filter: isActive
+                  ? "brightness(1.12) drop-shadow(0 0 10px rgba(200,132,42,0.7))"
+                  : "brightness(0.82)",
               }}
             >
-              <span aria-hidden>{item.glyph}</span>
+              <Image
+                src={item.banner}
+                alt=""
+                width={58}
+                height={72}
+                aria-hidden
+                className="block h-full w-full object-contain"
+              />
             </Link>
           );
         })}
