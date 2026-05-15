@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { logout } from "@/app/actions/auth";
 
@@ -107,32 +108,14 @@ function HeraldShield() {
       className="mb-3"
       style={{ filter: "drop-shadow(0 0 8px rgba(160,98,42,0.4))" }}
     >
-      <svg viewBox="0 0 100 100" width="52" height="52" aria-hidden>
-        <defs>
-          <radialGradient id="mekShieldGold" cx="50%" cy="40%">
-            <stop offset="0%" stopColor="#c8842a" />
-            <stop offset="100%" stopColor="#6e3e10" />
-          </radialGradient>
-        </defs>
-        <path
-          d="M50 6 L92 22 L92 56 Q92 82 50 96 Q8 82 8 56 L8 22 Z"
-          fill="url(#mekShieldGold)"
-          fillOpacity={0.4}
-          stroke="#c8842a"
-          strokeWidth={2}
-        />
-        <text
-          x="50"
-          y="62"
-          textAnchor="middle"
-          fontFamily="Cinzel"
-          fontSize="32"
-          fontWeight="900"
-          fill="#c8842a"
-        >
-          ⚜
-        </text>
-      </svg>
+      <Image
+        src="/images/Badge_Clan_MekDyude_v1.png"
+        alt=""
+        width={52}
+        height={52}
+        aria-hidden
+        className="block size-[52px] rounded-full object-contain"
+      />
     </div>
   );
 }
