@@ -36,6 +36,33 @@ export default function Sidebar() {
         {navItems.map((item) => {
           const isActive =
             item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+          if (item.href === "/inventaire") {
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                title={item.label}
+                aria-label={item.label}
+                aria-current={isActive ? "page" : undefined}
+                className="flex h-[72px] w-[58px] items-center justify-center cursor-pointer transition-[filter] hover:brightness-110"
+                style={{
+                  filter: isActive
+                    ? "brightness(1.12) drop-shadow(0 0 10px rgba(200,132,42,0.7))"
+                    : "brightness(0.82)",
+                }}
+              >
+                <Image
+                  src="/nav-banners/tab_inventaire.png"
+                  alt=""
+                  width={58}
+                  height={72}
+                  aria-hidden
+                  className="block h-full w-full object-contain"
+                />
+              </Link>
+            );
+          }
+
           return (
             <Link
               key={item.href}
