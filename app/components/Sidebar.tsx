@@ -47,7 +47,7 @@ export default function Sidebar() {
               style={{
                 filter: isActive
                   ? "brightness(1.12) drop-shadow(0 0 10px rgba(200,132,42,0.7))"
-                  : "brightness(0.82)",
+                  : "brightness(0.5) saturate(0.78) contrast(0.9)",
               }}
             >
               <Image
