@@ -105,7 +105,7 @@ function HeraldShield() {
       style={{ filter: "drop-shadow(0 0 8px rgba(160,98,42,0.4))" }}
     >
       <Image
-        src="/images/Banner_MekDyude.png"
+        src="/images/tab_mekdyude.png"
         alt=""
         width={46}
         height={68}
