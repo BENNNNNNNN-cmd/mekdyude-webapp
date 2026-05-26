@@ -638,11 +638,17 @@ export default function InventoryTable({
         }
       />
 
-      <StonePlaqueGrid cols={4}>
+      <StonePlaqueGrid cols={5}>
         <StonePlaque
-          label="Solar — Coffre"
+          label="Solar au coffre"
           value={stats.solarCoffre.toLocaleString("fr-CA")}
-          sub={`+ ${stats.solarEnMains.toLocaleString("fr-CA")} en mains`}
+          sub="au coffre du clan"
+          valueColor="#c8842a"
+        />
+        <StonePlaque
+          label="Solar en mains"
+          value={stats.solarEnMains.toLocaleString("fr-CA")}
+          sub="hors coffre"
           valueColor="#c8842a"
         />
         <StonePlaque
