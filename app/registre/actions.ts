@@ -410,12 +410,33 @@ export async function settleTransaction(
     return { ok: false, message: "Seules les transactions actives peuvent être réglées." };
   }
 
-  getDb()
-    .prepare("UPDATE transactions SET status = 'regle' WHERE guild_id = ? AND id = ?")
-    .run(GUILD_ID, transactionId);
+  try {
+    const db = getDb();
+    // Régler referme l'échange: on inverse le mouvement initial (le prêt
+    // revient au coffre, la garantie de location est rendue, etc.).
+    const settle = db.transaction(() => {
+      applyTransactionEffects(transaction, -1);
+      db.prepare(
+        "UPDATE transactions SET status = 'regle' WHERE guild_id = ? AND id = ?"
+      ).run(GUILD_ID, transactionId);
+    });
 
-  revalidateLedgerPaths();
-  return { ok: true, transactionId };
+    settle();
+    revalidateLedgerPaths();
+    return { ok: true, transactionId };
+  } catch (err) {
+    if (
+      err instanceof Error &&
+      (err.message === "stock_insufficient" || err.message === "stock_missing")
+    ) {
+      return {
+        ok: false,
+        message:
+          "Règlement bloqué: le coffre ne contient plus assez de stock pour refermer l'inscription.",
+      };
+    }
+    return { ok: false, message: "Impossible de régler cette transaction." };
+  }
 }
 
 export async function cancelTransaction(
@@ -446,7 +467,14 @@ export async function cancelTransaction(
   try {
     const db = getDb();
     const cancel = db.transaction(() => {
-      applyTransactionEffects(transaction, -1);
+      // Si la transaction est déjà réglée, son effet initial a déjà été
+      // inversé par le règlement — ne pas rembourser une seconde fois.
+      const effectAlreadyReversed =
+        transaction.status === "regle" &&
+        TYPE_META[transaction.type].initialStatus === "actif";
+      if (!effectAlreadyReversed) {
+        applyTransactionEffects(transaction, -1);
+      }
       db.prepare(`
         UPDATE transactions
         SET status = 'annule',

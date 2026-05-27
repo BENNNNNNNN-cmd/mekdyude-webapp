@@ -59,6 +59,13 @@ function signedSolarDelta(transaction: LedgerTransaction) {
   }
 
   const meta = TYPE_META[transaction.type];
+
+  // Obligation réglée (crédit/dette/location): le Solar est sorti puis revenu,
+  // son flux net au registre est donc nul.
+  if (transaction.status === "regle" && meta.initialStatus === "actif") {
+    return 0;
+  }
+
   let total = 0;
   if (isSolar(transaction.resource_name)) {
     total +=
