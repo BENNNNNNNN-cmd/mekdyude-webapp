@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
 import { logout } from "@/app/actions/auth";
 
 type NavItem = { href: string; label: string; banner: string };
@@ -20,10 +21,44 @@ const navItems: NavItem[] = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const [open, setOpen] = useState(false);
+
+  // Close the mobile drawer whenever we navigate to a new page.
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
 
   return (
-    <aside
-      className="relative w-[92px] shrink-0 min-h-screen flex flex-col items-center pt-[18px] gap-2"
+    <>
+      {/* Mobile hamburger — only shown below md, and hidden while the drawer is open */}
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-label="Ouvrir le menu"
+        className={`${open ? "hidden" : "flex"} md:hidden fixed top-3 left-3 z-[60] items-center justify-center w-10 h-10 rounded-md cursor-pointer`}
+        style={{
+          background: "linear-gradient(180deg, #1a0e05, #060200)",
+          border: "2px solid #5a3010",
+          color: "#f4ead2",
+          boxShadow: "0 2px 6px rgba(0,0,0,0.5)",
+        }}
+      >
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden>
+          <line x1="3" y1="6" x2="21" y2="6" />
+          <line x1="3" y1="12" x2="21" y2="12" />
+          <line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
+
+      {/* Backdrop behind the drawer on mobile */}
+      <div
+        aria-hidden
+        onClick={() => setOpen(false)}
+        className={`${open ? "block" : "hidden"} md:hidden fixed inset-0 z-40 bg-black/60`}
+      />
+
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-[92px] flex flex-col items-center pt-[18px] gap-2 transition-transform duration-300 ${open ? "translate-x-0" : "-translate-x-full"} md:relative md:inset-y-auto md:z-auto md:translate-x-0 md:shrink-0 md:min-h-screen`}
       style={{
         background: "linear-gradient(180deg, #060200 0%, #1a0e05 100%)",
         borderRight: "2px solid #2a1a08",
@@ -94,7 +129,8 @@ export default function Sidebar() {
             "repeating-linear-gradient(180deg, #8B1A1A 0 18px, #1a1008 18px 22px, #A0622A 22px 30px, #1a1008 30px 34px)",
         }}
       />
-    </aside>
+      </aside>
+    </>
   );
 }
 

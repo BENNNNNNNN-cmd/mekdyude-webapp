@@ -685,23 +685,22 @@ export default function InventoryTable({
 
       {/* Toolbar */}
       <div
-        className="flex items-center gap-2.5 px-4 py-3"
+        className="flex flex-wrap items-center gap-2.5 px-4 py-3"
         style={{
           background: "linear-gradient(180deg, #2a1a08, #1a0e05)",
           border: "2px solid #4a2810",
           borderBottom: "none",
         }}
       >
-        <div className="relative">
+        <div className="relative w-full sm:w-auto">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-on-body-soft pointer-events-none">⌕</span>
           <input
             type="search"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Rechercher un item…"
-            className="font-serif-body text-sm outline-none"
+            className="font-serif-body text-sm outline-none w-full sm:w-[280px]"
             style={{
-              width: 280,
               padding: "8px 12px 8px 32px",
               background: "#0c0703",
               border: "1px solid rgba(160,98,42,0.4)",
@@ -933,7 +932,8 @@ function InventorySectionTable({
   onDelete: (itemName: string) => void;
 }) {
   return (
-    <table className="w-full">
+    <div className="overflow-x-auto">
+    <table className="w-full min-w-[900px]">
       <thead>
         <tr>
           <Th>Item</Th>
@@ -1042,6 +1042,7 @@ function InventorySectionTable({
         })}
       </tbody>
     </table>
+    </div>
   );
 }
 

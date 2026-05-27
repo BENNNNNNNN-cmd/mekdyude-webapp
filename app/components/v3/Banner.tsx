@@ -18,7 +18,7 @@ export function Banner({
 }) {
   return (
     <div
-      className={`relative flex items-center justify-between px-7 py-5 mb-5 border-2 border-border-stone border-t-blood border-b-blood ${className}`}
+      className={`relative flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-4 sm:px-7 py-5 mb-5 border-2 border-border-stone border-t-blood border-b-blood ${className}`}
       style={{
         background: "linear-gradient(180deg, #1a0e05 0%, #2a1a08 100%)",
         borderTopWidth: "4px",
@@ -47,7 +47,7 @@ export function Banner({
           </p>
         )}
       </div>
-      {actions != null && <div className="flex items-center gap-2.5">{actions}</div>}
+      {actions != null && <div className="flex flex-wrap items-center gap-2.5">{actions}</div>}
       <EdgeStripe placement="bottom" />
     </div>
   );

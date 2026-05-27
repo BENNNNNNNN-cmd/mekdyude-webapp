@@ -82,10 +82,13 @@ export function StonePlaqueGrid({
   cols?: number;
   className?: string;
 }) {
+  // Cards keep a sensible minimum width and wrap to multiple rows on narrow
+  // screens, expanding to `cols` across once there's room.
+  const minColPx = Math.max(96, Math.round(520 / cols));
   return (
     <div
       className={`grid gap-3.5 mb-5 ${className}`}
-      style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
+      style={{ gridTemplateColumns: `repeat(auto-fit, minmax(${minColPx}px, 1fr))` }}
     >
       {children}
     </div>

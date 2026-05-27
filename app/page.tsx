@@ -176,7 +176,8 @@ export default async function Dashboard() {
 
 function DomainTable({ entries }: { entries: ProductionEntry[] }) {
   return (
-    <table className="w-full">
+    <div className="overflow-x-auto">
+    <table className="w-full min-w-[600px]">
       <thead>
         <tr>
           <Th>Bâtiment</Th>
@@ -215,6 +216,7 @@ function DomainTable({ entries }: { entries: ProductionEntry[] }) {
         })}
       </tbody>
     </table>
+    </div>
   );
 }
 
@@ -261,7 +263,8 @@ function StaffSeal({ status }: { status: ProductionEntry["staffingStatus"] }) {
 
 function MaintenanceTable({ rows }: { rows: MaintenanceLine[] }) {
   return (
-    <table className="w-full">
+    <div className="overflow-x-auto">
+    <table className="w-full min-w-[600px]">
       <thead>
         <tr>
           <Th>Ressource</Th>
@@ -299,6 +302,7 @@ function MaintenanceTable({ rows }: { rows: MaintenanceLine[] }) {
         })}
       </tbody>
     </table>
+    </div>
   );
 }
 
@@ -327,7 +331,8 @@ function ConstructionFolio({ result }: { result: FeasibilityResult }) {
 
 function ConstructionTable({ costs }: { costs: FeasibilityLine[] }) {
   return (
-    <table className="w-full">
+    <div className="overflow-x-auto">
+    <table className="w-full min-w-[600px]">
       <thead>
         <tr>
           <Th>Ressource</Th>
@@ -365,6 +370,7 @@ function ConstructionTable({ costs }: { costs: FeasibilityLine[] }) {
         ))}
       </tbody>
     </table>
+    </div>
   );
 }
 

@@ -273,7 +273,8 @@ function MetaPill({
 
 function BuildingsTable({ buildings }: { buildings: BuildingRow[] }) {
   return (
-    <table className="w-full">
+    <div className="overflow-x-auto">
+    <table className="w-full min-w-[600px]">
       <thead>
         <tr>
           <Th>Bâtiment</Th>
@@ -310,6 +311,7 @@ function BuildingsTable({ buildings }: { buildings: BuildingRow[] }) {
         })}
       </tbody>
     </table>
+    </div>
   );
 }
 
