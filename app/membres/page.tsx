@@ -13,12 +13,13 @@ interface ClanMemberRow {
   real_name: string | null;
   email: string | null;
   phone: string | null;
+  photo: string | null;
 }
 
 export default function MembresPage() {
   const db = getDb();
   const members = db.prepare(`
-    SELECT id, character_name, real_name, email, phone
+    SELECT id, character_name, real_name, email, phone, photo
     FROM clan_members
     WHERE guild_id = 'mek_dyude'
     ORDER BY sort_order, id

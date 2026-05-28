@@ -15,6 +15,12 @@ interface ClanMemberUpdate {
 type UpdateClanMembersResult = { ok: true } | { ok: false; message: string };
 type CreateClanMemberResult = { ok: true; member: ClanMemberUpdate } | { ok: false; message: string };
 type DeleteClanMemberResult = { ok: true } | { ok: false; message: string };
+type UpdateClanMemberPhotoResult = { ok: true } | { ok: false; message: string };
+
+// Photos are stored inline as resized data URLs (the client shrinks them before
+// upload). Cap the string length so a malformed/oversized payload can't bloat a row.
+const MAX_PHOTO_CHARS = 400 * 1024;
+const PHOTO_DATA_URL = /^data:image\/(png|jpeg|webp|gif);base64,[a-zA-Z0-9+/]+={0,2}$/;
 
 function normalizeRequired(value: string) {
   return value.trim();
@@ -115,6 +121,53 @@ export async function deleteClanMember(memberId: string): Promise<DeleteClanMemb
     }
   } catch {
     return { ok: false, message: "Impossible de supprimer ce membre." };
+  }
+
+  revalidatePath("/membres");
+  return { ok: true };
+}
+
+export async function updateClanMemberPhoto(
+  memberId: string,
+  photo: string | null
+): Promise<UpdateClanMemberPhotoResult> {
+  const session = await getSession();
+  if (!session) {
+    return { ok: false, message: "Session expirée. Reconnectez-vous avant de modifier la photo." };
+  }
+  if (session.role !== "admin") {
+    return { ok: false, message: "Seuls les administrateurs peuvent modifier la photo d'un membre." };
+  }
+
+  const normalizedMemberId = normalizeRequired(memberId);
+  if (!normalizedMemberId) {
+    return { ok: false, message: "Le membre à modifier est invalide." };
+  }
+
+  let value: string | null = null;
+  if (photo !== null) {
+    if (typeof photo !== "string" || !PHOTO_DATA_URL.test(photo)) {
+      return { ok: false, message: "Format d'image non supporté." };
+    }
+    if (photo.length > MAX_PHOTO_CHARS) {
+      return { ok: false, message: "L'image est trop volumineuse." };
+    }
+    value = photo;
+  }
+
+  const db = getDb();
+  try {
+    const result = db.prepare(`
+      UPDATE clan_members
+      SET photo = ?, updated_at = datetime('now')
+      WHERE guild_id = ? AND id = ?
+    `).run(value, "mek_dyude", normalizedMemberId);
+
+    if (result.changes !== 1) {
+      return { ok: false, message: "Ce membre n'existe plus." };
+    }
+  } catch {
+    return { ok: false, message: "Impossible d'enregistrer la photo." };
   }
 
   revalidatePath("/membres");

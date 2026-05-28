@@ -68,6 +68,7 @@ export function getDb(): Database.Database {
   if (isNew) seedDatabase(db);
 
   normalizeLegacyInventoryNames(db);
+  ensureClanMembersSchema(db);
   ensureClanMembers(db);
   return db;
 }
@@ -418,6 +419,15 @@ function seedDatabase(db: Database.Database) {
   } catch (e) {
     db.exec("ROLLBACK");
     throw e;
+  }
+}
+
+function ensureClanMembersSchema(conn: Database.Database) {
+  const columns = conn
+    .prepare("PRAGMA table_info(clan_members)")
+    .all() as Array<{ name: string }>;
+  if (!columns.some((column) => column.name === "photo")) {
+    conn.exec("ALTER TABLE clan_members ADD COLUMN photo TEXT");
   }
 }
 

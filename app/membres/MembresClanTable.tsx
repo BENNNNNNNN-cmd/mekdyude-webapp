@@ -1,8 +1,13 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClanMember, deleteClanMember, updateClanMembers } from "./actions";
+import {
+  createClanMember,
+  deleteClanMember,
+  updateClanMemberPhoto,
+  updateClanMembers,
+} from "./actions";
 import { Banner, GhostButton, PrimaryButton } from "@/app/components/v3/Banner";
 import { Folio } from "@/app/components/v3/Folio";
 import {
@@ -16,6 +21,39 @@ interface ClanMember {
   real_name: string | null;
   email: string | null;
   phone: string | null;
+  photo: string | null;
+}
+
+const MAX_PHOTO_DIM = 256;
+
+// Shrink the chosen image to a small JPEG data URL before it ever leaves the
+// browser, so member photos stay tiny enough to live inline in the database.
+function resizeImageToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const scale = Math.min(1, MAX_PHOTO_DIM / Math.max(img.width, img.height));
+      const w = Math.max(1, Math.round(img.width * scale));
+      const h = Math.max(1, Math.round(img.height * scale));
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        reject(new Error("canvas_unavailable"));
+        return;
+      }
+      ctx.drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL("image/jpeg", 0.85));
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("image_load_failed"));
+    };
+    img.src = url;
+  });
 }
 
 type EditableField = "character_name" | "real_name" | "email" | "phone";
@@ -60,6 +98,130 @@ function HeraldicAvatar({ name, idx }: { name: string; idx: number }) {
         {initials(name)}
       </text>
     </svg>
+  );
+}
+
+function MemberAvatar({
+  name,
+  idx,
+  photo,
+  busy,
+  onPick,
+  onRemove,
+}: {
+  name: string;
+  idx: number;
+  photo: string | null;
+  busy: boolean;
+  onPick: (file: File) => void;
+  onRemove: () => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  return (
+    <div className="relative inline-block">
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/webp,image/gif"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) onPick(file);
+          e.target.value = "";
+        }}
+      />
+      <button
+        type="button"
+        disabled={busy}
+        onClick={() => inputRef.current?.click()}
+        title={photo ? `Changer la photo de ${name}` : `Ajouter une photo pour ${name}`}
+        className="block cursor-pointer transition-[filter] hover:brightness-105 disabled:opacity-60"
+        style={
+          photo
+            ? {
+                width: 58,
+                height: 58,
+                padding: 2,
+                background: "linear-gradient(180deg, #A0622A, #6e3e10)",
+                borderRadius: 7,
+                boxShadow:
+                  "inset 0 1px 0 rgba(255,255,255,0.2), 0 2px 5px rgba(0,0,0,0.35)",
+              }
+            : { background: "transparent", border: "none", lineHeight: 0 }
+        }
+      >
+        {photo ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={photo}
+            alt={name}
+            width={54}
+            height={54}
+            className="block"
+            style={{
+              width: 54,
+              height: 54,
+              objectFit: "cover",
+              objectPosition: "center",
+              borderRadius: 5,
+              border: "1px solid #2a1a08",
+            }}
+          />
+        ) : (
+          <HeraldicAvatar name={name} idx={idx} />
+        )}
+      </button>
+
+      {busy ? (
+        <span
+          className="absolute inset-0 flex items-center justify-center font-serif"
+          style={{ color: "#f4ead2", fontSize: 18 }}
+        >
+          …
+        </span>
+      ) : photo ? (
+        <button
+          type="button"
+          onClick={onRemove}
+          title={`Retirer la photo de ${name}`}
+          className="absolute -top-1.5 -right-1.5 inline-flex items-center justify-center rounded-full cursor-pointer transition-[filter] hover:brightness-110 active:scale-95"
+          style={{
+            width: 18,
+            height: 18,
+            background: "radial-gradient(circle at 35% 35%, #8B1A1Add, #8B1A1A88)",
+            border: "1.5px solid #8B1A1A",
+            color: "#f4ead2",
+            fontFamily: "var(--font-serif)",
+            fontWeight: 700,
+            fontSize: 9,
+            lineHeight: 1,
+            boxShadow: "0 1px 3px rgba(0,0,0,0.4)",
+          }}
+        >
+          ✕
+        </button>
+      ) : (
+        <span
+          aria-hidden
+          className="absolute -bottom-1 -right-1 inline-flex items-center justify-center rounded-full pointer-events-none"
+          style={{
+            width: 18,
+            height: 18,
+            background: "radial-gradient(circle at 35% 35%, #A0622A, #6e3e10)",
+            border: "1.5px solid #4a2810",
+            color: "#f4ead2",
+            fontFamily: "var(--font-serif)",
+            fontWeight: 700,
+            fontSize: 12,
+            lineHeight: 1,
+            boxShadow: "0 1px 3px rgba(0,0,0,0.4)",
+          }}
+        >
+          +
+        </span>
+      )}
+    </div>
   );
 }
 
@@ -175,6 +337,7 @@ export default function MembresClanTable({
   const [saving, setSaving] = useState(false);
   const [adding, setAdding] = useState(false);
   const [deletingMember, setDeletingMember] = useState<string | null>(null);
+  const [photoBusy, setPhotoBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -225,7 +388,7 @@ export default function MembresClanTable({
         setError(result.message);
         return;
       }
-      setMembers((prev) => [...prev, result.member]);
+      setMembers((prev) => [...prev, { ...result.member, photo: null }]);
     } catch {
       setError("Erreur lors de l'ajout. Veuillez réessayer.");
     } finally {
@@ -259,6 +422,47 @@ export default function MembresClanTable({
       }
     },
     [hasDirtyChanges, router]
+  );
+
+  const setMemberPhoto = useCallback(
+    async (memberId: string, photo: string | null) => {
+      setPhotoBusy(memberId);
+      setError(null);
+      try {
+        const result = await updateClanMemberPhoto(memberId, photo);
+        if (!result.ok) {
+          setError(result.message);
+          return;
+        }
+        setMembers((prev) =>
+          prev.map((m) => (m.id === memberId ? { ...m, photo } : m))
+        );
+      } catch {
+        setError("Erreur lors de l'enregistrement de la photo. Veuillez réessayer.");
+      } finally {
+        setPhotoBusy(null);
+      }
+    },
+    []
+  );
+
+  const handlePhotoFile = useCallback(
+    async (memberId: string, file: File) => {
+      setError(null);
+      if (!file.type.startsWith("image/")) {
+        setError("Veuillez choisir un fichier image.");
+        return;
+      }
+      let dataUrl: string;
+      try {
+        dataUrl = await resizeImageToDataUrl(file);
+      } catch {
+        setError("Impossible de lire cette image. Essayez un autre fichier.");
+        return;
+      }
+      await setMemberPhoto(memberId, dataUrl);
+    },
+    [setMemberPhoto]
   );
 
   const filteredMembers = useMemo(() => {
@@ -440,7 +644,7 @@ export default function MembresClanTable({
                     minHeight: 96,
                   }}
                 >
-                  {/* Heraldic shield */}
+                  {/* Heraldic shield or member photo */}
                   <div
                     className="flex items-center justify-center"
                     style={{
@@ -448,7 +652,14 @@ export default function MembresClanTable({
                       borderRight: "1px solid rgba(139,32,32,0.18)",
                     }}
                   >
-                    <HeraldicAvatar name={member.character_name} idx={idx} />
+                    <MemberAvatar
+                      name={member.character_name}
+                      idx={idx}
+                      photo={member.photo}
+                      busy={photoBusy === member.id}
+                      onPick={(file) => handlePhotoFile(member.id, file)}
+                      onRemove={() => setMemberPhoto(member.id, null)}
+                    />
                   </div>
 
                   {/* Tartan stripe */}

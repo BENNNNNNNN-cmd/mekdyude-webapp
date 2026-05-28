@@ -89,6 +89,7 @@ CREATE TABLE IF NOT EXISTS clan_members (
   real_name TEXT,
   email TEXT,
   phone TEXT,
+  photo TEXT,
   sort_order INTEGER NOT NULL DEFAULT 0,
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
